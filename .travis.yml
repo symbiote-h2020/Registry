@@ -1,33 +1,27 @@
 language: java
-
 env:
   global:
-    secure: "jKuBB3MoaHw7sSD9RWacrXkPgnBE0194Tqj+zKPAjdAoBgunkq/rIJIq5NmgvpC6DPWbFC94aifJxaWLPulZHVEj+v9BjDs6Gkv9mfjyEb4qPm57vW2JDqJzCY46mnJcc46lNyL0MK0Q6fhVeWmi/flkJhewv+M3a/hqqMute48VuY10Tujbi6bmHDHQJjzlRiMJS3WuCQXdlvrpvNPZ8Gxz90mxX0PDNdfuHEkMjNePaNrcMlCJO7oiwqUv4E4Rewcpwej5s5c7/MHJzmaO4RZl3Fn8hqQ5vQ7GwphivThL4ZBB4d8HMqNiT9VQ+/+j0jDafeMj3czPwNTj2QKHgb9e7Uoq/3WLD+qbm97PqFdbkF9l7CC4V+sFM6c8WaS0SwbHOptK429ussAbCN7GcRcf+li84CYKhG7WUTZkZhwHtK1Wu+4wJJC1dO3eHwNCUBafIBgdH9JxfYTMX2yHLYVV6/dv9mvkP+IHI9vAZrJKCsFEK/UJf5DVzsA16rhihUv7rL3Ro1gJjGuoZsvRmEIW7zpQ+EKivq12aDGYpP8J8fK7r+3ccQ98Q3PmGtzvYIjfgOomNgn31PkmSqptKpROPGBehcZ4g+gkcWJRfydgQPllP020VRVFI8IPPxCn83uIPo6gh8zhIl1qaZmIvQPTfpzuhu/0GsTNSZspDlo="
-
+    secure: iWmCA3owEeEdhSVqvY/vxJI6guHx7BUNRhX1lMdG3cbHbixuv0xvAX78X9VDSXEAYrAhNOcAIV1m0hd4jkxFh9ed95hyt2scvkQu4AsK6icjnuTCvF9z01oka96UBzT31v/jrK8JKht6b3MH/KYgsMBh37TahRMtpDH7Ako8AZsAvhixVP1ZMdd8Q2YRc/ClbZX9E+3XARu6Y2rsmKaQwdoplxxzbBBf+ARPNnLKh66yEpwMCMalfB75zNVk6SIxc4EIBR0zjMx6sGSL7AiHVYutMAzP1JB5pPt3mHNZVXp48dxQdWYVT0jTFXfzYmArV7iTXRsQ07CAS7+YiofSsi7TJXaZhBqUtpkXsQb0V10mW/DWDjXuh1P18yb+pgOpGm1iH9rVaC26b6w3waQlXer/W6tWYHR1KAhYQNUDuGVe4xaukrdGpSpa+66vYW2/IwxYusFKV/u4dn/hnCSmuXQeMQrB85j4YYXs2r2yGuoFsUHyGzhRae/5XxX/NVbQEqKVqrSMN4khXEXDsl2HG7b+jygEfjc8UVOgRg2YQgJINM0kwfdbbTEEKELMCoeUzVyPYmYYydVl705S0xWLC0Ns9RxI3puauYI09YvRPX57RQxBCtKsfVxJ5I+TCYHEV9S5QPVwL94/fcOCzo+wWPno2GqfTcxG26X5M4i1mWM=
 jdk:
 - oraclejdk8
-
 services:
-  - mongodb
-  - rabbitmq
-
+- mongodb
+- rabbitmq
 sudo: required
-
 branches:
   only:
   - staging
-
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
-
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
-
 after_success:
 - chmod a+x merge_script.sh
 - BRANCHES_TO_MERGE_REGEX='staging' BRANCH_TO_MERGE_INTO=develop GITHUB_REPO=symbiote-h2020/Registry
   ./merge_script.sh
 - bash <(curl -s https://codecov.io/bash)
+dd:
+  secure: R/WzPQC6DorpgBxMwjtcMIeEL1O7pbewflmGa0c5Z6XtTxNHTrKUVEMIJG2OQ0NypuW1IfJcfR6LJ/hqa9z1dtT913QMGnN8T9VSC5Cq3iUWhBN2VPwLXL9NAqdJ6XbhQHW14cAAvRtm2JFrCo23TRYlcPIrFk4Ad+6ndn57h66CE6WR4y0Jd3DemZ2XSw5qFGWd2ovxBToNkZjpfy8zAd9ed6Axh8byDQZwJUaOHnF9v/NAvWqPFjuVV/tmcFmxH6eLA9hUXuS7TsmJR7W4TF8geNLd/58KZxOVhUi+ofYc45KzQddmVluEVvBQ+3+HV0+ZONrnvBedRNBYgT0+cs5E+WQoW511Vr+O4hy2/QaYPSQov8S12Fot6ax10U1gzjJpe/tMHRzA1f0ehQJ6Lq74lIn9KtvyhEyh3DANWt25GJkffUAHwPu2WfXuJoDrIcQ/ZKW+4T5g/oO4EyqXI1ewuwRKtVel7yH9fPxOPtqm2JQwAJs5NZubiFom2NVRHfqsm3SIBypQ2MxTvlS08u0UQhFT9ZiOuMGVP/ltYvjx7n05o9xKmZeeKPSNuVl1+jfy+M01wLXX/VGhM3CuCyBV/XO4NlLEWyh5j54W0S1sc8PFpMR7IAoBpwADXY/hE7Osio6rQsZx+ZpaYDnk7h/HVwppCKbm9Rqr1ue79CM=
