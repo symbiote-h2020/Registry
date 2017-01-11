@@ -19,8 +19,8 @@ import java.util.concurrent.TimeoutException;
 @Component
 public class RabbitManager {
 
-    private static Log log = LogFactory.getLog( RabbitManager.class );
-
+    private static Log log = LogFactory.getLog(RabbitManager.class);
+    DefaultConsumer consumer;
     /*
     @Value("${rabbit.host}")
     private String rabbitHost;
@@ -33,24 +33,17 @@ public class RabbitManager {
 */
     @Value("${rabbit.exchange.platform.name}")
     private String platformExchangeName;
-
     @Value("${rabbit.exchange.platform.type}")
     private String platformExchangeType;
-
     @Value("${rabbit.exchange.platform.durable}")
     private boolean plaftormExchangeDurable;
-
     @Value("${rabbit.exchange.platform.autodelete}")
     private boolean platformExchangeAutodelete;
-
     @Value("${rabbit.exchange.platform.internal}")
     private boolean platformExchangeInternal;
-
     @Value("${rabbit.routingKey.platform.creationRequested}")
     private String platformCreationRequestedRoutingKey;
-
     private Connection connection;
-
     private String queueName;
 
     /**
@@ -74,6 +67,8 @@ public class RabbitManager {
                     this.platformExchangeAutodelete,
                     this.platformExchangeInternal,
                     null);
+
+            receiveMessages();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -99,9 +94,10 @@ public class RabbitManager {
     }
 
     //todo during implementation
-    private String receiveMessage(){
+    public String receiveMessages() {
         String receivedMessage = "";
         Channel channel = null;
+        queueName = "";
         try {
             channel = this.connection.createChannel();
 
@@ -109,9 +105,10 @@ public class RabbitManager {
 
             log.info("Receiver waiting for messages....");
 
-            Consumer consumer = new DefaultConsumer(channel) {
+            consumer = new DefaultConsumer(channel) {
                 @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+                public void handleDelivery(String consumerTag, Envelope envelope,
+                                           AMQP.BasicProperties properties, byte[] body)
                         throws IOException {
                     String message = new String(body, "UTF-8");
                     System.out.println(" [x] Received '" + message + "'");

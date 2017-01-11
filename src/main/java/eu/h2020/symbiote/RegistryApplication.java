@@ -1,6 +1,6 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.messaging.RPCReceiver;
+import eu.h2020.symbiote.messaging.RabbitManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ public class RegistryApplication {
 	private static Log log = LogFactory.getLog(RegistryApplication.class);
 
     @Autowired
-    RPCReceiver rpcReceiver;
+    RabbitManager rabbitManager;
 
 	public static void main(String[] args) {
 		SpringApplication.run(RegistryApplication.class, args);
