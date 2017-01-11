@@ -1,5 +1,9 @@
 package eu.h2020.symbiote.model;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
 
 import java.net.URL;
@@ -85,4 +89,16 @@ public class Platform {
     public void setDescription(String description) {
         this.description = description;
     }
+
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
+    }
+
 }
