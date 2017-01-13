@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -20,8 +19,7 @@ import java.util.concurrent.TimeoutException;
 public class RabbitManager {
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
-    DefaultConsumer consumer;
-    /*
+
     @Value("${rabbit.host}")
     private String rabbitHost;
 
@@ -30,7 +28,7 @@ public class RabbitManager {
 
     @Value("${rabbit.password}")
     private String rabbitPassword;
-*/
+
     @Value("${rabbit.exchange.platform.name}")
     private String platformExchangeName;
     @Value("${rabbit.exchange.platform.type}")
@@ -43,39 +41,35 @@ public class RabbitManager {
     private boolean platformExchangeInternal;
     @Value("${rabbit.routingKey.platform.creationRequested}")
     private String platformCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.platform.created}")
+    private String platformCreatedRoutingKey;
+
     private Connection connection;
-    private String queueName;
+    private final String queueName = "platformCreationRequestedQueue"; //todo from properties
+    RequestConsumer consumer;
 
     /**
      * Initialization method.
      */
     @PostConstruct
-    private void init() {
+    private void init() throws InterruptedException {
         //FIXME check if there is better exception handling in @postconstruct method
-        Channel channel = null;
+
         try {
             ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost("127.0.0.1"); //todo value from properties
+
+            factory.setHost("localhost"); //todo value from properties
+
+//            factory.setHost(this.rabbitHost);
 //            factory.setUsername(this.rabbitUsername);
 //            factory.setPassword(this.rabbitPassword);
+
             this.connection = factory.newConnection();
-
-            channel = this.connection.createChannel();
-            channel.exchangeDeclare(this.platformExchangeName,
-                    this.platformExchangeType,
-                    this.plaftormExchangeDurable,
-                    this.platformExchangeAutodelete,
-                    this.platformExchangeInternal,
-                    null);
-
-            receiveMessages();
 
         } catch (IOException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
             e.printStackTrace();
-        } finally {
-            closeChannel(channel);
         }
     }
 
@@ -93,37 +87,29 @@ public class RabbitManager {
         }
     }
 
+    public void sendPlatformCreatedMessage( String message ) {
+        sendMessage( this.platformExchangeName, this.platformCreatedRoutingKey, message);
+    }
+
     //todo during implementation
-    public String receiveMessages() {
-        String receivedMessage = "";
+    public void receiveMessages() throws InterruptedException, IOException {
         Channel channel = null;
-        queueName = "";
         try {
             channel = this.connection.createChannel();
+            channel.exchangeDeclare("symbiote.platform", "topic", true, false, null);
 
-            channel.queueDeclare(queueName, false, false, false, null);
+            channel.queueDeclare(queueName, true, false, false, null);
 
-            log.info("Receiver waiting for messages....");
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            consumer = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope,
-                                           AMQP.BasicProperties properties, byte[] body)
-                        throws IOException {
-                    String message = new String(body, "UTF-8");
-                    System.out.println(" [x] Received '" + message + "'");
-                    //TODO use the message
-                }
-            };
-            channel.basicConsume(queueName, true, consumer);
+            System.out.println("Receiver waiting for messages....");
 
-            return receivedMessage;
+            consumer = new RequestConsumer(channel);
+            channel.basicConsume(queueName, false, consumer);
 
-        } catch (IOException e) {
+
+        } catch (IOException e){
             e.printStackTrace();
-            return e.toString();
-        } finally {
-            closeChannel(channel);
         }
     }
 
@@ -132,57 +118,18 @@ public class RabbitManager {
         try {
             channel = this.connection.createChannel();
 
+            channel.exchangeDeclare(this.platformExchangeName,
+                    this.platformExchangeType,
+                    this.plaftormExchangeDurable,
+                    this.platformExchangeAutodelete,
+                    this.platformExchangeInternal,
+                    null);
+
             channel.basicPublish(exchange, routingKey, null, message.getBytes());
 
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            closeChannel(channel);
         }
-    }
-
-    private String sendRpcMessage(String exchange, String routingKey, String message) {
-        Channel channel = null;
-        try {
-            channel = this.connection.createChannel();
-
-            String replyQueueName = channel.queueDeclare().getQueue();
-            QueueingConsumer consumer = new QueueingConsumer(channel);
-            channel.basicConsume(replyQueueName, true, consumer);
-
-            String response = null;
-            String correlationId = UUID.randomUUID().toString();
-
-            AMQP.BasicProperties props = new AMQP.BasicProperties()
-                    .builder()
-                    .correlationId(correlationId)
-                    .replyTo(replyQueueName)
-                    .build();
-
-            channel.basicPublish(exchange, routingKey, props, message.getBytes());
-
-
-            //TODO true or something else?
-            while (true) {
-                QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-                if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
-                    response = new String(delivery.getBody());
-                    break;
-                }
-            }
-
-            System.out.println(response);
-
-            return response;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            closeChannel(channel);
-        }
-        return null;
     }
 
     private void closeChannel(Channel channel) {
@@ -195,6 +142,4 @@ public class RabbitManager {
             e.printStackTrace();
         }
     }
-
-
 }

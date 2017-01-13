@@ -4,11 +4,13 @@ import eu.h2020.symbiote.messaging.RabbitManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.sleuth.sampler.AlwaysSampler;
 import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 
 /**
@@ -20,16 +22,28 @@ public class RegistryApplication {
 
 	private static Log log = LogFactory.getLog(RegistryApplication.class);
 
-    @Autowired
-    RabbitManager rabbitManager;
-
 	public static void main(String[] args) {
 		SpringApplication.run(RegistryApplication.class, args);
+    }
 
-        try {
-            // Subscribe to RabbitMQ messages
-        } catch (Exception e) {
-            log.error("Error occured during subscribing from Registry", e);
+    @Component
+    public static class CLR implements CommandLineRunner {
+
+        private final RabbitManager manager;
+
+        @Autowired
+        public CLR( RabbitManager manager ) {
+            this.manager = manager;
+        }
+
+        @Override
+        public void run(String... args) throws Exception {
+
+            //message retrieval start
+            this.manager.receiveMessages();
+
+            // todo move to message handler
+            this.manager.sendPlatformCreatedMessage(" platform created !");
         }
     }
 
@@ -37,5 +51,4 @@ public class RegistryApplication {
     public AlwaysSampler defaultSampler() {
         return new AlwaysSampler();
     }
-
 }
