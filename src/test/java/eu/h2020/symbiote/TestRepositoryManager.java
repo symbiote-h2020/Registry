@@ -1,6 +1,6 @@
 package eu.h2020.symbiote;
 
-import com.google.gson.Gson;
+import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -20,11 +20,10 @@ import static org.mockito.Mockito.when;
  */
 public class TestRepositoryManager {
 
-    Gson gson;
     private RepositoryManager repositoryManager;
     private PlatformRepository mockedPlatformRepo;
-    private String savedPlatformId;
     private Platform platformToSave;
+    private RabbitManager rabbitManager;
 
     public TestRepositoryManager() throws MalformedURLException {
     }
@@ -33,21 +32,22 @@ public class TestRepositoryManager {
     public void setUp() {
         mockedPlatformRepo = Mockito.mock(PlatformRepository.class);
         platformToSave = Mockito.mock(Platform.class);
+        rabbitManager = Mockito.mock(RabbitManager.class);
 
-        repositoryManager = new RepositoryManager(mockedPlatformRepo);
+        repositoryManager = new RepositoryManager(mockedPlatformRepo, rabbitManager);
     }
 
     @Test
     public void testMockCreation() {
         assertNotNull(mockedPlatformRepo);
         assertNotNull(platformToSave);
+        assertNotNull(rabbitManager);
     }
 
     //checks if repositoryManager.savePlatform() triggers mockedPlatformRepo.save()
     @Test
     public void testSavePlatformTriggersRepo() {
         when(mockedPlatformRepo.save(platformToSave)).thenReturn(platformToSave);
-        when(platformToSave.getPlatformId()).thenReturn("0");
         repositoryManager.savePlatform(platformToSave);
         verify(mockedPlatformRepo).save(platformToSave);
     }

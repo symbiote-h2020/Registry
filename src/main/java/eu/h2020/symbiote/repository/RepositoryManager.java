@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component;
 public class RepositoryManager {
 
     public static Log log = LogFactory.getLog(RepositoryManager.class);
-    @Autowired
-    RabbitManager rabbitManager;
 
+    private RabbitManager rabbitManager;
     private PlatformRepository platformRepository;
 
     @Autowired
-    public RepositoryManager(PlatformRepository platformRepository) {
+    public RepositoryManager(PlatformRepository platformRepository, RabbitManager rabbitManager) {
         this.platformRepository = platformRepository;
+        this.rabbitManager = rabbitManager;
     }
 
     /**
@@ -56,5 +56,4 @@ public class RepositoryManager {
         }
         return platformCreationResponse;
     }
-
 }

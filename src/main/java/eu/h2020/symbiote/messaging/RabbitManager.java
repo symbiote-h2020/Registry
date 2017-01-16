@@ -27,6 +27,7 @@ public class RabbitManager {
     private static Log log = LogFactory.getLog(RabbitManager.class);
     private final String platformCreationRequestedQueueName = "platformCreationRequestedQueueName"; //todo from properties
     RequestConsumer consumer;
+    private RepositoryManager repositoryManager;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
@@ -50,7 +51,9 @@ public class RabbitManager {
     private Connection connection;
 
     @Autowired
-    RepositoryManager repositoryManager;
+    public RabbitManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
 
     /**
      * Initialization method.
@@ -78,10 +81,6 @@ public class RabbitManager {
                     this.platformExchangeAutodelete,
                     this.platformExchangeInternal,
                     null);
-
-
-            //message retrieval start
-            this.receiveMessages(); //todo check
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -124,7 +123,7 @@ public class RabbitManager {
 
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            System.out.println("Receiver waiting for messages....");
+            log.info("Receiver waiting for messages....");
 
             consumer = new RequestConsumer(channel, repositoryManager);
             channel.basicConsume(platformCreationRequestedQueueName, false, consumer);
