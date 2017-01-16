@@ -1,40 +1,40 @@
 package eu.h2020.symbiote.messaging;
 
-import com.rabbitmq.client.*;
+import com.google.gson.Gson;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.PlatformCreationResponse;
+import eu.h2020.symbiote.repository.RepositoryManager;
 
 import java.io.IOException;
 
 /**
  * Created by mateuszl on 12.01.2017.
  */
+
 public class RequestConsumer extends DefaultConsumer {
+
+    private RepositoryManager repositoryManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      *
      * @param channel the channel to which this consumer is attached
      */
-    public RequestConsumer(Channel channel) {
+    public RequestConsumer(Channel channel, RepositoryManager repositoryManager) {
         super(channel);
-        System.out.println("Consumer created!");
-    }
-
-    @Override
-    public void handleConsumeOk(String consumerTag) {
-        System.out.println("Consume ok");
-        super.handleConsumeOk(consumerTag);
-    }
-
-    @Override
-    public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
-        System.out.println("Consumer shutdown");
-        super.handleShutdownSignal(consumerTag, sig);
+        this.repositoryManager = repositoryManager;
     }
 
     @Override
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
+        Gson gson = new Gson();
+        String response = "";
         String message = new String(body, "UTF-8");
         System.out.println(" [x] Received '" + message + "'");
 
@@ -43,11 +43,13 @@ public class RequestConsumer extends DefaultConsumer {
                 .correlationId(properties.getCorrelationId())
                 .build();
 
-        //todo save object to database here
-        String id = "12345";
+        Platform platform = gson.fromJson(message, Platform.class);
+        PlatformCreationResponse platformCreationResponse = this.repositoryManager.savePlatform(platform);
+        response = gson.toJson(platformCreationResponse);
 
-        //todo on successful save:
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, id.getBytes());
+        System.out.println(properties.getReplyTo());
+
+        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
         System.out.println("- message sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);

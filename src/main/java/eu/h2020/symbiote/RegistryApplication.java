@@ -38,12 +38,9 @@ public class RegistryApplication {
 
         @Override
         public void run(String... args) throws Exception {
-
-            //message retrieval start
-            this.manager.receiveMessages();
-
-            // todo move to message handler
-            this.manager.sendPlatformCreatedMessage(" platform created !");
+//
+//            //message retrieval start
+//            this.manager.receiveMessages(); //todo check
         }
     }
 

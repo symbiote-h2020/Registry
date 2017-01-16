@@ -47,7 +47,7 @@ public class TestRepositoryManager {
     @Test
     public void testSavePlatformTriggersRepo() {
         when(mockedPlatformRepo.save(platformToSave)).thenReturn(platformToSave);
-        when(platformToSave.getId()).thenReturn("0");
+        when(platformToSave.getPlatformId()).thenReturn("0");
         repositoryManager.savePlatform(platformToSave);
         verify(mockedPlatformRepo).save(platformToSave);
     }

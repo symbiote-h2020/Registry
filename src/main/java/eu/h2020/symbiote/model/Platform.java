@@ -1,12 +1,8 @@
 package eu.h2020.symbiote.model;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
-
-import java.net.URL;
 
 /**
  * Created by mateuszl on 09.01.2017.
@@ -14,48 +10,22 @@ import java.net.URL;
 public class Platform {
 
     @Id
-    private String id;
-    private String owner;
+    private String platformId;
     private String name;
-    private String type;
     private String description;
-    private URL resourceAccessProxyUrl;
+    private String url;
+    private String informationModelId;
 
     public Platform() {
 
     }
 
-    public Platform(String owner, String name, String type, String description, URL resourceAccessProxyUrl) {
-        this.owner = owner;
-        this.name = name;
-        this.type = type;
-        this.description = description;
-        this.resourceAccessProxyUrl = resourceAccessProxyUrl;
+    public String getPlatformId() {
+        return platformId;
     }
 
-    public Platform(String id, String owner, String name, String type, String description, URL resourceAccessProxyUrl) {
-        this.id = id;
-        this.owner = owner;
-        this.name = name;
-        this.type = type;
-        this.description = description;
-        this.resourceAccessProxyUrl = resourceAccessProxyUrl;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setPlatformId(String platformId) {
+        this.platformId = platformId;
     }
 
     public String getName() {
@@ -66,22 +36,6 @@ public class Platform {
         this.name = name;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public URL getResourceAccessProxyUrl() {
-        return resourceAccessProxyUrl;
-    }
-
-    public void setResourceAccessProxyUrl(URL resourceAccessProxyUrl) {
-        this.resourceAccessProxyUrl = resourceAccessProxyUrl;
-    }
-
     public String getDescription() {
         return description;
     }
@@ -90,6 +44,21 @@ public class Platform {
         this.description = description;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getInformationModelId() {
+        return informationModelId;
+    }
+
+    public void setInformationModelId(String informationModelId) {
+        this.informationModelId = informationModelId;
+    }
 
     @Override
     public int hashCode() {
