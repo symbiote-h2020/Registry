@@ -27,6 +27,8 @@ import java.util.concurrent.TimeoutException;
 public class RabbitManager {
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
+    @Autowired
+    RepositoryManager repositoryManager;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
@@ -62,9 +64,6 @@ public class RabbitManager {
     @Value("${rabbit.routingKey.resource.created}")
     private String resourceCreatedRoutingKey;
     private Connection connection;
-
-    @Autowired
-    RepositoryManager repositoryManager;
 
     /**
      * Initialization method.
@@ -143,7 +142,7 @@ public class RabbitManager {
 
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for messages....");
+            log.info("Receiver waiting for Platform messages....");
 
             Consumer consumer = new PlatformRequestConsumer(channel, repositoryManager);
             channel.basicConsume(queueName, false, consumer);
@@ -163,7 +162,7 @@ public class RabbitManager {
 
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for messages....");
+            log.info("Receiver waiting for Resource messages....");
 
             Consumer consumer = new ResourceRequestConsumer(channel, repositoryManager);
             channel.basicConsume(queueName, false, consumer);
@@ -177,9 +176,7 @@ public class RabbitManager {
         Channel channel;
         try {
             channel = this.connection.createChannel();
-
             channel.exchangeDeclare(name, type, durable, autodelete, internal, null);
-
             channel.basicPublish(exchange, routingKey, null, message.getBytes());
 
         } catch (IOException e) {
