@@ -126,18 +126,14 @@ public class RabbitManager {
         Gson gson = new Gson();
         String message = gson.toJson(platform);
 
-        sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
-                this.platformExchangeName, this.platformExchangeType, this.plaftormExchangeDurable,
-                this.platformExchangeAutodelete, this.platformExchangeInternal);
+        sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
     }
 
     public void sendResourceCreatedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
 
-        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
-                this.resourceExchangeName, this.resourceExchangeType, this.resourceExchangeDurable,
-                this.resourceExchangeAutodelete, this.resourceExchangeInternal);
+        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
     }
 
     public void receiveMessages() throws IOException, InterruptedException {
@@ -185,12 +181,10 @@ public class RabbitManager {
         }
     }
 
-    private void sendMessage(String exchange, String routingKey, String message,
-                             String name, String type, Boolean durable, Boolean autodelete, Boolean internal) {
+    private void sendMessage(String exchange, String routingKey, String message) {
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.exchangeDeclare(name, type, durable, autodelete, internal, null);
             channel.basicPublish(exchange, routingKey, null, message.getBytes());
 
         } catch (IOException e) {
