@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Consumer;
 import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,9 +27,6 @@ import java.util.concurrent.TimeoutException;
 public class RabbitManager {
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
-    private final String platformCreationRequestedQueueName = "platformCreationRequestedQueueName"; //todo from properties
-    RequestConsumer consumer;
-    private RepositoryManager repositoryManager;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
@@ -48,12 +47,24 @@ public class RabbitManager {
     private String platformCreationRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.created}")
     private String platformCreatedRoutingKey;
+    @Value("${rabbit.exchange.resource.name}")
+    private String resourceExchangeName;
+    @Value("${rabbit.exchange.resource.type}")
+    private String resourceExchangeType;
+    @Value("${rabbit.exchange.resource.durable}")
+    private boolean resourceExchangeDurable;
+    @Value("${rabbit.exchange.resource.autodelete}")
+    private boolean resourceExchangeAutodelete;
+    @Value("${rabbit.exchange.resource.internal}")
+    private boolean resourceExchangeInternal;
+    @Value("${rabbit.routingKey.resource.creationRequested}")
+    private String resourceCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.resource.created}")
+    private String resourceCreatedRoutingKey;
     private Connection connection;
 
     @Autowired
-    public RabbitManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
+    RepositoryManager repositoryManager;
 
     /**
      * Initialization method.
@@ -66,21 +77,14 @@ public class RabbitManager {
         try {
             ConnectionFactory factory = new ConnectionFactory();
 
-            factory.setHost("localhost"); //todo value from properties
-
-//            factory.setHost(this.rabbitHost);
-//            factory.setUsername(this.rabbitUsername);
-//            factory.setPassword(this.rabbitPassword);
+//            factory.setHost("localhost"); //todo value from properties
+            factory.setHost(this.rabbitHost);
+            factory.setUsername(this.rabbitUsername);
+            factory.setPassword(this.rabbitPassword);
 
             this.connection = factory.newConnection();
 
             channel = this.connection.createChannel();
-            channel.exchangeDeclare(this.platformExchangeName,
-                    this.platformExchangeType,
-                    this.plaftormExchangeDurable,
-                    this.platformExchangeAutodelete,
-                    this.platformExchangeInternal,
-                    null);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -109,41 +113,72 @@ public class RabbitManager {
         Gson gson = new Gson();
         String message = gson.toJson(platform);
 
-        sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
+        sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
+                this.platformExchangeName, this.platformExchangeType, this.plaftormExchangeDurable,
+                this.platformExchangeAutodelete, this.platformExchangeInternal);
     }
 
-    //todo during implementation
-    public void receiveMessages() throws InterruptedException, IOException {
-        Channel channel = null;
+    public void sendResourceCreatedMessage(Resource resource) {
+        Gson gson = new Gson();
+        String message = gson.toJson(resource);
+
+        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
+                this.resourceExchangeName, this.resourceExchangeType, this.resourceExchangeDurable,
+                this.resourceExchangeAutodelete, this.resourceExchangeInternal);
+    }
+
+    public void receiveMessages() throws IOException, InterruptedException {
+        receivePlatformMessages();
+        receiveResourceMessages();
+    }
+
+    private void receivePlatformMessages()
+            throws InterruptedException, IOException {
+        Channel channel;
+        String queueName = "platformCreationRequestedQueue";
         try {
             channel = this.connection.createChannel();
-
-            channel.queueDeclare(platformCreationRequestedQueueName, true, false, false, null);
-            channel.queueBind(platformCreationRequestedQueueName, platformExchangeName, platformCreationRequestedRoutingKey);
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
 
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for messages....");
 
-            consumer = new RequestConsumer(channel, repositoryManager);
-            channel.basicConsume(platformCreationRequestedQueueName, false, consumer);
-
+            Consumer consumer = new PlatformRequestConsumer(channel, repositoryManager);
+            channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void sendMessage(String exchange, String routingKey, String message) {
-        Channel channel = null;
+    private void receiveResourceMessages()
+            throws InterruptedException, IOException {
+        Channel channel;
+        String queueName = "resourceCreationRequestedQueue";
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
+
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for messages....");
+
+            Consumer consumer = new ResourceRequestConsumer(channel, repositoryManager);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendMessage(String exchange, String routingKey, String message,
+                             String name, String type, Boolean durable, Boolean autodelete, Boolean internal) {
+        Channel channel;
         try {
             channel = this.connection.createChannel();
 
-            channel.exchangeDeclare(this.platformExchangeName,
-                    this.platformExchangeType,
-                    this.plaftormExchangeDurable,
-                    this.platformExchangeAutodelete,
-                    this.platformExchangeInternal,
-                    null);
+            channel.exchangeDeclare(name, type, durable, autodelete, internal, null);
 
             channel.basicPublish(exchange, routingKey, null, message.getBytes());
 

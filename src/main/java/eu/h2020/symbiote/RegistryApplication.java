@@ -39,8 +39,8 @@ public class RegistryApplication {
         @Override
         public void run(String... args) throws Exception {
 //
-            //message retrieval - start consumer
-            this.manager.receiveMessages(); //todo check
+            //message retrieval - start rabbit exchange and consumers
+            this.manager.receiveMessages();
         }
     }
 

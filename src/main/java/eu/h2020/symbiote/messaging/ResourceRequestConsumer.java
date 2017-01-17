@@ -5,17 +5,16 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.Platform;
-import eu.h2020.symbiote.model.PlatformCreationResponse;
+import eu.h2020.symbiote.model.Resource;
+import eu.h2020.symbiote.model.ResourceCreationResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 12.01.2017.
+ * Created by mateuszl on 17.01.2017.
  */
-
-public class RequestConsumer extends DefaultConsumer {
+public class ResourceRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
 
@@ -24,7 +23,7 @@ public class RequestConsumer extends DefaultConsumer {
      *
      * @param channel the channel to which this consumer is attached
      */
-    public RequestConsumer(Channel channel, RepositoryManager repositoryManager) {
+    public ResourceRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
     }
@@ -43,14 +42,14 @@ public class RequestConsumer extends DefaultConsumer {
                 .correlationId(properties.getCorrelationId())
                 .build();
 
-        Platform platform = gson.fromJson(message, Platform.class);
-        PlatformCreationResponse platformCreationResponse = this.repositoryManager.savePlatform(platform);
-        response = gson.toJson(platformCreationResponse);
+        Resource resource = gson.fromJson(message, Resource.class);
+        ResourceCreationResponse resourceCreationResponse = this.repositoryManager.saveResource(resource);
+        response = gson.toJson(resourceCreationResponse);
 
         System.out.println(properties.getReplyTo());
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        System.out.println("- message sent back");
+        System.out.println("-> Message sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
