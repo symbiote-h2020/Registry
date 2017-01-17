@@ -85,6 +85,20 @@ public class RabbitManager {
 
             channel = this.connection.createChannel();
 
+            channel.exchangeDeclare(this.platformExchangeName,
+                    this.platformExchangeType,
+                    this.plaftormExchangeDurable,
+                    this.platformExchangeAutodelete,
+                    this.platformExchangeInternal,
+                    null);
+
+            channel.exchangeDeclare(this.resourceExchangeName,
+                    this.resourceExchangeType,
+                    this.resourceExchangeDurable,
+                    this.resourceExchangeAutodelete,
+                    this.resourceExchangeInternal,
+                    null);
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
