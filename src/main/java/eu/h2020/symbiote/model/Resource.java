@@ -13,6 +13,7 @@ public class Resource {
     private List<String> observedProperties;
     private String resourceURL;
     private Location location;
+    private String featureOfInterest = null;
 
     public Resource() {
     }
@@ -71,5 +72,13 @@ public class Resource {
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    public String getFeatureOfInterest() {
+        return featureOfInterest;
+    }
+
+    public void setFeatureOfInterest(String featureOfInterest) {
+        this.featureOfInterest = featureOfInterest;
     }
 }
