@@ -5,6 +5,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.model.Location;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceCreationResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -43,6 +44,8 @@ public class ResourceRequestConsumer extends DefaultConsumer {
                 .build();
 
         Resource resource = gson.fromJson(message, Resource.class);
+        Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
+        resource.setLocation(savedLocation);
         ResourceCreationResponse resourceCreationResponse = this.repositoryManager.saveResource(resource);
         response = gson.toJson(resourceCreationResponse);
 

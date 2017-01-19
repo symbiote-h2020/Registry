@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -64,15 +63,9 @@ public class RabbitManager {
     @Value("${rabbit.routingKey.resource.created}")
     private String resourceCreatedRoutingKey;
     private Connection connection;
+    Channel channel;
 
-    /**
-     * Initialization method.
-     */
-    @PostConstruct
-    private void init() throws InterruptedException {
-        //FIXME check if there is better exception handling in @postconstruct method
-
-        Channel channel = null;
+    public void initialize(){
         try {
             ConnectionFactory factory = new ConnectionFactory();
 
@@ -99,12 +92,15 @@ public class RabbitManager {
                     this.resourceExchangeInternal,
                     null);
 
+            receivePlatformMessages();
+            receiveResourceMessages();
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
             e.printStackTrace();
-        } finally {
-            closeChannel(channel);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -112,10 +108,17 @@ public class RabbitManager {
      * Cleanup method
      */
     @PreDestroy
-    private void cleanup() {
+    public void cleanup() {
         //FIXME check if there is better exception handling in @predestroy method
+        System.out.println("CLEANING");
         try {
             if (this.connection != null && this.connection.isOpen())
+                channel.queueUnbind("platformCreationRequestedQueue", this.platformExchangeName,
+                        this.platformCreationRequestedRoutingKey);
+                channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
+                        this.resourceCreationRequestedRoutingKey);
+                channel.queueDelete("platformCreationRequestedQueue");
+                channel.queueDelete("resourceCreationRequestedQueue");
                 this.connection.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -136,14 +139,7 @@ public class RabbitManager {
         sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
     }
 
-    public void receiveMessages() throws IOException, InterruptedException {
-        receivePlatformMessages();
-        receiveResourceMessages();
-    }
-
-    private void receivePlatformMessages()
-            throws InterruptedException, IOException {
-        Channel channel;
+    private void receivePlatformMessages() throws InterruptedException, IOException {
         String queueName = "platformCreationRequestedQueue";
         try {
             channel = this.connection.createChannel();
@@ -161,9 +157,7 @@ public class RabbitManager {
         }
     }
 
-    private void receiveResourceMessages()
-            throws InterruptedException, IOException {
-        Channel channel;
+    private void receiveResourceMessages() throws InterruptedException, IOException {
         String queueName = "resourceCreationRequestedQueue";
         try {
             channel = this.connection.createChannel();
@@ -182,11 +176,9 @@ public class RabbitManager {
     }
 
     private void sendMessage(String exchange, String routingKey, String message) {
-        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.basicPublish(exchange, routingKey, null, message.getBytes());
-
         } catch (IOException e) {
             e.printStackTrace();
         }

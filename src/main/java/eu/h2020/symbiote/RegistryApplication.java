@@ -32,7 +32,7 @@ public class RegistryApplication {
         private final RabbitManager manager;
 
         @Autowired
-        public CLR( RabbitManager manager ) {
+        public CLR(RabbitManager manager) {
             this.manager = manager;
         }
 
@@ -40,7 +40,7 @@ public class RegistryApplication {
         public void run(String... args) throws Exception {
 //
             //message retrieval - start rabbit exchange and consumers
-            this.manager.receiveMessages();
+//            this.manager.initialize();
         }
     }
 

@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -34,7 +35,7 @@ public class PlatformRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        String response = "";
+        String response;
         String message = new String(body, "UTF-8");
         System.out.println(" [x] Received '" + message + "'");
 
@@ -43,12 +44,17 @@ public class PlatformRequestConsumer extends DefaultConsumer {
                 .correlationId(properties.getCorrelationId())
                 .build();
 
-        Platform platform = gson.fromJson(message, Platform.class);
-        PlatformCreationResponse platformCreationResponse = this.repositoryManager.savePlatform(platform);
+        Platform platform;
+        PlatformCreationResponse platformCreationResponse = null;
+        try {
+            platform = gson.fromJson(message, Platform.class);
+            platformCreationResponse = this.repositoryManager.savePlatform(platform);
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+            platformCreationResponse.setStatus(400);
+        }
+
         response = gson.toJson(platformCreationResponse);
-
-        System.out.println(properties.getReplyTo());
-
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
         System.out.println("->Message sent back");
 

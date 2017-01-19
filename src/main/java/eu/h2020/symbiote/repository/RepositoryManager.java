@@ -1,10 +1,7 @@
 package eu.h2020.symbiote.repository;
 
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.model.Platform;
-import eu.h2020.symbiote.model.PlatformCreationResponse;
-import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceCreationResponse;
+import eu.h2020.symbiote.model.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -22,14 +19,17 @@ public class RepositoryManager {
     private RabbitManager rabbitManager;
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
+    private LocationRepository locationRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
                              RabbitManager rabbitManager,
-                             ResourceRepository resourceRepository) {
+                             ResourceRepository resourceRepository,
+                             LocationRepository locationRepository) {
         this.platformRepository = platformRepository;
         this.rabbitManager = rabbitManager;
         this.resourceRepository = resourceRepository;
+        this.locationRepository = locationRepository;
     }
 
     /**
@@ -40,6 +40,7 @@ public class RepositoryManager {
      */
     public PlatformCreationResponse savePlatform(Platform platform) {
         PlatformCreationResponse platformCreationResponse = new PlatformCreationResponse();
+
 
         //todo make sure that given platform has empty ID field
         log.debug("Adding Platform");
@@ -79,7 +80,7 @@ public class RepositoryManager {
             resourceCreationResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                //todo check if provided platform already exists
+                //todo check if provided resource already exists
                 Resource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
 
@@ -94,5 +95,21 @@ public class RepositoryManager {
             }
         }
         return resourceCreationResponse;
+    }
+
+    public Location saveLocation(Location location) {
+        Location savedLocation = null;
+        log.debug("Adding Location");
+        if (location == null) {
+            return null;
+        } else {
+            try {
+                savedLocation = locationRepository.save(location);
+                log.info("Location with id: " + savedLocation.getId() + " saved !");
+            } catch (Exception e){
+                log.error(e);
+            }
+        }
+        return savedLocation;
     }
 }

@@ -14,6 +14,7 @@ public class Resource {
     private String resourceURL;
     private Location location;
     private String featureOfInterest = null;
+    private String platformId;
 
     public Resource() {
     }
@@ -80,5 +81,13 @@ public class Resource {
 
     public void setFeatureOfInterest(String featureOfInterest) {
         this.featureOfInterest = featureOfInterest;
+    }
+
+    public String getPlatformId() {
+        return platformId;
+    }
+
+    public void setPlatformId(String platformId) {
+        this.platformId = platformId;
     }
 }
