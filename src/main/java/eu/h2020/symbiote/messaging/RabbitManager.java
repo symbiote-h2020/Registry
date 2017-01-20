@@ -28,7 +28,6 @@ public class RabbitManager {
     private static Log log = LogFactory.getLog(RabbitManager.class);
     @Autowired
     RepositoryManager repositoryManager;
-    Channel channel;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
@@ -74,6 +73,7 @@ public class RabbitManager {
     private Connection connection;
 
     public void init() {
+        Channel channel = null;
         try {
             ConnectionFactory factory = new ConnectionFactory();
 
@@ -106,6 +106,8 @@ public class RabbitManager {
             e.printStackTrace();
         } catch (TimeoutException e) {
             e.printStackTrace();
+        } finally {
+            closeChannel(channel);
         }
     }
 
@@ -117,21 +119,24 @@ public class RabbitManager {
         //FIXME check if there is better exception handling in @predestroy method
         System.out.println("RABBIT CLEANED");
         try {
-            if (this.connection != null && this.connection.isOpen())
+            Channel channel = null;
+            if (this.connection != null && this.connection.isOpen()) {
+                channel = connection.createChannel();
                 channel.queueUnbind("platformCreationRequestedQueue", this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-            channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
-                    this.resourceCreationRequestedRoutingKey);
-            channel.queueDelete("platformCreationRequestedQueue");
-            channel.queueDelete("resourceCreationRequestedQueue");
-            closeChannel(channel);
-            this.connection.close();
+                channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
+                        this.resourceCreationRequestedRoutingKey);
+                channel.queueDelete("platformCreationRequestedQueue");
+                channel.queueDelete("resourceCreationRequestedQueue");
+                closeChannel(channel);
+                this.connection.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void startConsumers(){
+    private void startConsumers() {
         try {
             startConsumerOfPlatformCreationMessages();
             startConsumerOfResourceCreationMessages();
@@ -174,6 +179,7 @@ public class RabbitManager {
 
     private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
         String queueName = "platformCreationRequestedQueue";
+        Channel channel = null;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -192,6 +198,7 @@ public class RabbitManager {
 
     private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
         String queueName = "platformRemovalRequestedQueue";
+        Channel channel = null;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -210,6 +217,7 @@ public class RabbitManager {
 
     private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
         String queueName = "resourceCreationRequestedQueue";
+        Channel channel = null;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -229,6 +237,7 @@ public class RabbitManager {
 
     private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
         String queueName = "resourceRemovalRequestedQueue";
+        Channel channel = null;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -246,11 +255,14 @@ public class RabbitManager {
     }
 
     private void sendMessage(String exchange, String routingKey, String message) {
+        Channel channel = null;
         try {
             channel = this.connection.createChannel();
             channel.basicPublish(exchange, routingKey, null, message.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            closeChannel(channel);
         }
     }
 
