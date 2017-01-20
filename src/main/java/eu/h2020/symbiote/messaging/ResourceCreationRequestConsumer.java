@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -15,7 +16,7 @@ import java.io.IOException;
 /**
  * Created by mateuszl on 17.01.2017.
  */
-public class ResourceRequestConsumer extends DefaultConsumer {
+public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
 
@@ -24,7 +25,7 @@ public class ResourceRequestConsumer extends DefaultConsumer {
      *
      * @param channel the channel to which this consumer is attached
      */
-    public ResourceRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
+    public ResourceCreationRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
     }
@@ -43,13 +44,20 @@ public class ResourceRequestConsumer extends DefaultConsumer {
                 .correlationId(properties.getCorrelationId())
                 .build();
 
-        Resource resource = gson.fromJson(message, Resource.class);
-        Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
-        resource.setLocation(savedLocation);
-        ResourceCreationResponse resourceCreationResponse = this.repositoryManager.saveResource(resource);
-        response = gson.toJson(resourceCreationResponse);
+        Resource resource;
+        ResourceCreationResponse resourceCreationResponse = null;
+        try {
+            resource = gson.fromJson(message, Resource.class);
+            Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
+            resource.setLocation(savedLocation);
+            resourceCreationResponse = this.repositoryManager.saveResource(resource);
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+            resourceCreationResponse = new ResourceCreationResponse();
+            resourceCreationResponse.setStatus(400);
+        }
 
-        System.out.println(properties.getReplyTo());
+        response = gson.toJson(resourceCreationResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
         System.out.println("-> Message sent back");

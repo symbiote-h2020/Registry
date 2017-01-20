@@ -28,6 +28,7 @@ public class RabbitManager {
     private static Log log = LogFactory.getLog(RabbitManager.class);
     @Autowired
     RepositoryManager repositoryManager;
+    Channel channel;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
@@ -48,6 +49,10 @@ public class RabbitManager {
     private String platformCreationRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.created}")
     private String platformCreatedRoutingKey;
+    @Value("${rabbit.routingKey.platform.removalRequested}")
+    private String platformRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.platform.removed}")
+    private String platformRemovedRoutingKey;
     @Value("${rabbit.exchange.resource.name}")
     private String resourceExchangeName;
     @Value("${rabbit.exchange.resource.type}")
@@ -62,10 +67,13 @@ public class RabbitManager {
     private String resourceCreationRequestedRoutingKey;
     @Value("${rabbit.routingKey.resource.created}")
     private String resourceCreatedRoutingKey;
+    @Value("${rabbit.routingKey.resource.removalRequested}")
+    private String resourceRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.resource.removed}")
+    private String resourceRemovedRoutingKey;
     private Connection connection;
-    Channel channel;
 
-    public void initialize(){
+    public void init() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
 
@@ -92,14 +100,11 @@ public class RabbitManager {
                     this.resourceExchangeInternal,
                     null);
 
-            receivePlatformMessages();
-            receiveResourceMessages();
+            startConsumers();
 
         } catch (IOException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -110,16 +115,30 @@ public class RabbitManager {
     @PreDestroy
     public void cleanup() {
         //FIXME check if there is better exception handling in @predestroy method
-        System.out.println("CLEANING");
+        System.out.println("RABBIT CLEANED");
         try {
             if (this.connection != null && this.connection.isOpen())
                 channel.queueUnbind("platformCreationRequestedQueue", this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
-                        this.resourceCreationRequestedRoutingKey);
-                channel.queueDelete("platformCreationRequestedQueue");
-                channel.queueDelete("resourceCreationRequestedQueue");
-                this.connection.close();
+            channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
+                    this.resourceCreationRequestedRoutingKey);
+            channel.queueDelete("platformCreationRequestedQueue");
+            channel.queueDelete("resourceCreationRequestedQueue");
+            closeChannel(channel);
+            this.connection.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startConsumers(){
+        try {
+            startConsumerOfPlatformCreationMessages();
+            startConsumerOfResourceCreationMessages();
+            startConsumerOfPlatformRemovalMessages();
+            startConsumerOfResourceRemovalMessages();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -128,18 +147,32 @@ public class RabbitManager {
     public void sendPlatformCreatedMessage(Platform platform) {
         Gson gson = new Gson();
         String message = gson.toJson(platform);
-
         sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
+        System.out.println("- platform created message sent");
+    }
+
+    public void sendPlatformRemovedMessage(Platform platform) {
+        Gson gson = new Gson();
+        String message = gson.toJson(platform);
+        sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message);
+        System.out.println("- platform removed message sent");
     }
 
     public void sendResourceCreatedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
-
         sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
+        System.out.println("- resource created message sent");
     }
 
-    private void receivePlatformMessages() throws InterruptedException, IOException {
+    public void sendResourceRemovedMessage(Resource resource) {
+        Gson gson = new Gson();
+        String message = gson.toJson(resource);
+        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
+        System.out.println("- resource removed message sent");
+    }
+
+    private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
         String queueName = "platformCreationRequestedQueue";
         try {
             channel = this.connection.createChannel();
@@ -148,16 +181,34 @@ public class RabbitManager {
 
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Platform messages....");
+            log.info("Receiver waiting for Platform Creation messages....");
 
-            Consumer consumer = new PlatformRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void receiveResourceMessages() throws InterruptedException, IOException {
+    private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
+        String queueName = "platformRemovalRequestedQueue";
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
+
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Platform Removal messages....");
+
+            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
         String queueName = "resourceCreationRequestedQueue";
         try {
             channel = this.connection.createChannel();
@@ -166,9 +217,28 @@ public class RabbitManager {
 
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Resource messages....");
+            log.info("Receiver waiting for Resource Creation messages....");
 
-            Consumer consumer = new ResourceRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, repositoryManager);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
+        String queueName = "resourceRemovalRequestedQueue";
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
+
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Removal messages....");
+
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, repositoryManager);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();

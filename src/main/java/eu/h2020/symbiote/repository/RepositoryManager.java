@@ -41,7 +41,6 @@ public class RepositoryManager {
     public PlatformCreationResponse savePlatform(Platform platform) {
         PlatformCreationResponse platformCreationResponse = new PlatformCreationResponse();
 
-
         //todo make sure that given platform has empty ID field
         log.debug("Adding Platform");
         if (platform == null) {
@@ -63,6 +62,13 @@ public class RepositoryManager {
             }
         }
         return platformCreationResponse;
+    }
+
+    public PlatformRemovalResponse removePlatform(Platform platform) {
+        PlatformRemovalResponse platformRemovalResponse = new PlatformRemovalResponse();
+
+        //todo implement
+        return platformRemovalResponse;
     }
 
     /**
@@ -95,6 +101,13 @@ public class RepositoryManager {
             }
         }
         return resourceCreationResponse;
+    }
+
+    public ResourceRemovalResponse removeResource(Resource resource) {
+        ResourceRemovalResponse resourceRemovalResponse = new ResourceRemovalResponse();
+
+        //todo implement
+        return resourceRemovalResponse;
     }
 
     public Location saveLocation(Location location) {
