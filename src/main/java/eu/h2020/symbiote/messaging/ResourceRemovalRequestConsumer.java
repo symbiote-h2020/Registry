@@ -35,7 +35,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         String response = "";
         String message = new String(body, "UTF-8");
-        System.out.println(" [x] Received '" + message + "'");
+        System.out.println(" [x] Received resource to remove: '" + message + "'");
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()

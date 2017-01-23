@@ -35,7 +35,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         String response;
         String message = new String(body, "UTF-8");
-        System.out.println(" [x] Received '" + message + "'");
+        System.out.println(" [x] Received platform to remove: '" + message + "'");
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()
@@ -55,7 +55,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
         response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        System.out.println("->Message sent back");
+        System.out.println("-> Message sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
