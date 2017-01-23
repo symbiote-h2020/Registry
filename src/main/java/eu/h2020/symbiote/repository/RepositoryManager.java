@@ -86,6 +86,32 @@ public class RepositoryManager {
         return platformResponse;
     }
 
+    public PlatformResponse updatePlatform(Platform platform){
+        PlatformResponse platformResponse = new PlatformResponse();
+
+        //todo check if platform with ID exists
+
+        if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                //todo do something with resources corresponding to removed platform
+                platformRepository.save(platform);
+                Platform foundPlatform = platformRepository.findOne(platform.getPlatformId());
+
+                platformResponse.setStatus(HttpStatus.SC_OK);
+                platformResponse.setPlatform(foundPlatform);
+
+                rabbitManager.sendPlatformRemovedMessage(foundPlatform);
+            } catch (Exception e) {
+                e.printStackTrace();
+                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        return platformResponse;
+    }
+
     /**
      * Saves resource in MongoDB
      *
@@ -125,8 +151,10 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                platformRepository.delete(resource.getId());
-
+                if (resource.getLocation()!=null){
+                    removeLocation(resource.getLocation());
+                }
+                resourceRepository.delete(resource.getId());
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(resource);
 
@@ -136,6 +164,22 @@ public class RepositoryManager {
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
+        return resourceResponse;
+    }
+
+    private void removeLocation(Location location){
+        try {
+            locationRepository.delete(location.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ResourceResponse updateResource(Resource resource){
+        ResourceResponse resourceResponse = new ResourceResponse();
+        //todo something with Location objects
+
+        //todo implement
         return resourceResponse;
     }
 

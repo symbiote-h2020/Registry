@@ -52,6 +52,10 @@ public class RabbitManager {
     private String platformRemovalRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.removed}")
     private String platformRemovedRoutingKey;
+    @Value("${rabbit.routingKey.platform.modificationRequested}")
+    private String platformModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.platform.modified}")
+    private String platformModifiedRoutingKey;
     @Value("${rabbit.exchange.resource.name}")
     private String resourceExchangeName;
     @Value("${rabbit.exchange.resource.type}")
@@ -70,6 +74,10 @@ public class RabbitManager {
     private String resourceRemovalRequestedRoutingKey;
     @Value("${rabbit.routingKey.resource.removed}")
     private String resourceRemovedRoutingKey;
+    @Value("${rabbit.routingKey.resource.modificationRequested}")
+    private String resourceModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.resource.modified}")
+    private String resourceModifiedRoutingKey;
     private Connection connection;
 
     public void init() {
@@ -142,6 +150,8 @@ public class RabbitManager {
             startConsumerOfResourceCreationMessages();
             startConsumerOfPlatformRemovalMessages();
             startConsumerOfResourceRemovalMessages();
+            startConsumerOfPlatformModificationMessages();
+            startConsumerOfResourceModificationMessages();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -163,6 +173,13 @@ public class RabbitManager {
         System.out.println("- platform removed message sent");
     }
 
+    public void sendPlatformModifiedMessage(Platform platform) {
+        Gson gson = new Gson();
+        String message = gson.toJson(platform);
+        sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message);
+        System.out.println("- platform modified message sent");
+    }
+
     public void sendResourceCreatedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
@@ -175,6 +192,13 @@ public class RabbitManager {
         String message = gson.toJson(resource);
         sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
         System.out.println("- resource removed message sent");
+    }
+
+    public void sendResourceModifiedMessage(Resource resource) {
+        Gson gson = new Gson();
+        String message = gson.toJson(resource);
+        sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
+        System.out.println("- resource modified message sent");
     }
 
     private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
@@ -215,6 +239,26 @@ public class RabbitManager {
         }
     }
 
+    private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
+        //todo implement
+        String queueName = "platformModificationRequestedQueue";
+        Channel channel = null;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
+
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Platform Modification messages....");
+
+            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
         String queueName = "resourceCreationRequestedQueue";
         Channel channel = null;
@@ -234,7 +278,6 @@ public class RabbitManager {
         }
     }
 
-
     private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
         String queueName = "resourceRemovalRequestedQueue";
         Channel channel = null;
@@ -248,6 +291,25 @@ public class RabbitManager {
             log.info("Receiver waiting for Resource Removal messages....");
 
             Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startConsumerOfResourceModificationMessages() throws InterruptedException, IOException {
+        String queueName = "resourceModificationRequestedQueue";
+        Channel channel = null;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
+
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Modification messages....");
+
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, repositoryManager);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
