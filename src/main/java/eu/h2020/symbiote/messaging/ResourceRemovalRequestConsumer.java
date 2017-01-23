@@ -7,7 +7,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceRemovalResponse;
+import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 
 import java.io.IOException;
@@ -43,17 +43,17 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 .build();
 
         Resource resource;
-        ResourceRemovalResponse resourceRemovalResponse = null;
+        ResourceResponse resourceResponse = null;
         try {
             resource = gson.fromJson(message, Resource.class);
-            resourceRemovalResponse = this.repositoryManager.removeResource(resource);
+            resourceResponse = this.repositoryManager.removeResource(resource);
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
-            resourceRemovalResponse = new ResourceRemovalResponse();
-            resourceRemovalResponse.setStatus(400);
+            resourceResponse = new ResourceResponse();
+            resourceResponse.setStatus(400);
         }
 
-        response = gson.toJson(resourceRemovalResponse);
+        response = gson.toJson(resourceResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
         System.out.println("-> Message sent back");

@@ -38,37 +38,52 @@ public class RepositoryManager {
      * @param platform Platform with given properties in JSON format
      * @return Platform with added 'Id' (generated in MongoDB), in JSON format
      */
-    public PlatformCreationResponse savePlatform(Platform platform) {
-        PlatformCreationResponse platformCreationResponse = new PlatformCreationResponse();
+    public PlatformResponse savePlatform(Platform platform) {
+        PlatformResponse platformResponse = new PlatformResponse();
 
         //todo make sure that given platform has empty ID field
         log.debug("Adding Platform");
         if (platform == null) {
-            platformCreationResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 //todo check if provided platform already exists
                 Platform savedPlatform = platformRepository.save(platform);
                 log.info("Platform with id: " + savedPlatform.getPlatformId() + " saved !");
 
-                platformCreationResponse.setStatus(HttpStatus.SC_OK);
-                platformCreationResponse.setPlatform(savedPlatform);
+                platformResponse.setStatus(HttpStatus.SC_OK);
+                platformResponse.setPlatform(savedPlatform);
 
                 rabbitManager.sendPlatformCreatedMessage(savedPlatform);
 
             } catch (Exception e) {
                 log.error("Error occured during Platform saving to db", e);
-                platformCreationResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-        return platformCreationResponse;
+        return platformResponse;
     }
 
-    public PlatformRemovalResponse removePlatform(Platform platform) {
-        PlatformRemovalResponse platformRemovalResponse = new PlatformRemovalResponse();
+    public PlatformResponse removePlatform(Platform platform) {
+        PlatformResponse platformResponse = new PlatformResponse();
 
-        //todo implement
-        return platformRemovalResponse;
+        if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                //todo do something with resources corresponding to removed platform
+                platformRepository.delete(platform.getPlatformId());
+
+                platformResponse.setStatus(HttpStatus.SC_OK);
+                platformResponse.setPlatform(platform);
+
+                rabbitManager.sendPlatformRemovedMessage(platform);
+            } catch (Exception e) {
+                e.printStackTrace();
+                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return platformResponse;
     }
 
     /**
@@ -77,37 +92,51 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return Resource with added 'Id' (generated in MongoDB), in JSON format
      */
-    public ResourceCreationResponse saveResource(Resource resource) {
-        ResourceCreationResponse resourceCreationResponse = new ResourceCreationResponse();
+    public ResourceResponse saveResource(Resource resource) {
+        ResourceResponse resourceResponse = new ResourceResponse();
 
         //todo make sure that given resource has empty ID field
         log.debug("Adding Platform");
         if (resource == null) {
-            resourceCreationResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 //todo check if provided resource already exists
                 Resource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
 
-                resourceCreationResponse.setStatus(HttpStatus.SC_OK);
-                resourceCreationResponse.setResource(savedResource);
+                resourceResponse.setStatus(HttpStatus.SC_OK);
+                resourceResponse.setResource(savedResource);
 
                 rabbitManager.sendResourceCreatedMessage(savedResource);
 
             } catch (Exception e) {
                 log.error("Error occured during Platform saving to db", e);
-                resourceCreationResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-        return resourceCreationResponse;
+        return resourceResponse;
     }
 
-    public ResourceRemovalResponse removeResource(Resource resource) {
-        ResourceRemovalResponse resourceRemovalResponse = new ResourceRemovalResponse();
+    public ResourceResponse removeResource(Resource resource) {
+        ResourceResponse resourceResponse = new ResourceResponse();
 
-        //todo implement
-        return resourceRemovalResponse;
+        if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
+            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                platformRepository.delete(resource.getId());
+
+                resourceResponse.setStatus(HttpStatus.SC_OK);
+                resourceResponse.setResource(resource);
+
+                rabbitManager.sendResourceRemovedMessage(resource);
+            } catch (Exception e) {
+                e.printStackTrace();
+                resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return resourceResponse;
     }
 
     public Location saveLocation(Location location) {
@@ -119,7 +148,7 @@ public class RepositoryManager {
             try {
                 savedLocation = locationRepository.save(location);
                 log.info("Location with id: " + savedLocation.getId() + " saved !");
-            } catch (Exception e){
+            } catch (Exception e) {
                 log.error(e);
             }
         }

@@ -1,13 +1,18 @@
 package eu.h2020.symbiote.model;
 
 /**
- * Created by mateuszl on 20.01.2017.
+ * Class used as a response to RPC call requesting platform creation
  */
-public class PlatformRemovalResponse {
+public class PlatformResponse {
     private int status;
     private Platform platform;
 
-    public PlatformRemovalResponse() {
+    public PlatformResponse() {
+    }
+
+    public PlatformResponse(int status, Platform platform) {
+        this.status = status;
+        this.platform = platform;
     }
 
     public int getStatus() {

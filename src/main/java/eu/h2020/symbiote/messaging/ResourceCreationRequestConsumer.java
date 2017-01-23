@@ -8,7 +8,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Location;
 import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceCreationResponse;
+import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 
 import java.io.IOException;
@@ -45,19 +45,19 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 .build();
 
         Resource resource;
-        ResourceCreationResponse resourceCreationResponse = null;
+        ResourceResponse resourceResponse = null;
         try {
             resource = gson.fromJson(message, Resource.class);
             Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
             resource.setLocation(savedLocation);
-            resourceCreationResponse = this.repositoryManager.saveResource(resource);
+            resourceResponse = this.repositoryManager.saveResource(resource);
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
-            resourceCreationResponse = new ResourceCreationResponse();
-            resourceCreationResponse.setStatus(400);
+            resourceResponse = new ResourceResponse();
+            resourceResponse.setStatus(400);
         }
 
-        response = gson.toJson(resourceCreationResponse);
+        response = gson.toJson(resourceResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
         System.out.println("-> Message sent back");
