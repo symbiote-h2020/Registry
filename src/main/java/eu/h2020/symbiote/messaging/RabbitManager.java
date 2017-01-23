@@ -247,7 +247,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Removal messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
