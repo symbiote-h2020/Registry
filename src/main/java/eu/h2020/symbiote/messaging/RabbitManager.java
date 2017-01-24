@@ -203,7 +203,7 @@ public class RabbitManager {
 
     private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
         String queueName = "platformCreationRequestedQueue";
-        Channel channel = null;
+        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -222,7 +222,7 @@ public class RabbitManager {
 
     private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
         String queueName = "platformRemovalRequestedQueue";
-        Channel channel = null;
+        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -242,7 +242,7 @@ public class RabbitManager {
     private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
         //todo implement
         String queueName = "platformModificationRequestedQueue";
-        Channel channel = null;
+        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -261,7 +261,7 @@ public class RabbitManager {
 
     private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
         String queueName = "resourceCreationRequestedQueue";
-        Channel channel = null;
+        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -280,7 +280,7 @@ public class RabbitManager {
 
     private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
         String queueName = "resourceRemovalRequestedQueue";
-        Channel channel = null;
+        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
@@ -299,7 +299,7 @@ public class RabbitManager {
 
     private void startConsumerOfResourceModificationMessages() throws InterruptedException, IOException {
         String queueName = "resourceModificationRequestedQueue";
-        Channel channel = null;
+        Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);

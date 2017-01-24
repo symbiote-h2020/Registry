@@ -41,9 +41,8 @@ public class RepositoryManager {
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
-        //todo make sure that given platform has empty ID field
         log.debug("Adding Platform");
-        if (platform == null) {
+        if (platform == null || platform.getPlatformId() != null) {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -86,23 +85,38 @@ public class RepositoryManager {
         return platformResponse;
     }
 
-    public PlatformResponse updatePlatform(Platform platform){
+    public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
+        Platform foundPlatform = null;
 
-        //todo check if platform with ID exists
+        if (platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            foundPlatform = platformRepository.findOne(platform.getPlatformId());
+        }
 
-        if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+        if (foundPlatform == null) {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 //todo do something with resources corresponding to removed platform
+
+                //fulfilment of empty Platform fields before saving
+                if (platform.getDescription() == null && foundPlatform.getDescription() != null)
+                    platform.setDescription(foundPlatform.getDescription());
+                if (platform.getInformationModelId() == null && foundPlatform.getInformationModelId() != null)
+                    platform.setInformationModelId(foundPlatform.getInformationModelId());
+                if (platform.getName() == null && foundPlatform.getName() != null)
+                    platform.setName(foundPlatform.getName());
+                if (platform.getUrl() == null && foundPlatform.getUrl() != null)
+                    platform.setUrl(foundPlatform.getUrl());
+
                 platformRepository.save(platform);
-                Platform foundPlatform = platformRepository.findOne(platform.getPlatformId());
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
-                platformResponse.setPlatform(foundPlatform);
+                platformResponse.setPlatform(platform);
 
-                rabbitManager.sendPlatformRemovedMessage(foundPlatform);
+                rabbitManager.sendPlatformModifiedMessage(platform);
             } catch (Exception e) {
                 e.printStackTrace();
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -121,9 +135,8 @@ public class RepositoryManager {
     public ResourceResponse saveResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
-        //todo make sure that given resource has empty ID field
         log.debug("Adding Platform");
-        if (resource == null) {
+        if (resource == null || resource.getId() != null) {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -151,7 +164,7 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                if (resource.getLocation()!=null){
+                if (resource.getLocation() != null) {
                     removeLocation(resource.getLocation());
                 }
                 resourceRepository.delete(resource.getId());
@@ -167,7 +180,58 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
-    private void removeLocation(Location location){
+    public ResourceResponse modifyResource(Resource resource) {
+        ResourceResponse resourceResponse = new ResourceResponse();
+
+        Resource foundResource = null;
+
+        if (resource.getPlatformId().isEmpty() || resource.getPlatformId() == null) {
+            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+
+        } else {
+            foundResource = resourceRepository.findOne(resource.getPlatformId());
+        }
+
+        if (foundResource == null) {
+            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                //fulfilment of empty Resource fields before saving
+                if (resource.getDescription() == null && foundResource.getDescription() != null)
+                    resource.setDescription(foundResource.getDescription());
+                if (resource.getFeatureOfInterest() == null && foundResource.getFeatureOfInterest() != null)
+                    resource.setFeatureOfInterest(foundResource.getFeatureOfInterest());
+                if (resource.getName() == null && foundResource.getName() != null)
+                    resource.setName(foundResource.getName());
+                if (resource.getOwner() == null && foundResource.getOwner() != null)
+                    resource.setOwner(foundResource.getOwner());
+                if (resource.getResourceURL() == null && foundResource.getResourceURL() != null)
+                    resource.setResourceURL(foundResource.getResourceURL());
+                if (resource.getId() == null && foundResource.getId() != null)
+                    resource.setId(foundResource.getId());
+                if (resource.getObservedProperties() == null && foundResource.getObservedProperties() != null)
+                    resource.setObservedProperties(foundResource.getObservedProperties());
+                if (resource.getLocation() == null && foundResource.getLocation() != null)
+                    resource.setLocation(foundResource.getLocation());
+
+                resourceRepository.save(resource);
+
+                resourceResponse.setStatus(HttpStatus.SC_OK);
+                resourceResponse.setResource(resource);
+
+                rabbitManager.sendResourceModifiedMessage(resource);
+            } catch (Exception e) {
+                e.printStackTrace();
+                resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+
+
+        return resourceResponse;
+    }
+
+
+    private void removeLocation(Location location) {
         try {
             locationRepository.delete(location.getId());
         } catch (Exception e) {
@@ -175,7 +239,7 @@ public class RepositoryManager {
         }
     }
 
-    public ResourceResponse updateResource(Resource resource){
+    public ResourceResponse updateResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
         //todo something with Location objects
 
@@ -198,4 +262,5 @@ public class RepositoryManager {
         }
         return savedLocation;
     }
+
 }
