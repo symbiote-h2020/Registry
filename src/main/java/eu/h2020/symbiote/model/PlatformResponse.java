@@ -3,14 +3,14 @@ package eu.h2020.symbiote.model;
 /**
  * Class used as a response to RPC call requesting platform creation
  */
-public class PlatformCreationResponse {
+public class PlatformResponse {
     private int status;
     private Platform platform;
 
-    public PlatformCreationResponse() {
+    public PlatformResponse() {
     }
 
-    public PlatformCreationResponse(int status, Platform platform) {
+    public PlatformResponse(int status, Platform platform) {
         this.status = status;
         this.platform = platform;
     }

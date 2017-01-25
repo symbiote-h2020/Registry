@@ -7,25 +7,23 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
-import eu.h2020.symbiote.model.PlatformCreationResponse;
+import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 12.01.2017.
+ * Created by mateuszl on 20.01.2017.
  */
-
-public class PlatformRequestConsumer extends DefaultConsumer {
+public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
-
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      *
      * @param channel the channel to which this consumer is attached
      */
-    public PlatformRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
+    public PlatformRemovalRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
     }
@@ -37,7 +35,7 @@ public class PlatformRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         String response;
         String message = new String(body, "UTF-8");
-        System.out.println(" [x] Received '" + message + "'");
+        System.out.println(" [x] Received platform to remove: '" + message + "'");
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()
@@ -45,18 +43,19 @@ public class PlatformRequestConsumer extends DefaultConsumer {
                 .build();
 
         Platform platform;
-        PlatformCreationResponse platformCreationResponse = null;
+        PlatformResponse platformResponse = null;
         try {
             platform = gson.fromJson(message, Platform.class);
-            platformCreationResponse = this.repositoryManager.savePlatform(platform);
+            platformResponse = this.repositoryManager.removePlatform(platform);
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
-            platformCreationResponse.setStatus(400);
+            platformResponse = new PlatformResponse();
+            platformResponse.setStatus(400);
         }
 
-        response = gson.toJson(platformCreationResponse);
+        response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        System.out.println("->Message sent back");
+        System.out.println("-> Message sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

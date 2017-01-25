@@ -40,7 +40,7 @@ public class RegistryApplication {
         public void run(String... args) throws Exception {
 //
             //message retrieval - start rabbit exchange and consumers
-//            this.manager.initialize();
+            this.manager.init();
         }
     }
 

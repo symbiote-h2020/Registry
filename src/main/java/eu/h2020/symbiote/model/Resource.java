@@ -1,11 +1,14 @@
 package eu.h2020.symbiote.model;
 
+import org.springframework.data.annotation.Id;
+
 import java.util.List;
 
 /**
  * Created by jawora on 21.12.16.
  */
 public class Resource {
+    @Id
     private String id;
     private String name;
     private String owner;
