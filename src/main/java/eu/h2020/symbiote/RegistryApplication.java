@@ -20,32 +20,32 @@ import org.springframework.stereotype.Component;
 @SpringBootApplication
 public class RegistryApplication {
 
-	private static Log log = LogFactory.getLog(RegistryApplication.class);
+    private static Log log = LogFactory.getLog(RegistryApplication.class);
 
-	public static void main(String[] args) {
-		SpringApplication.run(RegistryApplication.class, args);
+    public static void main(String[] args) {
+        SpringApplication.run(RegistryApplication.class, args);
+    }
+
+    @Bean
+    public AlwaysSampler defaultSampler() {
+        return new AlwaysSampler();
     }
 
     @Component
     public static class CLR implements CommandLineRunner {
 
-        private final RabbitManager manager;
+        private final RabbitManager rabbitManager;
 
         @Autowired
-        public CLR(RabbitManager manager) {
-            this.manager = manager;
+        public CLR(RabbitManager rabbitManager) {
+            this.rabbitManager = rabbitManager;
         }
 
         @Override
         public void run(String... args) throws Exception {
 //
             //message retrieval - start rabbit exchange and consumers
-            this.manager.init();
+            this.rabbitManager.init();
         }
-    }
-
-    @Bean
-    public AlwaysSampler defaultSampler() {
-        return new AlwaysSampler();
     }
 }

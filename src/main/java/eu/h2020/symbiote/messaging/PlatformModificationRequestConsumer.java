@@ -18,14 +18,18 @@ import java.io.IOException;
 public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
+    private RabbitManager rabbitManager;
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      *
      * @param channel the channel to which this consumer is attached
      */
-    public PlatformModificationRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
+    public PlatformModificationRequestConsumer(Channel channel,
+                                               RepositoryManager repositoryManager,
+                                               RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
+        this.rabbitManager = rabbitManager;
     }
 
     @Override
@@ -48,6 +52,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         try {
             platform = gson.fromJson(message, Platform.class);
             platformResponse = this.repositoryManager.modifyPlatform(platform);
+            rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             platformResponse = new PlatformResponse();

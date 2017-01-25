@@ -19,15 +19,19 @@ import java.io.IOException;
 public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
+    private RabbitManager rabbitManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      *
      * @param channel the channel to which this consumer is attached
      */
-    public ResourceModificationRequestConsumer(Channel channel, RepositoryManager repositoryManager) {
+    public ResourceModificationRequestConsumer(Channel channel,
+                                               RepositoryManager repositoryManager,
+                                               RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
+        this.rabbitManager = rabbitManager;
     }
 
     @Override
@@ -55,6 +59,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 resource.setLocation(savedLocation);
             }
             resourceResponse = this.repositoryManager.modifyResource(resource);
+            rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             resourceResponse = new ResourceResponse();

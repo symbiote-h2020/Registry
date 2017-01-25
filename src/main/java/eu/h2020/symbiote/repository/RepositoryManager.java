@@ -16,21 +16,19 @@ public class RepositoryManager {
 
     public static Log log = LogFactory.getLog(RepositoryManager.class);
 
-    private RabbitManager rabbitManager;
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
     private LocationRepository locationRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
-                             RabbitManager rabbitManager,
                              ResourceRepository resourceRepository,
                              LocationRepository locationRepository) {
         this.platformRepository = platformRepository;
-        this.rabbitManager = rabbitManager;
         this.resourceRepository = resourceRepository;
         this.locationRepository = locationRepository;
     }
+
 
     /**
      * Saves platform in MongoDB
@@ -53,8 +51,6 @@ public class RepositoryManager {
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(savedPlatform);
 
-                rabbitManager.sendPlatformCreatedMessage(savedPlatform);
-
             } catch (Exception e) {
                 log.error("Error occured during Platform saving to db", e);
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -76,7 +72,6 @@ public class RepositoryManager {
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
 
-                rabbitManager.sendPlatformRemovedMessage(platform);
             } catch (Exception e) {
                 e.printStackTrace();
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -116,7 +111,6 @@ public class RepositoryManager {
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
 
-                rabbitManager.sendPlatformModifiedMessage(platform);
             } catch (Exception e) {
                 e.printStackTrace();
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -147,7 +141,6 @@ public class RepositoryManager {
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(savedResource);
 
-                rabbitManager.sendResourceCreatedMessage(savedResource);
 
             } catch (Exception e) {
                 log.error("Error occured during Platform saving to db", e);
@@ -171,7 +164,6 @@ public class RepositoryManager {
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(resource);
 
-                rabbitManager.sendResourceRemovedMessage(resource);
             } catch (Exception e) {
                 e.printStackTrace();
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -219,7 +211,6 @@ public class RepositoryManager {
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(resource);
 
-                rabbitManager.sendResourceModifiedMessage(resource);
             } catch (Exception e) {
                 e.printStackTrace();
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);

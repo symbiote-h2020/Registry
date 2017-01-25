@@ -213,7 +213,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Creation messages....");
 
-            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -232,7 +232,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Removal messages....");
 
-            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -252,7 +252,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Modification messages....");
 
-            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -271,7 +271,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Creation messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -290,7 +290,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Removal messages....");
 
-            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -309,7 +309,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Modification messages....");
 
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, repositoryManager);
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
