@@ -55,7 +55,9 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
             resource.setLocation(savedLocation);
             resourceResponse = this.repositoryManager.saveResource(resource);
-            rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+            if (resourceResponse.getStatus() == 200) {
+                rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+            }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             resourceResponse = new ResourceResponse();

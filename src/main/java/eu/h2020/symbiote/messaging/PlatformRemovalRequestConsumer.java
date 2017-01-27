@@ -19,6 +19,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
+
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      *
@@ -51,7 +52,9 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         try {
             platform = gson.fromJson(message, Platform.class);
             platformResponse = this.repositoryManager.removePlatform(platform);
-            rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
+            if (platformResponse.getStatus() == 200) {
+                rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
+            }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             platformResponse = new PlatformResponse();

@@ -80,18 +80,21 @@ public class RabbitManager {
     private String resourceModifiedRoutingKey;
     private Connection connection;
 
+    private void getConnection() throws IOException, TimeoutException {
+        ConnectionFactory factory = new ConnectionFactory();
+
+//            factory.setHost("localhost"); //todo value from properties
+        factory.setHost(this.rabbitHost);
+        factory.setUsername(this.rabbitUsername);
+        factory.setPassword(this.rabbitPassword);
+
+        this.connection = factory.newConnection();
+    }
+
     public void init() {
         Channel channel = null;
         try {
-            ConnectionFactory factory = new ConnectionFactory();
-
-//            factory.setHost("localhost"); //todo value from properties
-            factory.setHost(this.rabbitHost);
-            factory.setUsername(this.rabbitUsername);
-            factory.setPassword(this.rabbitPassword);
-
-            this.connection = factory.newConnection();
-
+            getConnection();
             channel = this.connection.createChannel();
 
             channel.exchangeDeclare(this.platformExchangeName,
@@ -190,7 +193,7 @@ public class RabbitManager {
     public void sendResourceRemovedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
-        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
+        sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
         System.out.println("- resource removed message sent");
     }
 

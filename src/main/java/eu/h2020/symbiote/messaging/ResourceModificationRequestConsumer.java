@@ -59,7 +59,9 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 resource.setLocation(savedLocation);
             }
             resourceResponse = this.repositoryManager.modifyResource(resource);
-            rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());
+            if (resourceResponse.getStatus() == 200) {
+                rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());
+            }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             resourceResponse = new ResourceResponse();

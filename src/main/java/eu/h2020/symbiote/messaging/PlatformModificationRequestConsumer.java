@@ -52,7 +52,9 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         try {
             platform = gson.fromJson(message, Platform.class);
             platformResponse = this.repositoryManager.modifyPlatform(platform);
-            rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
+            if (platformResponse.getStatus() == 200) {
+                rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
+            }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             platformResponse = new PlatformResponse();

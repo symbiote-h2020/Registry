@@ -53,9 +53,9 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         try {
             platform = gson.fromJson(message, Platform.class);
             platformResponse = this.repositoryManager.savePlatform(platform);
-
-            rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
-
+            if (platformResponse.getStatus() == 200) {
+                rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+            }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             platformResponse = new PlatformResponse();

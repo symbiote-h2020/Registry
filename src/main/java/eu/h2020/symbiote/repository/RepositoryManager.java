@@ -1,6 +1,5 @@
 package eu.h2020.symbiote.repository;
 
-import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -68,6 +67,7 @@ public class RepositoryManager {
             try {
                 //todo do something with resources corresponding to removed platform
                 platformRepository.delete(platform.getPlatformId());
+                log.info("Platform with id: " + platform.getPlatformId() + " removed !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
@@ -107,6 +107,7 @@ public class RepositoryManager {
                     platform.setUrl(foundPlatform.getUrl());
 
                 platformRepository.save(platform);
+                log.info("Platform with id: " + platform.getPlatformId() + " modified !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
@@ -157,12 +158,20 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                if (resource.getLocation() != null) {
-                    removeLocation(resource.getLocation());
+                Resource foundResource = resourceRepository.findOne(resource.getId());
+                if (foundResource != null) {
+                    if (foundResource.getLocation() != null) {
+                        Location loc = foundResource.getLocation();
+                        removeLocation(loc);
+                        log.info("Location with id: " + loc.getId() + " removed !");
+                    }
+                    resourceRepository.delete(resource.getId());
+                    resourceResponse.setStatus(HttpStatus.SC_OK);
+                    resourceResponse.setResource(resource);
+                    log.info("Resource with id: " + resource.getId() + " removed !");
+                } else {
+                    resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 }
-                resourceRepository.delete(resource.getId());
-                resourceResponse.setStatus(HttpStatus.SC_OK);
-                resourceResponse.setResource(resource);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -207,6 +216,7 @@ public class RepositoryManager {
                     resource.setLocation(foundResource.getLocation());
 
                 resourceRepository.save(resource);
+                log.info("Resource with id: " + resource.getId() + " modified !");
 
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(resource);

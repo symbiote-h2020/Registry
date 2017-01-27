@@ -51,7 +51,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         try {
             resource = gson.fromJson(message, Resource.class);
             resourceResponse = this.repositoryManager.removeResource(resource);
-            rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
+            if (resourceResponse.getStatus()==200) {
+                rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
+            }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
             resourceResponse = new ResourceResponse();
