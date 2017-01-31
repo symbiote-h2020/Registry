@@ -15,6 +15,7 @@ import java.io.IOException;
 /**
  * Created by mateuszl on 20.01.2017.
  */
+
 public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
     private RepositoryManager repositoryManager;
@@ -22,8 +23,11 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
+     * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
      * @param channel the channel to which this consumer is attached
+     * @param rabbitManager rabbit manager bean passed for access to messages manager
+     * @param repositoryManager repository manager bean passed for persistence actions
      */
     public PlatformRemovalRequestConsumer(Channel channel,
                                           RepositoryManager repositoryManager,
@@ -33,6 +37,15 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         this.rabbitManager = rabbitManager;
     }
 
+    /**
+     * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
+     * @param consumerTag the <i>consumer tag</i> associated with the consumer
+     * @param envelope packaging data for the message
+     * @param properties content header data for the message
+     * @param body the message body (opaque, client-specific byte array)
+     * @throws IOException if the consumer encounters an I/O error while processing the message
+     * @see Envelope
+     */
     @Override
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
