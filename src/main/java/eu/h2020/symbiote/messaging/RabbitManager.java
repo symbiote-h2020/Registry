@@ -1,10 +1,7 @@
 package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.*;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -322,8 +319,14 @@ public class RabbitManager {
     private void sendMessage(String exchange, String routingKey, String message) {
         Channel channel = null;
         try {
+
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
+                    .builder()
+                    .contentType("application/json")
+                    .build();
+
             channel = this.connection.createChannel();
-            channel.basicPublish(exchange, routingKey, null, message.getBytes());
+            channel.basicPublish(exchange, routingKey, props, message.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
