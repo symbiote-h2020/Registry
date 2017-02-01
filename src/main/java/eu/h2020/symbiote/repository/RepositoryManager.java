@@ -13,8 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RepositoryManager {
 
-    public static Log log = LogFactory.getLog(RepositoryManager.class);
-
+    private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
     private LocationRepository locationRepository;
@@ -117,7 +116,6 @@ public class RepositoryManager {
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-
         return platformResponse;
     }
 
@@ -226,8 +224,6 @@ public class RepositoryManager {
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-
-
         return resourceResponse;
     }
 
@@ -238,14 +234,6 @@ public class RepositoryManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public ResourceResponse updateResource(Resource resource) {
-        ResourceResponse resourceResponse = new ResourceResponse();
-        //todo something with Location objects
-
-        //todo implement
-        return resourceResponse;
     }
 
     public Location saveLocation(Location location) {

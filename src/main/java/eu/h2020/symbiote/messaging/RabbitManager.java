@@ -77,57 +77,73 @@ public class RabbitManager {
     private String resourceModifiedRoutingKey;
     private Connection connection;
 
+    /**
+     * Initiates connection with Rabbit server using parameters taken from ConfigProperties
+     *
+     * @throws IOException
+     * @throws TimeoutException
+     */
     private void getConnection() throws IOException, TimeoutException {
         ConnectionFactory factory = new ConnectionFactory();
-
-//            factory.setHost("localhost"); //todo value from properties
         factory.setHost(this.rabbitHost);
         factory.setUsername(this.rabbitUsername);
         factory.setPassword(this.rabbitPassword);
-
         this.connection = factory.newConnection();
     }
 
+    /**
+     * Method creates channel and declares Rabbit exchanges for Platform and Resources.
+     * It requires active connection to Rabbit server.
+     * It triggers start of all consumers used in Registry communication.
+     */
     public void init() {
         Channel channel = null;
+
         try {
             getConnection();
-            channel = this.connection.createChannel();
-
-            channel.exchangeDeclare(this.platformExchangeName,
-                    this.platformExchangeType,
-                    this.plaftormExchangeDurable,
-                    this.platformExchangeAutodelete,
-                    this.platformExchangeInternal,
-                    null);
-
-            channel.exchangeDeclare(this.resourceExchangeName,
-                    this.resourceExchangeType,
-                    this.resourceExchangeDurable,
-                    this.resourceExchangeAutodelete,
-                    this.resourceExchangeInternal,
-                    null);
-
-            startConsumers();
-
         } catch (IOException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
             e.printStackTrace();
-        } finally {
-            closeChannel(channel);
+        }
+
+        if (connection != null) {
+            try {
+                channel = this.connection.createChannel();
+
+                channel.exchangeDeclare(this.platformExchangeName,
+                        this.platformExchangeType,
+                        this.plaftormExchangeDurable,
+                        this.platformExchangeAutodelete,
+                        this.platformExchangeInternal,
+                        null);
+
+                channel.exchangeDeclare(this.resourceExchangeName,
+                        this.resourceExchangeType,
+                        this.resourceExchangeDurable,
+                        this.resourceExchangeAutodelete,
+                        this.resourceExchangeInternal,
+                        null);
+
+                startConsumers();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                closeChannel(channel);
+            }
         }
     }
 
     /**
-     * Cleanup method
+     * Cleanup method for rabbit
      */
     @PreDestroy
     public void cleanup() {
         //FIXME check if there is better exception handling in @predestroy method
-        System.out.println("RABBIT CLEANED");
+        log.info("Rabbit cleaned!");
         try {
-            Channel channel = null;
+            Channel channel;
             if (this.connection != null && this.connection.isOpen()) {
                 channel = connection.createChannel();
                 channel.queueUnbind("platformCreationRequestedQueue", this.platformExchangeName,

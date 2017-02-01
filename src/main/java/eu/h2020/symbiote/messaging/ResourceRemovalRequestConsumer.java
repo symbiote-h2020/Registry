@@ -9,6 +9,8 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 
@@ -18,6 +20,7 @@ import java.io.IOException;
 
 public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
+    private static Log log = LogFactory.getLog(ResourceRemovalRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
