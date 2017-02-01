@@ -179,42 +179,42 @@ public class RabbitManager {
         Gson gson = new Gson();
         String message = gson.toJson(platform);
         sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
-        System.out.println("- platform created message sent");
+        log.info("- platform created message sent");
     }
 
     public void sendPlatformRemovedMessage(Platform platform) {
         Gson gson = new Gson();
         String message = gson.toJson(platform);
         sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message);
-        System.out.println("- platform removed message sent");
+        log.info("- platform removed message sent");
     }
 
     public void sendPlatformModifiedMessage(Platform platform) {
         Gson gson = new Gson();
         String message = gson.toJson(platform);
         sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message);
-        System.out.println("- platform modified message sent");
+        log.info("- platform modified message sent");
     }
 
     public void sendResourceCreatedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
         sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
-        System.out.println("- resource created message sent");
+        log.info("- resource created message sent");
     }
 
     public void sendResourceRemovedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
         sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
-        System.out.println("- resource removed message sent");
+        log.info("- resource removed message sent");
     }
 
     public void sendResourceModifiedMessage(Resource resource) {
         Gson gson = new Gson();
         String message = gson.toJson(resource);
         sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
-        System.out.println("- resource modified message sent");
+        log.info("- resource modified message sent");
     }
 
     private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
@@ -224,7 +224,6 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
-
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Creation messages....");
@@ -243,7 +242,6 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
-
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Removal messages....");
@@ -256,14 +254,12 @@ public class RabbitManager {
     }
 
     private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
-        //todo implement
         String queueName = "platformModificationRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
-
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Modification messages....");
@@ -282,7 +278,6 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
-
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Creation messages....");
@@ -301,7 +296,6 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
-
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Removal messages....");
@@ -320,7 +314,6 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
             channel.queueBind(queueName, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
-
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Modification messages....");
@@ -335,7 +328,6 @@ public class RabbitManager {
     private void sendMessage(String exchange, String routingKey, String message) {
         Channel channel = null;
         try {
-
             AMQP.BasicProperties props = new AMQP.BasicProperties()
                     .builder()
                     .contentType("application/json")

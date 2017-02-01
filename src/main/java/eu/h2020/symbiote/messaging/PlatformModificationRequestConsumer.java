@@ -59,7 +59,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         PlatformResponse platformResponse;
 
         String message = new String(body, "UTF-8");
-        System.out.println(" [x] Received platform to modify: '" + message + "'");
+        log.info(" [x] Received platform to modify: '" + message + "'");
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()
@@ -80,7 +80,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        System.out.println("-> Message sent back");
+        log.info("-> Message sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
