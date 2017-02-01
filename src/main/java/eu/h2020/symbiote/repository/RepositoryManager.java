@@ -28,10 +28,13 @@ public class RepositoryManager {
     }
 
     /**
-     * Saves platform in MongoDB
+     * Saves given Platform in MongoDB. It triggers save action in Platform Repository and if it ends successfully
+     * it returns http status '200' and Platform object with generated ID field.
+     * If given platform is null or it already has an id the method will return 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
      *
-     * @param platform Platform with given properties in JSON format
-     * @return Platform with added 'Id' (generated in MongoDB), in JSON format
+     * @param platform Platform to save - in JSON format
+     * @return PlatformResponse with status and Platform object with unique "id" (generated in MongoDB)
      */
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
@@ -54,6 +57,15 @@ public class RepositoryManager {
         return platformResponse;
     }
 
+    /**
+     * Removes given Platform from MongoDB. It triggers delete action in Platform Repository and if it ends successfully
+     * it returns http status '200' and removed Platform object.
+     * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
+     *
+     * @param platform Platform to remove - in JSON format
+     * @return PlatformResponse with status and removed Platform object
+     */
     public PlatformResponse removePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
@@ -75,6 +87,17 @@ public class RepositoryManager {
         return platformResponse;
     }
 
+    /**
+     * Modifies (existing in mongodb) Platform accordingly to fields in given Platform.
+     * It triggers delete and save actions in Platform Repository and if it ends successfully
+     * it returns http status '200' and new modified Platform object.
+     * //todo from here
+     * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
+     *
+     * @param platform Platform to remove - in JSON format
+     * @return PlatformResponse with status and removed Platform object
+     */
     public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
         Platform foundPlatform = null;
