@@ -69,7 +69,6 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
         try {
             resource = gson.fromJson(message, Resource.class);
-            //todo something with location
             if (resource.getLocation() != null) {
                 Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
                 resource.setLocation(savedLocation);

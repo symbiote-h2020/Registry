@@ -33,7 +33,7 @@ class AppConfig extends AbstractMongoConfiguration {
         return "com.oreilly.springdata.mongodb";
     }
 
-    //TODO change localhost to sth read from configuration
+    //TODO change 'localhost' in MongoClient to sth read from configuration
     @Bean
     public MongoTemplate mongoTemplate() throws Exception {
         return new MongoTemplate(new MongoClient("localhost"), getDatabaseName());

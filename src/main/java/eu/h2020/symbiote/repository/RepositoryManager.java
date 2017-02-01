@@ -27,7 +27,6 @@ public class RepositoryManager {
         this.locationRepository = locationRepository;
     }
 
-
     /**
      * Saves platform in MongoDB
      *
@@ -36,19 +35,17 @@ public class RepositoryManager {
      */
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
-
         log.debug("Adding Platform");
         if (platform == null || platform.getPlatformId() != null) {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                //todo check if provided platform already exists
+                //todo check if provided platform already exists - somehow
                 Platform savedPlatform = platformRepository.save(platform);
                 log.info("Platform with id: " + savedPlatform.getPlatformId() + " saved !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(savedPlatform);
-
             } catch (Exception e) {
                 log.error("Error occured during Platform saving to db", e);
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -70,7 +67,6 @@ public class RepositoryManager {
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
-
             } catch (Exception e) {
                 e.printStackTrace();
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -110,7 +106,6 @@ public class RepositoryManager {
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
-
             } catch (Exception e) {
                 e.printStackTrace();
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -133,13 +128,12 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                //todo check if provided resource already exists
+                //todo check if provided resource already exists - somehow (URL?)
                 Resource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
 
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(savedResource);
-
 
             } catch (Exception e) {
                 log.error("Error occured during Platform saving to db", e);
@@ -170,7 +164,6 @@ public class RepositoryManager {
                 } else {
                     resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -186,7 +179,6 @@ public class RepositoryManager {
 
         if (resource.getPlatformId().isEmpty() || resource.getPlatformId() == null) {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-
         } else {
             foundResource = resourceRepository.findOne(resource.getPlatformId());
         }
@@ -218,7 +210,6 @@ public class RepositoryManager {
 
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(resource);
-
             } catch (Exception e) {
                 e.printStackTrace();
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -251,5 +242,4 @@ public class RepositoryManager {
         }
         return savedLocation;
     }
-
 }

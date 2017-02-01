@@ -136,7 +136,7 @@ public class RabbitManager {
     }
 
     /**
-     * Cleanup method for rabbit
+     * Cleanup method for rabbit - set on pre destroy
      */
     @PreDestroy
     public void cleanup() {
@@ -160,6 +160,9 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method gathers all of the rabbit consumer starter methods
+     */
     private void startConsumers() {
         try {
             startConsumerOfPlatformCreationMessages();
@@ -217,6 +220,13 @@ public class RabbitManager {
         log.info("- resource modified message sent");
     }
 
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
     private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
         String queueName = "platformCreationRequestedQueue";
         Channel channel;
@@ -235,6 +245,13 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
     private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
         String queueName = "platformRemovalRequestedQueue";
         Channel channel;
@@ -253,6 +270,13 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
     private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
         String queueName = "platformModificationRequestedQueue";
         Channel channel;
@@ -271,6 +295,13 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
     private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
         String queueName = "resourceCreationRequestedQueue";
         Channel channel;
@@ -289,6 +320,13 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
     private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
         String queueName = "resourceRemovalRequestedQueue";
         Channel channel;
@@ -307,6 +345,13 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
     private void startConsumerOfResourceModificationMessages() throws InterruptedException, IOException {
         String queueName = "resourceModificationRequestedQueue";
         Channel channel;
@@ -325,6 +370,14 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method publishes given message to the given exchange and routing key.
+     * Props are set for correct message handle on the receiver side.
+     *
+     * @param exchange name of the proper Rabbit exchange, adequate to topic of the communication
+     * @param routingKey name of the proper Rabbit routing key, adequate to topic of the communication
+     * @param message message content in JSON String format
+     */
     private void sendMessage(String exchange, String routingKey, String message) {
         Channel channel = null;
         try {
@@ -342,6 +395,11 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Closes given channel if it exists and is open.
+     *
+     * @param channel rabbit channel to close
+     */
     private void closeChannel(Channel channel) {
         try {
             if (channel != null && channel.isOpen())
