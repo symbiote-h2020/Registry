@@ -15,18 +15,30 @@ public class PlatformResponse {
         this.platform = platform;
     }
 
+    /**
+     * @return
+     */
     public int getStatus() {
         return status;
     }
 
+    /**
+     * @param status
+     */
     public void setStatus(int status) {
         this.status = status;
     }
 
+    /**
+     * @return
+     */
     public Platform getPlatform() {
         return platform;
     }
 
+    /**
+     * @param platform
+     */
     public void setPlatform(Platform platform) {
         this.platform = platform;
     }

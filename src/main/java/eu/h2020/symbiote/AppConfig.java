@@ -1,11 +1,5 @@
 package eu.h2020.symbiote;
 
-/**
- * Created by mateuszl on 30.09.2016.
- *
- * Note: to be used by components with MongoDB
- */
-
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import org.springframework.context.annotation.Bean;

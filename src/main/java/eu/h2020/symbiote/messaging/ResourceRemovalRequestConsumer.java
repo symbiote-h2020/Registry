@@ -15,9 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 20.01.2017.
+ * RabbitMQ Consumer implementation used for Resource Removal actions
  */
-
 public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceRemovalRequestConsumer.class);

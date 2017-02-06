@@ -1,9 +1,6 @@
 package eu.h2020.symbiote.model;
 
 /**
- * Created by mateuszl on 17.01.2017.
- */
-/**
  * Class used as a response to RPC call requesting resource actions
  */
 public class ResourceResponse {
@@ -18,18 +15,30 @@ public class ResourceResponse {
     public ResourceResponse() {
     }
 
+    /**
+     * @return
+     */
     public int getStatus() {
         return status;
     }
 
+    /**
+     * @param status
+     */
     public void setStatus(int status) {
         this.status = status;
     }
 
+    /**
+     * @return
+     */
     public Resource getResource() {
         return resource;
     }
 
+    /**
+     * @param resource
+     */
     public void setResource(Resource resource) {
         this.resource = resource;
     }

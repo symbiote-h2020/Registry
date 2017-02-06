@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Created by mateuszl on 09.01.2017.
+ * Class managing persistence actions for Platforms, Resources and Locations using MongoDB repositories.
  */
 @Component
 public class RepositoryManager {
@@ -93,6 +93,7 @@ public class RepositoryManager {
      * it returns http status '200' and new modified Platform object.
      * //todo from here
      * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
+     * If there is no Platform in database with ID same as given one, it returns 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
      * @param platform Platform to remove - in JSON format
@@ -151,6 +152,7 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
+                //todo check Platform ID in given Resource
                 //todo check if provided resource already exists - somehow (URL?)
                 Resource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
@@ -166,6 +168,12 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
+    /**
+     * Deletes resource from MongoDB
+     *
+     * @param resource Resource with given properties in JSON format
+     * @return Deleted Resource, in JSON format
+     */
     public ResourceResponse removeResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
@@ -195,6 +203,12 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
+    /**
+     * Modifies given resource in MongoDB
+     *
+     * @param resource Resource with given properties in JSON format
+     * @return Modified Resource, in JSON format
+     */
     public ResourceResponse modifyResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
@@ -241,7 +255,11 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
-
+    /**
+     * Removes from mongoDB given Location.
+     *
+     * @param location Location object to delete.
+     */
     private void removeLocation(Location location) {
         try {
             locationRepository.delete(location.getId());
@@ -250,6 +268,12 @@ public class RepositoryManager {
         }
     }
 
+    /**
+     * Saves in MongoDB given Location.
+     *
+     * @param location Location object to save.
+     * @return saved Location with ID field fulfilled.
+     */
     public Location saveLocation(Location location) {
         Location savedLocation = null;
         log.debug("Adding Location");

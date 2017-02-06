@@ -16,9 +16,8 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 17.01.2017.
+ * RabbitMQ Consumer implementation used for Resource Creation actions
  */
-
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);

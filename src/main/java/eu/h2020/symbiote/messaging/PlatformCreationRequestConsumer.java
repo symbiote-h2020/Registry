@@ -15,9 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 12.01.2017.
+ * RabbitMQ Consumer implementation used for Platform Creation actions
  */
-
 public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);

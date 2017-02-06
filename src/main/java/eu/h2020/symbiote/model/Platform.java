@@ -5,10 +5,9 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
 
 /**
- * Created by mateuszl on 09.01.2017.
+ * Registry Platform object
  */
 public class Platform {
-
     @Id
     private String platformId;
     private String name;
@@ -20,42 +19,72 @@ public class Platform {
 
     }
 
+    /**
+     * @return
+     */
     public String getPlatformId() {
         return platformId;
     }
 
+    /**
+     * @param platformId
+     */
     public void setPlatformId(String platformId) {
         this.platformId = platformId;
     }
 
+    /**
+     * @return
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @param name
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * @return
+     */
     public String getDescription() {
         return description;
     }
 
+    /**
+     * @param description
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
+    /**
+     * @return
+     */
     public String getUrl() {
         return url;
     }
 
+    /**
+     * @param url
+     */
     public void setUrl(String url) {
         this.url = url;
     }
 
+    /**
+     * @return
+     */
     public String getInformationModelId() {
         return informationModelId;
     }
 
+    /**
+     * @param informationModelId
+     */
     public void setInformationModelId(String informationModelId) {
         this.informationModelId = informationModelId;
     }
