@@ -71,6 +71,8 @@ public class RepositoryManager {
 
         if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else if(resourceRepository.findByPlatformId(platform.getPlatformId())!=null){
+            platformResponse.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {
                 //todo do something with resources corresponding to removed platform

@@ -83,12 +83,15 @@ public class RabbitManager {
      * @throws IOException
      * @throws TimeoutException
      */
-    private void getConnection() throws IOException, TimeoutException {
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(this.rabbitHost);
-        factory.setUsername(this.rabbitUsername);
-        factory.setPassword(this.rabbitPassword);
-        this.connection = factory.newConnection();
+    public Connection getConnection() throws IOException, TimeoutException {
+        if (connection == null) {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(this.rabbitHost);
+            factory.setUsername(this.rabbitUsername);
+            factory.setPassword(this.rabbitPassword);
+            this.connection = factory.newConnection();
+        }
+        return this.connection;
     }
 
     /**
@@ -374,9 +377,9 @@ public class RabbitManager {
      * Method publishes given message to the given exchange and routing key.
      * Props are set for correct message handle on the receiver side.
      *
-     * @param exchange name of the proper Rabbit exchange, adequate to topic of the communication
+     * @param exchange   name of the proper Rabbit exchange, adequate to topic of the communication
      * @param routingKey name of the proper Rabbit routing key, adequate to topic of the communication
-     * @param message message content in JSON String format
+     * @param message    message content in JSON String format
      */
     private void sendMessage(String exchange, String routingKey, String message) {
         Channel channel = null;
