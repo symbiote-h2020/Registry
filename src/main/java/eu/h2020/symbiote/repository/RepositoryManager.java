@@ -71,7 +71,8 @@ public class RepositoryManager {
 
         if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if(resourceRepository.findByPlatformId(platform.getPlatformId())!=null){
+        } else if (resourceRepository.findByPlatformId(platform.getPlatformId()) != null
+                && resourceRepository.findByPlatformId(platform.getPlatformId()).size() > 0) {
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {

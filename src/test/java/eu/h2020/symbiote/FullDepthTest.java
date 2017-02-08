@@ -12,15 +12,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,7 +24,6 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes={RegistryApplication.class})
-@SpringBootTest({"eureka.client.enabled=false"})
 public class FullDepthTest {
     private RepositoryManager repositoryManager;
     private PlatformRepository mockedPlatformRepo;
@@ -53,6 +47,7 @@ public class FullDepthTest {
 
         repositoryManager = new RepositoryManager(mockedPlatformRepo, mockedResourceRepo, mockedLocationRepo);
     }
+/*
 
     @Test
     public void testMockCreation() throws IOException, TimeoutException {
@@ -63,6 +58,7 @@ public class FullDepthTest {
         assertNotNull(rabbitManager);
         assertNotNull(rabbitManager.getConnection());
     }
+*/
 
     @Test
     public void messageTriggersRepositoryManager(){
