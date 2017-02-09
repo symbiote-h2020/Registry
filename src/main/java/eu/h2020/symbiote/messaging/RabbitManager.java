@@ -151,10 +151,22 @@ public class RabbitManager {
                 channel = connection.createChannel();
                 channel.queueUnbind("platformCreationRequestedQueue", this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
+                channel.queueUnbind("platformModificationRequestedQueue", this.platformExchangeName,
+                        this.platformCreationRequestedRoutingKey);
+                channel.queueUnbind("platformRemovalRequestedQueue", this.platformExchangeName,
+                        this.platformCreationRequestedRoutingKey);
                 channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
+                channel.queueUnbind("resourceModificationRequestedQueue", this.resourceExchangeName,
+                        this.resourceCreationRequestedRoutingKey);
+                channel.queueUnbind("resourceRemovalRequestedQueue", this.resourceExchangeName,
+                        this.resourceCreationRequestedRoutingKey);
                 channel.queueDelete("platformCreationRequestedQueue");
+                channel.queueDelete("platformModificationRequestedQueue");
+                channel.queueDelete("platformRemovalRequestedQueue");
                 channel.queueDelete("resourceCreationRequestedQueue");
+                channel.queueDelete("resourceModificationRequestedQueue");
+                channel.queueDelete("resourceRemovalRequestedQueue");
                 closeChannel(channel);
                 this.connection.close();
             }
