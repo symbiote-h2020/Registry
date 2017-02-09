@@ -220,7 +220,7 @@ public class RepositoryManager {
         if (resource.getPlatformId().isEmpty() || resource.getPlatformId() == null) {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            foundResource = resourceRepository.findOne(resource.getPlatformId());
+            foundResource = resourceRepository.findOne(resource.getId());
         }
 
         if (foundResource == null) {
