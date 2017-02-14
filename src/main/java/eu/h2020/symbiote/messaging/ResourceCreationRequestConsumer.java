@@ -10,6 +10,7 @@ import eu.h2020.symbiote.model.Location;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,8 +29,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel the channel to which this consumer is attached
-     * @param rabbitManager rabbit manager bean passed for access to messages manager
+     * @param channel           the channel to which this consumer is attached
+     * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public ResourceCreationRequestConsumer(Channel channel,
@@ -42,10 +43,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
+     *
      * @param consumerTag the <i>consumer tag</i> associated with the consumer
-     * @param envelope packaging data for the message
-     * @param properties content header data for the message
-     * @param body the message body (opaque, client-specific byte array)
+     * @param envelope    packaging data for the message
+     * @param properties  content header data for the message
+     * @param body        the message body (opaque, client-specific byte array)
      * @throws IOException if the consumer encounters an I/O error while processing the message
      * @see Envelope
      */
@@ -64,18 +66,21 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 .build();
 
         Resource resource;
-        ResourceResponse resourceResponse;
+        ResourceResponse resourceResponse = new ResourceResponse();
         try {
             resource = gson.fromJson(message, Resource.class);
-            Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
-            resource.setLocation(savedLocation);
-            resourceResponse = this.repositoryManager.saveResource(resource);
-            if (resourceResponse.getStatus() == 200) {
-                rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+            if (RegistryUtils.validate(resource)) {
+                Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
+                resource.setLocation(savedLocation);
+                resourceResponse = this.repositoryManager.saveResource(resource);
+                if (resourceResponse.getStatus() == 200) {
+                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+                }
+            } else {
+                resourceResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
-            resourceResponse = new ResourceResponse();
             resourceResponse.setStatus(400);
         }
 

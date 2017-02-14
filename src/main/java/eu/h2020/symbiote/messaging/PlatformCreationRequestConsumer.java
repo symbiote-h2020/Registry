@@ -9,6 +9,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -63,16 +64,19 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 .build();
 
         Platform platform;
-        PlatformResponse platformResponse = null;
+        PlatformResponse platformResponse = new PlatformResponse();
         try {
             platform = gson.fromJson(message, Platform.class);
-            platformResponse = this.repositoryManager.savePlatform(platform);
-            if (platformResponse.getStatus() == 200) {
-                rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+            if (RegistryUtils.validate(platform)){
+                platformResponse = this.repositoryManager.savePlatform(platform);
+                if (platformResponse.getStatus() == 200) {
+                    rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+                }
+            } else {
+                platformResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
-            platformResponse = new PlatformResponse();
             platformResponse.setStatus(400);
         }
 

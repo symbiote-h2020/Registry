@@ -98,5 +98,4 @@ public class Platform {
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
-
 }

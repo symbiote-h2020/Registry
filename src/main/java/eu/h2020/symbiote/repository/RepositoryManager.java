@@ -30,6 +30,7 @@ public class RepositoryManager {
     /**
      * Saves given Platform in MongoDB. It triggers save action in Platform Repository and if it ends successfully
      * it returns http status '200' and Platform object with generated ID field.
+     * If given platform URL noe ends with "/", method appends it.
      * If given platform is null or it already has an id the method will return 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
@@ -38,12 +39,18 @@ public class RepositoryManager {
      */
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
-        log.debug("Adding Platform");
-        if (platform == null || platform.getPlatformId() != null) {
+
+        if (platform.getPlatformId() != null) {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
+                log.info("Saving platform: " + platform.getName());
                 //todo check if provided platform already exists - somehow
+
+                if (platform.getUrl().trim().charAt(platform.getUrl().length() - 1) != "/".charAt(0)) {
+                    platform.setUrl(platform.getUrl().trim() + "/");
+                }
+
                 Platform savedPlatform = platformRepository.save(platform);
                 log.info("Platform with id: " + savedPlatform.getPlatformId() + " saved !");
 
@@ -142,13 +149,17 @@ public class RepositoryManager {
     }
 
     /**
-     * Saves resource in MongoDB
+     * Saves resource in MongoDB. Checks if URL in given resource ends with "/" and if not, appends it.
      *
      * @param resource Resource with given properties in JSON format
      * @return Resource with added 'Id' (generated in MongoDB), in JSON format
      */
     public ResourceResponse saveResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
+
+        if (resource.getResourceURL().trim().charAt(resource.getResourceURL().length() - 1) != "/".charAt(0)) {
+            resource.setResourceURL(resource.getResourceURL().trim() + "/");
+        }
 
         if (platformRepository.findOne(resource.getPlatformId()) == null) {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -157,8 +168,9 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving Resource with id: " + resource.getName());
+                log.info("Saving Resource: " + resource.getName());
                 //todo check if provided resource already exists - somehow (URL?)
+
                 Resource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
 
