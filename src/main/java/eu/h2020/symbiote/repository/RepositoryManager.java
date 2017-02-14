@@ -150,12 +150,14 @@ public class RepositoryManager {
     public ResourceResponse saveResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
-        log.debug("Adding Platform");
-        if (resource == null || resource.getId() != null) {
+        if (platformRepository.findOne(resource.getPlatformId()) == null) {
+            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else if (resource.getId() != null ||
+                !platformRepository.findOne(resource.getPlatformId()).getUrl().equals(resource.getResourceURL())) {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                //todo check Platform ID in given Resource
+                log.info("Saving Resource with id: " + resource.getName());
                 //todo check if provided resource already exists - somehow (URL?)
                 Resource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");

@@ -64,7 +64,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 .build();
 
         Resource resource;
-        ResourceResponse resourceResponse = null;
+        ResourceResponse resourceResponse;
         try {
             resource = gson.fromJson(message, Resource.class);
             Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
