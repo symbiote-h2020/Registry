@@ -40,6 +40,10 @@ public class RepositoryManager {
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
+        if (platform.getUrl().trim().charAt(platform.getUrl().length() - 1) != "/".charAt(0)) {
+            platform.setUrl(platform.getUrl().trim() + "/");
+        }
+
         if (platform.getPlatformId() != null) {
             log.error("Given platform has null PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -114,8 +118,12 @@ public class RepositoryManager {
      */
     public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
-        Platform foundPlatform = null;
 
+        if (platform.getUrl().trim().charAt(platform.getUrl().length() - 1) != "/".charAt(0)) {
+            platform.setUrl(platform.getUrl().trim() + "/");
+        }
+
+        Platform foundPlatform = null;
         if (platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
             log.error("Given platform has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -236,6 +244,10 @@ public class RepositoryManager {
      */
     public ResourceResponse modifyResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
+
+        if (resource.getResourceURL().trim().charAt(resource.getResourceURL().length() - 1) != "/".charAt(0)) {
+            resource.setResourceURL(resource.getResourceURL().trim() + "/");
+        }
 
         Resource foundResource = null;
 
