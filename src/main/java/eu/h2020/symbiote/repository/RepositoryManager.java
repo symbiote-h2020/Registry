@@ -41,6 +41,7 @@ public class RepositoryManager {
         PlatformResponse platformResponse = new PlatformResponse();
 
         if (platform.getPlatformId() != null) {
+            log.error("Given platform has null PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -57,7 +58,7 @@ public class RepositoryManager {
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(savedPlatform);
             } catch (Exception e) {
-                log.error("Error occured during Platform saving to db", e);
+                log.error("Error occurred during Platform saving to db", e);
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -77,9 +78,11 @@ public class RepositoryManager {
         PlatformResponse platformResponse = new PlatformResponse();
 
         if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+            log.error("Given platform is null or has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resourceRepository.findByPlatformId(platform.getPlatformId()) != null
                 && resourceRepository.findByPlatformId(platform.getPlatformId()).size() > 0) {
+            log.error("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {
@@ -90,7 +93,7 @@ public class RepositoryManager {
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error occurred during Platform removing from db", e);
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -114,17 +117,17 @@ public class RepositoryManager {
         Platform foundPlatform = null;
 
         if (platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+            log.error("Given platform has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             foundPlatform = platformRepository.findOne(platform.getPlatformId());
         }
 
         if (foundPlatform == null) {
+            log.error("Given platform does not exist in database!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                //todo do something with resources corresponding to removed platform
-
                 //fulfilment of empty Platform fields before saving
                 if (platform.getDescription() == null && foundPlatform.getDescription() != null)
                     platform.setDescription(foundPlatform.getDescription());
@@ -142,6 +145,7 @@ public class RepositoryManager {
                 platformResponse.setPlatform(platform);
             } catch (Exception e) {
                 e.printStackTrace();
+                log.error("Error occurred during Platform modifying in db", e);
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -162,9 +166,11 @@ public class RepositoryManager {
         }
 
         if (platformRepository.findOne(resource.getPlatformId()) == null) {
+            log.error("Given PlatformId does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resource.getId() != null ||
                 !platformRepository.findOne(resource.getPlatformId()).getUrl().equals(resource.getResourceURL())) {
+            log.error("Platform with given resourceURL does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -178,7 +184,7 @@ public class RepositoryManager {
                 resourceResponse.setResource(savedResource);
 
             } catch (Exception e) {
-                log.error("Error occured during Platform saving to db", e);
+                log.error("Error occurred during Resource saving in db", e);
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -195,6 +201,7 @@ public class RepositoryManager {
         ResourceResponse resourceResponse = new ResourceResponse();
 
         if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
+            log.error("Given resource has empty or null ID!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -210,10 +217,11 @@ public class RepositoryManager {
                     resourceResponse.setResource(resource);
                     log.info("Resource with id: " + resource.getId() + " removed !");
                 } else {
+                    log.error("Given resource does not exist in database");
                     resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error occurred during Resource deleting from db", e);
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -232,12 +240,14 @@ public class RepositoryManager {
         Resource foundResource = null;
 
         if (resource.getPlatformId().isEmpty() || resource.getPlatformId() == null) {
+            log.error("Given resource has empty or null PlatformID!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             foundResource = resourceRepository.findOne(resource.getId());
         }
 
         if (foundResource == null) {
+            log.error("Given resource does not exist in database!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -265,7 +275,7 @@ public class RepositoryManager {
                 resourceResponse.setStatus(HttpStatus.SC_OK);
                 resourceResponse.setResource(resource);
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error occurred during Resource modifying in db", e);
                 resourceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
@@ -281,7 +291,7 @@ public class RepositoryManager {
         try {
             locationRepository.delete(location.getId());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error occurred during Location deleting from db", e);
         }
     }
 
@@ -293,7 +303,7 @@ public class RepositoryManager {
      */
     public Location saveLocation(Location location) {
         Location savedLocation = null;
-        log.debug("Adding Location");
+        log.info("Adding Location to db");
         if (location == null) {
             return null;
         } else {
@@ -301,7 +311,7 @@ public class RepositoryManager {
                 savedLocation = locationRepository.save(location);
                 log.info("Location with id: " + savedLocation.getId() + " saved !");
             } catch (Exception e) {
-                log.error(e);
+                log.error("Error occurred during Location saving in db", e);
             }
         }
         return savedLocation;

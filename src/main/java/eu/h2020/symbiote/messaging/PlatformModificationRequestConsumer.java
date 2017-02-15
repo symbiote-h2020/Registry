@@ -55,7 +55,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         String response;
         Platform platform;
-        PlatformResponse platformResponse;
+        PlatformResponse platformResponse = new PlatformResponse();
 
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to modify: '" + message + "'");
@@ -72,14 +72,13 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
             }
         } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-            platformResponse = new PlatformResponse();
+            log.error("Error occured during Platform saving to db", e);
             platformResponse.setStatus(400);
         }
 
         response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("-> Message sent back");
+        log.info("Message 'modification successful' sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

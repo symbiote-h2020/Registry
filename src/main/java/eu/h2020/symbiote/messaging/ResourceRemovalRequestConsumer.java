@@ -63,7 +63,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 .build();
 
         Resource resource;
-        ResourceResponse resourceResponse = null;
+        ResourceResponse resourceResponse = new ResourceResponse();
         try {
             resource = gson.fromJson(message, Resource.class);
             resourceResponse = this.repositoryManager.removeResource(resource);
@@ -71,15 +71,14 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
             }
         } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-            resourceResponse = new ResourceResponse();
+            log.error("Error occured during Resource deleting in db", e);
             resourceResponse.setStatus(400);
         }
 
         response = gson.toJson(resourceResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("-> Message sent back");
+        log.info("Message 'removal successful' sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

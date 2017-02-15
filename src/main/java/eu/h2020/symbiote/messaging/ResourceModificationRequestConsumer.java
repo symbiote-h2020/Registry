@@ -55,7 +55,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         Resource resource;
-        ResourceResponse resourceResponse;
+        ResourceResponse resourceResponse = new ResourceResponse();
         String response = "";
 
         String message = new String(body, "UTF-8");
@@ -77,15 +77,14 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());
             }
         } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-            resourceResponse = new ResourceResponse();
+            log.error("Error occured during Resource saving to db", e);
             resourceResponse.setStatus(400);
         }
 
         response = gson.toJson(resourceResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("-> Message sent back");
+        log.info("Message 'modification successful' sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

@@ -63,7 +63,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
                 .build();
 
         Platform platform;
-        PlatformResponse platformResponse = null;
+        PlatformResponse platformResponse = new PlatformResponse();
         try {
             platform = gson.fromJson(message, Platform.class);
             platformResponse = this.repositoryManager.removePlatform(platform);
@@ -71,14 +71,13 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
             }
         } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-            platformResponse = new PlatformResponse();
+            log.error("Error occured during Platform deleting in db", e);
             platformResponse.setStatus(400);
         }
 
         response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("-> Message sent back");
+        log.info("Message 'removal successful' sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

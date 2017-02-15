@@ -76,13 +76,13 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 platformResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {
-            e.printStackTrace();
+            log.error("Error occured during Platform saving to db", e);
             platformResponse.setStatus(400);
         }
 
         response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("-> Message sent back");
+        log.info("Message 'creation successful' sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

@@ -80,14 +80,14 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 resourceResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {
-            e.printStackTrace();
+            log.error("Error occurred during Resource saving to db", e);
             resourceResponse.setStatus(400);
         }
 
         response = gson.toJson(resourceResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("-> Message sent back");
+        log.info("Message 'creation successful' sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
