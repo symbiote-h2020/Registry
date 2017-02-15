@@ -77,6 +77,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                     rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
                 }
             } else {
+                log.error("Given Resource has some fields null or empty");
                 resourceResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {

@@ -73,6 +73,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                     rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
                 }
             } else {
+                log.error("Given Platform has some fields null or empty");
                 platformResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {
