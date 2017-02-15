@@ -50,8 +50,8 @@ public class RegistryUtils {
             log.info("Given resource has some null fields");
             b = false;
         } else if (resource.getResourceURL().isEmpty() || resource.getPlatformId().isEmpty()
-                || resource.getFeatureOfInterest().isEmpty() || resource.getName().isEmpty()
-                || resource.getObservedProperties().isEmpty() || resource.getOwner().isEmpty()) {
+                || resource.getName().isEmpty() || resource.getObservedProperties().isEmpty()
+                || resource.getOwner().isEmpty()) {
             log.info("Given resource has some empty fields");
             b = false;
         } else {
