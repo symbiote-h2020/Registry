@@ -78,7 +78,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         response = gson.toJson(resourceResponse);
 
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message 'removal successful' sent back");
+        log.info("Message with status: " + resourceResponse.getStatus() + " sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

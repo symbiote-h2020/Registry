@@ -78,7 +78,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         response = gson.toJson(platformResponse);
         this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message 'modification successful' sent back");
+        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
 
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }

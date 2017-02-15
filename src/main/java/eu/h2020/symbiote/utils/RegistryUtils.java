@@ -45,8 +45,8 @@ public class RegistryUtils {
     public static boolean validate(Resource resource) {
         boolean b;
         if (resource.getResourceURL() == null || resource.getLocation() == null || resource.getPlatformId() == null
-                || resource.getFeatureOfInterest() == null || resource.getName() == null
-                || resource.getObservedProperties() == null || resource.getOwner() == null) {
+                || resource.getName() == null || resource.getObservedProperties() == null
+                || resource.getOwner() == null) {
             log.info("Given resource has some null fields");
             b = false;
         } else if (resource.getResourceURL().isEmpty() || resource.getPlatformId().isEmpty()
