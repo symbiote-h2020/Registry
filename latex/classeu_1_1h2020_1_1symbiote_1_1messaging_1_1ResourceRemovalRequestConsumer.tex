@@ -1,0 +1,80 @@
+\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer}{}\section{eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer Class Reference}
+\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer}\index{eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer@{eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer}}
+
+
+Inheritance diagram for eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer\+:
+% FIG 0
+
+
+Collaboration diagram for eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer\+:
+% FIG 1
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer_aba5553aba270fe213d42a950e5c3ccd6}{Resource\+Removal\+Request\+Consumer} (Channel channel, \hyperlink{classeu_1_1h2020_1_1symbiote_1_1repository_1_1RepositoryManager}{Repository\+Manager} repository\+Manager, \hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager}{Rabbit\+Manager} rabbit\+Manager)
+\item 
+void \hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer_acddf45d794a218a11e496d11e47dd01c}{handle\+Delivery} (String consumer\+Tag, Envelope envelope, A\+M\+Q\+P.\+Basic\+Properties properties, byte\mbox{[}$\,$\mbox{]} body)  throws I\+O\+Exception 
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Rabbit\+MQ Consumer implementation used for Resource Removal actions 
+
+\subsection{Constructor \& Destructor Documentation}
+\index{eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer@{eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer}!Resource\+Removal\+Request\+Consumer@{Resource\+Removal\+Request\+Consumer}}
+\index{Resource\+Removal\+Request\+Consumer@{Resource\+Removal\+Request\+Consumer}!eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer@{eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer}}
+\subsubsection[{\texorpdfstring{Resource\+Removal\+Request\+Consumer(\+Channel channel, Repository\+Manager repository\+Manager, Rabbit\+Manager rabbit\+Manager)}{ResourceRemovalRequestConsumer(Channel channel, RepositoryManager repositoryManager, RabbitManager rabbitManager)}}]{\setlength{\rightskip}{0pt plus 5cm}eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer.\+Resource\+Removal\+Request\+Consumer (
+\begin{DoxyParamCaption}
+\item[{Channel}]{channel, }
+\item[{{\bf Repository\+Manager}}]{repository\+Manager, }
+\item[{{\bf Rabbit\+Manager}}]{rabbit\+Manager}
+\end{DoxyParamCaption}
+)}\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer_aba5553aba270fe213d42a950e5c3ccd6}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer_aba5553aba270fe213d42a950e5c3ccd6}
+Constructs a new instance and records its association to the passed-\/in channel. Managers beans passed as parameters because of lack of possibility to inject it to consumer.
+
+
+\begin{DoxyParams}{Parameters}
+{\em channel} & the channel to which this consumer is attached \\
+\hline
+{\em rabbit\+Manager} & rabbit manager bean passed for access to messages manager \\
+\hline
+{\em repository\+Manager} & repository manager bean passed for persistence actions \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\index{eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer@{eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer}!handle\+Delivery@{handle\+Delivery}}
+\index{handle\+Delivery@{handle\+Delivery}!eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer@{eu\+::h2020\+::symbiote\+::messaging\+::\+Resource\+Removal\+Request\+Consumer}}
+\subsubsection[{\texorpdfstring{handle\+Delivery(\+String consumer\+Tag, Envelope envelope, A\+M\+Q\+P.\+Basic\+Properties properties, byte[] body)}{handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)}}]{\setlength{\rightskip}{0pt plus 5cm}void eu.\+h2020.\+symbiote.\+messaging.\+Resource\+Removal\+Request\+Consumer.\+handle\+Delivery (
+\begin{DoxyParamCaption}
+\item[{String}]{consumer\+Tag, }
+\item[{Envelope}]{envelope, }
+\item[{A\+M\+Q\+P.\+Basic\+Properties}]{properties, }
+\item[{byte\mbox{[}$\,$\mbox{]}}]{body}
+\end{DoxyParamCaption}
+) throws I\+O\+Exception}\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer_acddf45d794a218a11e496d11e47dd01c}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer_acddf45d794a218a11e496d11e47dd01c}
+Called when a {\ttfamily {\bfseries basic.\+deliver}} is received for this consumer. 
+\begin{DoxyParams}{Parameters}
+{\em consumer\+Tag} & the {\itshape consumer tag} associated with the consumer \\
+\hline
+{\em envelope} & packaging data for the message \\
+\hline
+{\em properties} & content header data for the message \\
+\hline
+{\em body} & the message body (opaque, client-\/specific byte array) \\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em I\+O\+Exception} & if the consumer encounters an I/O error while processing the message \\
+\hline
+\end{DoxyExceptions}
+\begin{DoxySeeAlso}{See also}
+Envelope 
+\end{DoxySeeAlso}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/main/java/eu/h2020/symbiote/messaging/Resource\+Removal\+Request\+Consumer.\+java\end{DoxyCompactItemize}

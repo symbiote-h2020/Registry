@@ -1,0 +1,7 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="eu.h2020.symbiote.Registry\lApplication",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classeu_1_1h2020_1_1symbiote_1_1RegistryApplication.html"];
+}
