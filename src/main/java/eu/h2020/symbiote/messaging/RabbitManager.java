@@ -84,7 +84,7 @@ public class RabbitManager {
     private Connection connection;
 
     /**
-     * Initiates connection with Rabbit server using parameters taken from ConfigProperties
+     * Initiates connection with Rabbit server using parameters from ConfigProperties
      *
      * @throws IOException
      * @throws TimeoutException
@@ -102,7 +102,6 @@ public class RabbitManager {
 
     /**
      * Method creates channel and declares Rabbit exchanges for Platform and Resources.
-     * It requires active connection to Rabbit server.
      * It triggers start of all consumers used in Registry communication.
      */
     public void init() {
@@ -184,7 +183,7 @@ public class RabbitManager {
     /**
      * Method gathers all of the rabbit consumer starter methods
      */
-    private void startConsumers() {
+    public void startConsumers() {
         try {
             startConsumerOfPlatformCreationMessages();
             startConsumerOfResourceCreationMessages();
