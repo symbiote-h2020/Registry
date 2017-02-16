@@ -235,6 +235,11 @@ public class RabbitManager {
         log.info("- resource modified message sent");
     }
 
+    public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
+        sendMessage(exchange, routingKey, objectInJson);
+        log.info("- Custom message sent");
+    }
+
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
@@ -394,14 +399,15 @@ public class RabbitManager {
      * @param message    message content in JSON String format
      */
     private void sendMessage(String exchange, String routingKey, String message) {
+        AMQP.BasicProperties props;
         Channel channel = null;
         try {
-            AMQP.BasicProperties props = new AMQP.BasicProperties()
+            channel = this.connection.createChannel();
+            props = new AMQP.BasicProperties()
                     .builder()
                     .contentType("application/json")
                     .build();
 
-            channel = this.connection.createChannel();
             channel.basicPublish(exchange, routingKey, props, message.getBytes());
         } catch (IOException e) {
             e.printStackTrace();

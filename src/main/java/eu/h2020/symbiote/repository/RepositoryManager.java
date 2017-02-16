@@ -44,7 +44,7 @@ public class RepositoryManager {
             platform.setUrl(platform.getUrl().trim() + "/");
         }
 
-        if (platform.getPlatformId() != null) {
+        if (platform.getPlatformId() == null) {
             log.error("Given platform has null PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {

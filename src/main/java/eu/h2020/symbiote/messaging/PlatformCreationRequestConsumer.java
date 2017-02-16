@@ -28,8 +28,8 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel the channel to which this consumer is attached
-     * @param rabbitManager rabbit manager bean passed for access to messages manager
+     * @param channel           the channel to which this consumer is attached
+     * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public PlatformCreationRequestConsumer(Channel channel,
@@ -42,10 +42,11 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
+     *
      * @param consumerTag the <i>consumer tag</i> associated with the consumer
-     * @param envelope packaging data for the message
-     * @param properties content header data for the message
-     * @param body the message body (opaque, client-specific byte array)
+     * @param envelope    packaging data for the message
+     * @param properties  content header data for the message
+     * @param body        the message body (opaque, client-specific byte array)
      * @throws IOException if the consumer encounters an I/O error while processing the message
      * @see Envelope
      */
@@ -58,16 +59,11 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to create: '" + message + "'");
 
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
         Platform platform;
         PlatformResponse platformResponse = new PlatformResponse();
         try {
             platform = gson.fromJson(message, Platform.class);
-            if (RegistryUtils.validate(platform)){
+            if (RegistryUtils.validate(platform)) {
                 platformResponse = this.repositoryManager.savePlatform(platform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
@@ -80,11 +76,20 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             log.error("Error occured during Platform saving to db", e);
             platformResponse.setStatus(400);
         }
-
         response = gson.toJson(platformResponse);
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
 
+        if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
+
+            AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                    .Builder()
+                    .correlationId(properties.getCorrelationId())
+                    .build();
+
+            this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
+            log.info("Message with status: " + platformResponse.getStatus() + " sent back");
+        } else {
+            log.warn("Received RPC message without ReplyTo or CorrelationId props.");
+        }
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
 }

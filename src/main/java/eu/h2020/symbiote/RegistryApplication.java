@@ -1,6 +1,8 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.messaging.RabbitManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -22,6 +24,8 @@ public class RegistryApplication {
         SpringApplication.run(RegistryApplication.class, args);
     }
 
+    private static Log log = LogFactory.getLog(RegistryApplication.class);
+
     @Bean
     public AlwaysSampler defaultSampler() {
         return new AlwaysSampler();
@@ -42,6 +46,7 @@ public class RegistryApplication {
 //
             //message retrieval - start rabbit exchange and consumers
             this.rabbitManager.init();
+            log.info("CLR run() and Rabbit Manager init()");
         }
     }
 }
