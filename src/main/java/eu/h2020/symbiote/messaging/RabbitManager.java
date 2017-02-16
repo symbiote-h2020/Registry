@@ -23,8 +23,14 @@ import java.util.concurrent.TimeoutException;
 public class RabbitManager {
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
-    @Autowired
+
     RepositoryManager repositoryManager;
+
+    @Autowired
+    public RabbitManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
+
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
