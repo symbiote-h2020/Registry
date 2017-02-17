@@ -17,6 +17,8 @@ import java.io.IOException;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Creation actions
+ *
+ * Created by mateuszl
  */
 public class PlatformCreationRequestConsumer extends DefaultConsumer {
 

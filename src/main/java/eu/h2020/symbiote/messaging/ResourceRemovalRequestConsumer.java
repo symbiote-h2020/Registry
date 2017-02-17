@@ -16,6 +16,8 @@ import java.io.IOException;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Removal actions
+ *
+ * Created by mateuszl
  */
 public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 

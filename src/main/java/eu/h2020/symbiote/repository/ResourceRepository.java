@@ -8,6 +8,8 @@ import java.util.List;
 
 /**
  * Registry MongoDB Persistence layer for Resource objects
+ *
+ * Created by mateuszl
  */
 @Repository
 public interface ResourceRepository extends MongoRepository<Resource, String> {

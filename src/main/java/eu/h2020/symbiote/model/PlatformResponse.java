@@ -2,6 +2,8 @@ package eu.h2020.symbiote.model;
 
 /**
  * Class used as a response to RPC call requesting platform actions
+ *
+ * Created by mateuszl
  */
 public class PlatformResponse {
     private int status;

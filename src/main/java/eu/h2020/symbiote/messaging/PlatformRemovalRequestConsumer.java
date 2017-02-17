@@ -16,6 +16,8 @@ import java.io.IOException;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Removal actions
+ *
+ * Created by mateuszl
  */
 public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 

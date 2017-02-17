@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 /**
  * Registry MongoDB Persistence layer for Platform objects
+ *
+ * Created by mateuszl
  */
 @Repository
 public interface PlatformRepository extends MongoRepository<Platform, String>{

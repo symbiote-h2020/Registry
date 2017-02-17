@@ -6,6 +6,8 @@ import java.util.List;
 
 /**
  * Registry Resource object
+ *
+ * Created by mateuszl
  */
 public class Resource {
     @Id

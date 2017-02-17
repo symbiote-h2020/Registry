@@ -18,6 +18,8 @@ import java.io.IOException;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
+ *
+ * Created by mateuszl
  */
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
 

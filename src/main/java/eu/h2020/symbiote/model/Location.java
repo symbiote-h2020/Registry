@@ -4,6 +4,8 @@ import org.springframework.data.annotation.Id;
 
 /**
  * Registry Location object used with Resources.
+ *
+ * Created by mateuszl
  */
 public class Location {
     @Id

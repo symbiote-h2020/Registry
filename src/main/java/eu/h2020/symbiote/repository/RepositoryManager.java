@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Class managing persistence actions for Platforms, Resources and Locations using MongoDB repositories.
+ *
+ * Created by mateuszl
  */
 @Component
 public class RepositoryManager {
@@ -33,6 +35,7 @@ public class RepositoryManager {
      * If given platform URL noe ends with "/", method appends it.
      * If given platform is null or it already has an id the method will return 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
+     * Url of given platform is appended with "/" if it does not end with it.
      *
      * @param platform Platform to save - in JSON format
      * @return PlatformResponse with status and Platform object with unique "id" (generated in MongoDB)
@@ -106,9 +109,10 @@ public class RepositoryManager {
 
     /**
      * Modifies (existing in mongodb) Platform accordingly to fields in given Platform.
-     * It triggers delete and save actions in Platform Repository and if it ends successfully
+     * It triggers delete and save actions in Platform Repository and if it ends successfully,
      * it returns http status '200' and new modified Platform object.
-     * //todo from here
+     * Url of given platform is appended with "/" if it does not end with it.
+     *
      * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
      * If there is no Platform in database with ID same as given one, it returns 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.

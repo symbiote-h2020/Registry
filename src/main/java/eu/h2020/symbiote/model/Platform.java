@@ -6,6 +6,8 @@ import org.springframework.data.annotation.Id;
 
 /**
  * Registry Platform object
+ *
+ * Created by mateuszl
  */
 public class Platform {
     @Id
