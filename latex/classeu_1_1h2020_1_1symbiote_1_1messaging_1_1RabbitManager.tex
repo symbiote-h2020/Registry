@@ -1,0 +1,91 @@
+\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager}{}\section{eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager Class Reference}
+\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager}\index{eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager@{eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager}}
+
+
+Collaboration diagram for eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager\+:
+% FIG 0
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries Rabbit\+Manager} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1repository_1_1RepositoryManager}{Repository\+Manager} repository\+Manager)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ad05170cea6626e742a9b3ff5a359b192}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ad05170cea6626e742a9b3ff5a359b192}
+
+\item 
+Connection \hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ac6037e07ab7703c98c8a880a1ea5f5cd}{get\+Connection} ()  throws I\+O\+Exception, Timeout\+Exception 
+\item 
+void \hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ae6688b10d5858345271d21eda576036c}{init} ()
+\item 
+void \hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_abf294e221b0bbfc0faa81d38fcec50cd}{cleanup} ()
+\item 
+void \hyperlink{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ab6555364fdd7e95b41802ae24da7f30f}{start\+Consumers} ()
+\item 
+void {\bfseries send\+Platform\+Created\+Message} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1model_1_1Platform}{Platform} platform)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ad0733a08e8a207dac36c8ae6a86dfe7e}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ad0733a08e8a207dac36c8ae6a86dfe7e}
+
+\item 
+void {\bfseries send\+Platform\+Removed\+Message} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1model_1_1Platform}{Platform} platform)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_af0a5271ea2607bc84b77f81d70e6dcd7}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_af0a5271ea2607bc84b77f81d70e6dcd7}
+
+\item 
+void {\bfseries send\+Platform\+Modified\+Message} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1model_1_1Platform}{Platform} platform)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ac241cd7e1ec4b33aa0a907b86eecb354}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ac241cd7e1ec4b33aa0a907b86eecb354}
+
+\item 
+void {\bfseries send\+Resource\+Created\+Message} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1model_1_1Resource}{Resource} resource)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_a1499d1a2def21a1c2a405b1448918da7}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_a1499d1a2def21a1c2a405b1448918da7}
+
+\item 
+void {\bfseries send\+Resource\+Removed\+Message} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1model_1_1Resource}{Resource} resource)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_aa77dd12749ba669407cdd928eb7138b6}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_aa77dd12749ba669407cdd928eb7138b6}
+
+\item 
+void {\bfseries send\+Resource\+Modified\+Message} (\hyperlink{classeu_1_1h2020_1_1symbiote_1_1model_1_1Resource}{Resource} resource)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_a05e443fe0be56a424239727cfed231da}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_a05e443fe0be56a424239727cfed231da}
+
+\item 
+void {\bfseries send\+Custom\+Message} (String exchange, String routing\+Key, String object\+In\+Json)\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_a39ec3510289f5e647eb4dab95f82e127}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_a39ec3510289f5e647eb4dab95f82e127}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Bean used to manage internal communication using Rabbit\+MQ. It is responsible for declaring exchanges and using routing keys from centralized config server. 
+
+Created by mateuszl 
+
+\subsection{Member Function Documentation}
+\index{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}!cleanup@{cleanup}}
+\index{cleanup@{cleanup}!eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}}
+\subsubsection[{\texorpdfstring{cleanup()}{cleanup()}}]{\setlength{\rightskip}{0pt plus 5cm}void eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager.\+cleanup (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_abf294e221b0bbfc0faa81d38fcec50cd}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_abf294e221b0bbfc0faa81d38fcec50cd}
+Cleanup method for rabbit -\/ set on pre destroy \index{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}!get\+Connection@{get\+Connection}}
+\index{get\+Connection@{get\+Connection}!eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}}
+\subsubsection[{\texorpdfstring{get\+Connection()}{getConnection()}}]{\setlength{\rightskip}{0pt plus 5cm}Connection eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager.\+get\+Connection (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) throws I\+O\+Exception, Timeout\+Exception}\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ac6037e07ab7703c98c8a880a1ea5f5cd}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ac6037e07ab7703c98c8a880a1ea5f5cd}
+Initiates connection with Rabbit server using parameters from Config\+Properties
+
+
+\begin{DoxyExceptions}{Exceptions}
+{\em I\+O\+Exception} & \\
+\hline
+{\em Timeout\+Exception} & \\
+\hline
+\end{DoxyExceptions}
+\index{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}!init@{init}}
+\index{init@{init}!eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}}
+\subsubsection[{\texorpdfstring{init()}{init()}}]{\setlength{\rightskip}{0pt plus 5cm}void eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager.\+init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ae6688b10d5858345271d21eda576036c}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ae6688b10d5858345271d21eda576036c}
+Method creates channel and declares Rabbit exchanges for Platform and Resources. It triggers start of all consumers used in Registry communication. \index{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}!start\+Consumers@{start\+Consumers}}
+\index{start\+Consumers@{start\+Consumers}!eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager@{eu\+::h2020\+::symbiote\+::messaging\+::\+Rabbit\+Manager}}
+\subsubsection[{\texorpdfstring{start\+Consumers()}{startConsumers()}}]{\setlength{\rightskip}{0pt plus 5cm}void eu.\+h2020.\+symbiote.\+messaging.\+Rabbit\+Manager.\+start\+Consumers (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\hypertarget{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ab6555364fdd7e95b41802ae24da7f30f}{}\label{classeu_1_1h2020_1_1symbiote_1_1messaging_1_1RabbitManager_ab6555364fdd7e95b41802ae24da7f30f}
+Method gathers all of the rabbit consumer starter methods 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/main/java/eu/h2020/symbiote/messaging/Rabbit\+Manager.\+java\end{DoxyCompactItemize}
