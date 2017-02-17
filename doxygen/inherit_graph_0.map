@@ -1,0 +1,8 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classeu_1_1h2020_1_1symbiote_1_1messaging_1_1PlatformCreationRequestConsumer.html" title="eu.h2020.symbiote.messaging.\lPlatformCreationRequestConsumer" alt="" coords="191,5,421,47"/>
+<area shape="rect" id="node3" href="$classeu_1_1h2020_1_1symbiote_1_1messaging_1_1PlatformModificationRequestConsumer.html" title="eu.h2020.symbiote.messaging.\lPlatformModificationRequestConsumer" alt="" coords="181,71,431,112"/>
+<area shape="rect" id="node4" href="$classeu_1_1h2020_1_1symbiote_1_1messaging_1_1PlatformRemovalRequestConsumer.html" title="eu.h2020.symbiote.messaging.\lPlatformRemovalRequestConsumer" alt="" coords="190,136,422,177"/>
+<area shape="rect" id="node5" href="$classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceCreationRequestConsumer.html" title="eu.h2020.symbiote.messaging.\lResourceCreationRequestConsumer" alt="" coords="188,201,424,243"/>
+<area shape="rect" id="node6" href="$classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceModificationRequestConsumer.html" title="eu.h2020.symbiote.messaging.\lResourceModificationRequestConsumer" alt="" coords="177,267,435,308"/>
+<area shape="rect" id="node7" href="$classeu_1_1h2020_1_1symbiote_1_1messaging_1_1ResourceRemovalRequestConsumer.html" title="eu.h2020.symbiote.messaging.\lResourceRemovalRequestConsumer" alt="" coords="187,332,425,373"/>
+</map>
