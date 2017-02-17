@@ -38,7 +38,7 @@ public class RepositoryManager {
      * Url of given platform is appended with "/" if it does not end with it.
      *
      * @param platform Platform to save - in JSON format
-     * @return PlatformResponse with status and Platform object with unique "id" (generated in MongoDB)
+     * @return PlatformResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
      */
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
@@ -47,8 +47,8 @@ public class RepositoryManager {
             platform.setUrl(platform.getUrl().trim() + "/");
         }
 
-        if (platform.getPlatformId() == null) {
-            log.error("Given platform has null PlatformId!");
+        if (platform.getPlatformId() != null) {
+            log.error("Given platform has not null PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -79,7 +79,7 @@ public class RepositoryManager {
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
      * @param platform Platform to remove - in JSON format
-     * @return PlatformResponse with status and removed Platform object
+     * @return PlatformResponse with Http status code and removed Platform object - in JSON format
      */
     public PlatformResponse removePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
@@ -93,7 +93,6 @@ public class RepositoryManager {
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {
-                //todo do something with resources corresponding to removed platform
                 platformRepository.delete(platform.getPlatformId());
                 log.info("Platform with id: " + platform.getPlatformId() + " removed !");
 
@@ -112,13 +111,13 @@ public class RepositoryManager {
      * It triggers delete and save actions in Platform Repository and if it ends successfully,
      * it returns http status '200' and new modified Platform object.
      * Url of given platform is appended with "/" if it does not end with it.
-     *
-     * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
+     * If given platform has any null field, it is retrieved from DB and fulfilled.
+     * If given platform has no ID or has an empty 'id' field the method will return 'bad request' status.
      * If there is no Platform in database with ID same as given one, it returns 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
      * @param platform Platform to remove - in JSON format
-     * @return PlatformResponse with status and removed Platform object
+     * @return PlatformResponse with Http status code and modified Platform object - in JSON format
      */
     public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
@@ -166,9 +165,14 @@ public class RepositoryManager {
 
     /**
      * Saves resource in MongoDB. Checks if URL in given resource ends with "/" and if not, appends it.
+     * If in database there is no Platform with given PlatformId field, the method will return 'bad request' status.
+     * If given resource has not null Id field, the method will return 'bad request' status.
+     * If in database there is no Platform with given URL same as in given Resource, the method will return 'bad request'.
+     * If saving in DB goes wrong it returns 'internal server error' status.
      *
      * @param resource Resource with given properties in JSON format
-     * @return Resource with added 'Id' (generated in MongoDB), in JSON format
+     * @return ResourceResponse containing Http status code and Resource with added 'Id' (generated in MongoDB),
+     * in JSON format
      */
     public ResourceResponse saveResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
@@ -180,8 +184,10 @@ public class RepositoryManager {
         if (platformRepository.findOne(resource.getPlatformId()) == null) {
             log.error("Given PlatformId does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resource.getId() != null ||
-                !platformRepository.findOne(resource.getPlatformId()).getUrl().equals(resource.getResourceURL())) {
+        } else if (resource.getId() != null){
+            log.error("Resource has not null ID!");
+            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else if (!platformRepository.findOne(resource.getPlatformId()).getUrl().equals(resource.getResourceURL())) {
             log.error("Platform with given resourceURL does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
@@ -207,7 +213,7 @@ public class RepositoryManager {
      * Deletes resource from MongoDB
      *
      * @param resource Resource with given properties in JSON format
-     * @return Deleted Resource, in JSON format
+     * @return ResourceResponse containing Http status code and Deleted Resource, in JSON format
      */
     public ResourceResponse removeResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
@@ -244,7 +250,7 @@ public class RepositoryManager {
      * Modifies given resource in MongoDB
      *
      * @param resource Resource with given properties in JSON format
-     * @return Modified Resource, in JSON format
+     * @return ResourceResponse containing Http status code and Modified Resource, in JSON format
      */
     public ResourceResponse modifyResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();

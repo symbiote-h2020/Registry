@@ -1,6 +1,0 @@
-digraph "eu.h2020.symbiote.model.Location"
-{
-  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
-  node [fontname="Helvetica",fontsize="10",shape=record];
-  Node1 [label="{eu.h2020.symbiote.model.\lLocation\n||+ Location()\l+ getId()\l+ setId()\l+ getName()\l+ setName()\l+ getDescription()\l+ setDescription()\l+ getLatitude()\l+ setLatitude()\l+ getLongitude()\l+ setLongitude()\l+ getAltitude()\l+ setAltitude()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
-}
