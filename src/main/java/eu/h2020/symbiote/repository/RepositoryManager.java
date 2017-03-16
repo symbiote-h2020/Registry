@@ -225,11 +225,11 @@ public class RepositoryManager {
             try {
                 Resource foundResource = resourceRepository.findOne(resource.getId());
                 if (foundResource != null) {
-                    if (foundResource.getLocation() != null) {
-                        Location loc = foundResource.getLocation();
-                        removeLocation(loc);
-                        log.info("Location with id: " + loc.getId() + " removed !");
-                    }
+//                    if (foundResource.getLocation() != null) {
+//                        Location loc = foundResource.getLocation();
+//                        removeLocation(loc);
+//                        log.info("Location with id: " + loc.getId() + " removed !");
+//                    }
                     resourceRepository.delete(resource.getId());
                     resourceResponse.setStatus(HttpStatus.SC_OK);
                     resourceResponse.setResource(resource);
@@ -276,20 +276,20 @@ public class RepositoryManager {
                 //fulfilment of empty Resource fields before saving
                 if (resource.getComment() == null && foundResource.getComment() != null)
                     resource.setComment(foundResource.getComment());
-                if (resource.getFeatureOfInterest() == null && foundResource.getFeatureOfInterest() != null)
-                    resource.setFeatureOfInterest(foundResource.getFeatureOfInterest());
-                if (resource.getLabel() == null && foundResource.getLabel() != null)
-                    resource.setLabel(foundResource.getLabel());
-                if (resource.getOwner() == null && foundResource.getOwner() != null)
-                    resource.setOwner(foundResource.getOwner());
-                if (resource.getBody() == null && foundResource.getBody() != null)
-                    resource.setBody(foundResource.getBody());
-                if (resource.getId() == null && foundResource.getId() != null)
-                    resource.setId(foundResource.getId());
-                if (resource.getObservedProperties() == null && foundResource.getObservedProperties() != null)
-                    resource.setObservedProperties(foundResource.getObservedProperties());
-                if (resource.getLocation() == null && foundResource.getLocation() != null)
-                    resource.setLocation(foundResource.getLocation());
+//                if (resource.getFeatureOfInterest() == null && foundResource.getFeatureOfInterest() != null)
+//                    resource.setFeatureOfInterest(foundResource.getFeatureOfInterest());
+//                if (resource.getLabel() == null && foundResource.getLabel() != null)
+//                    resource.setLabel(foundResource.getLabel());
+//                if (resource.getOwner() == null && foundResource.getOwner() != null)
+//                    resource.setOwner(foundResource.getOwner());
+//                if (resource.getBody() == null && foundResource.getBody() != null)
+//                    resource.setBody(foundResource.getBody());
+//                if (resource.getId() == null && foundResource.getId() != null)
+//                    resource.setId(foundResource.getId());
+//                if (resource.getObservedProperties() == null && foundResource.getObservedProperties() != null)
+//                    resource.setObservedProperties(foundResource.getObservedProperties());
+//                if (resource.getLocation() == null && foundResource.getLocation() != null)
+//                    resource.setLocation(foundResource.getLocation());
 
                 resourceRepository.save(resource);
                 log.info("Resource with id: " + resource.getId() + " modified !");
@@ -304,38 +304,38 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
-    /**
-     * Removes from mongoDB given Location.
-     *
-     * @param location Location object to delete.
-     */
-    private void removeLocation(Location location) {
-        try {
-            locationRepository.delete(location.getId());
-        } catch (Exception e) {
-            log.error("Error occurred during Location deleting from db", e);
-        }
-    }
+//    /**
+//     * Removes from mongoDB given Location.
+//     *
+//     * @param location Location object to delete.
+//     */
+//    private void removeLocation(Location location) {
+//        try {
+//            locationRepository.delete(location.getId());
+//        } catch (Exception e) {
+//            log.error("Error occurred during Location deleting from db", e);
+//        }
+//    }
 
-    /**
-     * Saves in MongoDB given Location.
-     *
-     * @param location Location object to save.
-     * @return saved Location with ID field fulfilled.
-     */
-    public Location saveLocation(Location location) {
-        Location savedLocation = null;
-        log.info("Adding Location to db");
-        if (location == null) {
-            return null;
-        } else {
-            try {
-                savedLocation = locationRepository.save(location);
-                log.info("Location with id: " + savedLocation.getId() + " saved !");
-            } catch (Exception e) {
-                log.error("Error occurred during Location saving in db", e);
-            }
-        }
-        return savedLocation;
-    }
+//    /**
+//     * Saves in MongoDB given Location.
+//     *
+//     * @param location Location object to save.
+//     * @return saved Location with ID field fulfilled.
+//     */
+//    public Location saveLocation(Location location) {
+//        Location savedLocation = null;
+//        log.info("Adding Location to db");
+//        if (location == null) {
+//            return null;
+//        } else {
+//            try {
+//                savedLocation = locationRepository.save(location);
+//                log.info("Location with id: " + savedLocation.getId() + " saved !");
+//            } catch (Exception e) {
+//                log.error("Error occurred during Location saving in db", e);
+//            }
+//        }
+//        return savedLocation;
+//    }
 }

@@ -6,7 +6,6 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.Location;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -70,10 +69,10 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
         try {
             resource = gson.fromJson(message, Resource.class);
-            if (resource.getLocation() != null) {
-                Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
-                resource.setLocation(savedLocation);
-            }
+//            if (resource.getLocation() != null) {
+//                Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
+//                resource.setLocation(savedLocation);
+//            }
             resourceResponse = this.repositoryManager.modifyResource(resource);
             if (resourceResponse.getStatus() == 200) {
                 rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());

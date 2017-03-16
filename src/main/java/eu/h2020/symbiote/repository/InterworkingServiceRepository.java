@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.repository;
 
+import eu.h2020.symbiote.model.InterworkingService;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
