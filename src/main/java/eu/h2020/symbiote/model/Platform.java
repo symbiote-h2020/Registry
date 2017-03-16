@@ -4,6 +4,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
 
+import java.util.List;
+
 /**
  * Registry Platform object
  *
@@ -11,84 +13,98 @@ import org.springframework.data.annotation.Id;
  */
 public class Platform {
     @Id
-    private String platformId;
-    private String name;
-    private String description;
-    private String url;
-    private String informationModelId;
+    private String id;
+    private String label; //todo array of labels
+    private String comment; //todo array of comments
+    private String body;
+    private String format;
+    private List<InterworkingService> interworkingServices;
 
     public Platform() {
-
     }
 
     /**
      * @return
      */
-    public String getPlatformId() {
-        return platformId;
+    public String getId() {
+        return id;
     }
 
     /**
-     * @param platformId
+     * @param id
      */
-    public void setPlatformId(String platformId) {
-        this.platformId = platformId;
-    }
-
-    /**
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**
      * @return
      */
-    public String getDescription() {
-        return description;
+    public String getLabel() {
+        return label;
     }
 
     /**
-     * @param description
+     * @param label
      */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * @param url
-     */
-    public void setUrl(String url) {
-        this.url = url;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     /**
      * @return
      */
-    public String getInformationModelId() {
-        return informationModelId;
+    public String getComment() {
+        return comment;
     }
 
     /**
-     * @param informationModelId
+     * @param comment
      */
-    public void setInformationModelId(String informationModelId) {
-        this.informationModelId = informationModelId;
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    /**
+     * @return
+     */
+    public String getBody() {
+        return body;
+    }
+
+    /**
+     * @param body
+     */
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    /**
+     * @return
+     */
+    public String getFormat() {
+        return format;
+    }
+
+    /**
+     * @param format
+     */
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    /**
+     * @return
+     */
+    public List<InterworkingService> getInterworkingServices() {
+        return interworkingServices;
+    }
+
+    /**
+     * @param interworkingServices
+     */
+    public void setInterworkingServices(List<InterworkingService> interworkingServices) {
+        this.interworkingServices = interworkingServices;
     }
 
     @Override

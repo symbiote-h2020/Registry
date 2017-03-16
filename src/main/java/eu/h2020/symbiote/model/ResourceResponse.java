@@ -7,10 +7,12 @@ package eu.h2020.symbiote.model;
  */
 public class ResourceResponse {
     private int status;
+    private String message;
     private Resource resource;
 
-    public ResourceResponse(int status, Resource resource) {
+    public ResourceResponse(int status, String message, Resource resource) {
         this.status = status;
+        this.message = message;
         this.resource = resource;
     }
 
@@ -43,5 +45,19 @@ public class ResourceResponse {
      */
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    /**
+     * @return
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * @param message
+     */
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

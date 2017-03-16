@@ -23,11 +23,11 @@ public class RegistryUtils {
      */
     public static boolean validate(Platform platform) {
         boolean b;
-        if (platform.getUrl() == null || platform.getName() == null || platform.getInformationModelId() == null) {
+        if (platform.getBody() == null || platform.getLabel() == null || platform.getFormat() == null) {
             log.info("Given platform has some null fields");
             b = false;
-        } else if (platform.getUrl().isEmpty() || platform.getName().isEmpty()
-                || platform.getInformationModelId().isEmpty()) {
+        } else if (platform.getBody().isEmpty() || platform.getLabel().isEmpty()
+                || platform.getFormat().isEmpty()) {
             log.info("Given platform has some empty fields");
             b = false;
         } else {
@@ -44,13 +44,13 @@ public class RegistryUtils {
      */
     public static boolean validate(Resource resource) {
         boolean b;
-        if (resource.getResourceURL() == null || resource.getLocation() == null || resource.getPlatformId() == null
-                || resource.getName() == null || resource.getObservedProperties() == null
+        if (resource.getBody() == null || resource.getLocation() == null || resource.getFormat() == null
+                || resource.getLabel() == null || resource.getObservedProperties() == null
                 || resource.getOwner() == null) {
             log.info("Given resource has some null fields");
             b = false;
-        } else if (resource.getResourceURL().isEmpty() || resource.getPlatformId().isEmpty()
-                || resource.getName().isEmpty() || resource.getObservedProperties().isEmpty()
+        } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty()
+                || resource.getLabel().isEmpty() || resource.getObservedProperties().isEmpty()
                 || resource.getOwner().isEmpty()) {
             log.info("Given resource has some empty fields");
             b = false;

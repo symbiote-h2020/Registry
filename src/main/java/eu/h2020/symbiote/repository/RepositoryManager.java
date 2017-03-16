@@ -43,24 +43,24 @@ public class RepositoryManager {
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
-        if (platform.getUrl().trim().charAt(platform.getUrl().length() - 1) != "/".charAt(0)) {
-            platform.setUrl(platform.getUrl().trim() + "/");
+        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
+            platform.setBody(platform.getBody().trim() + "/");
         }
 
-        if (platform.getPlatformId() != null) {
+        if (platform.getId() != null) {
             log.error("Given platform has not null PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving platform: " + platform.getName());
+                log.info("Saving platform: " + platform.getLabel());
                 //todo check if provided platform already exists - somehow
 
-                if (platform.getUrl().trim().charAt(platform.getUrl().length() - 1) != "/".charAt(0)) {
-                    platform.setUrl(platform.getUrl().trim() + "/");
+                if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
+                    platform.setBody(platform.getBody().trim() + "/");
                 }
 
                 Platform savedPlatform = platformRepository.save(platform);
-                log.info("Platform with id: " + savedPlatform.getPlatformId() + " saved !");
+                log.info("Platform with id: " + savedPlatform.getId() + " saved !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(savedPlatform);
@@ -84,17 +84,17 @@ public class RepositoryManager {
     public PlatformResponse removePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
-        if (platform == null || platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+        if (platform == null || platform.getId().isEmpty() || platform.getId() == null) {
             log.error("Given platform is null or has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resourceRepository.findByPlatformId(platform.getPlatformId()) != null
-                && resourceRepository.findByPlatformId(platform.getPlatformId()).size() > 0) {
+        } else if (resourceRepository.findByPlatformId(platform.getId()) != null
+                && resourceRepository.findByPlatformId(platform.getId()).size() > 0) {
             log.error("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {
-                platformRepository.delete(platform.getPlatformId());
-                log.info("Platform with id: " + platform.getPlatformId() + " removed !");
+                platformRepository.delete(platform.getId());
+                log.info("Platform with id: " + platform.getId() + " removed !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
@@ -122,16 +122,16 @@ public class RepositoryManager {
     public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
-        if (platform.getUrl().trim().charAt(platform.getUrl().length() - 1) != "/".charAt(0)) {
-            platform.setUrl(platform.getUrl().trim() + "/");
+        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
+            platform.setBody(platform.getBody().trim() + "/");
         }
 
         Platform foundPlatform = null;
-        if (platform.getPlatformId().isEmpty() || platform.getPlatformId() == null) {
+        if (platform.getId().isEmpty() || platform.getId() == null) {
             log.error("Given platform has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            foundPlatform = platformRepository.findOne(platform.getPlatformId());
+            foundPlatform = platformRepository.findOne(platform.getId());
         }
 
         if (foundPlatform == null) {
@@ -140,17 +140,17 @@ public class RepositoryManager {
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
-                if (platform.getDescription() == null && foundPlatform.getDescription() != null)
-                    platform.setDescription(foundPlatform.getDescription());
-                if (platform.getInformationModelId() == null && foundPlatform.getInformationModelId() != null)
-                    platform.setInformationModelId(foundPlatform.getInformationModelId());
-                if (platform.getName() == null && foundPlatform.getName() != null)
-                    platform.setName(foundPlatform.getName());
-                if (platform.getUrl() == null && foundPlatform.getUrl() != null)
-                    platform.setUrl(foundPlatform.getUrl());
+                if (platform.getComment() == null && foundPlatform.getComment() != null)
+                    platform.setComment(foundPlatform.getComment());
+                if (platform.getFormat() == null && foundPlatform.getFormat() != null)
+                    platform.setFormat(foundPlatform.getFormat());
+                if (platform.getLabel() == null && foundPlatform.getLabel() != null)
+                    platform.setLabel(foundPlatform.getLabel());
+                if (platform.getBody() == null && foundPlatform.getBody() != null)
+                    platform.setBody(foundPlatform.getBody());
 
                 platformRepository.save(platform);
-                log.info("Platform with id: " + platform.getPlatformId() + " modified !");
+                log.info("Platform with id: " + platform.getId() + " modified !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setPlatform(platform);
@@ -177,22 +177,22 @@ public class RepositoryManager {
     public ResourceResponse saveResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
-        if (resource.getResourceURL().trim().charAt(resource.getResourceURL().length() - 1) != "/".charAt(0)) {
-            resource.setResourceURL(resource.getResourceURL().trim() + "/");
+        if (resource.getBody().trim().charAt(resource.getBody().length() - 1) != "/".charAt(0)) {
+            resource.setBody(resource.getBody().trim() + "/");
         }
 
-        if (platformRepository.findOne(resource.getPlatformId()) == null) {
+        if (platformRepository.findOne(resource.getFormat()) == null) {
             log.error("Given PlatformId does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resource.getId() != null){
             log.error("Resource has not null ID!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (!platformRepository.findOne(resource.getPlatformId()).getUrl().equals(resource.getResourceURL())) {
+        } else if (!platformRepository.findOne(resource.getFormat()).getBody().equals(resource.getBody())) {
             log.error("Platform with given resourceURL does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving Resource: " + resource.getName());
+                log.info("Saving Resource: " + resource.getLabel());
                 //todo check if provided resource already exists - somehow (URL?)
 
                 Resource savedResource = resourceRepository.save(resource);
@@ -255,13 +255,13 @@ public class RepositoryManager {
     public ResourceResponse modifyResource(Resource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
-        if (resource.getResourceURL().trim().charAt(resource.getResourceURL().length() - 1) != "/".charAt(0)) {
-            resource.setResourceURL(resource.getResourceURL().trim() + "/");
+        if (resource.getBody().trim().charAt(resource.getBody().length() - 1) != "/".charAt(0)) {
+            resource.setBody(resource.getBody().trim() + "/");
         }
 
         Resource foundResource = null;
 
-        if (resource.getPlatformId().isEmpty() || resource.getPlatformId() == null) {
+        if (resource.getFormat().isEmpty() || resource.getFormat() == null) {
             log.error("Given resource has empty or null PlatformID!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
@@ -274,16 +274,16 @@ public class RepositoryManager {
         } else {
             try {
                 //fulfilment of empty Resource fields before saving
-                if (resource.getDescription() == null && foundResource.getDescription() != null)
-                    resource.setDescription(foundResource.getDescription());
+                if (resource.getComment() == null && foundResource.getComment() != null)
+                    resource.setComment(foundResource.getComment());
                 if (resource.getFeatureOfInterest() == null && foundResource.getFeatureOfInterest() != null)
                     resource.setFeatureOfInterest(foundResource.getFeatureOfInterest());
-                if (resource.getName() == null && foundResource.getName() != null)
-                    resource.setName(foundResource.getName());
+                if (resource.getLabel() == null && foundResource.getLabel() != null)
+                    resource.setLabel(foundResource.getLabel());
                 if (resource.getOwner() == null && foundResource.getOwner() != null)
                     resource.setOwner(foundResource.getOwner());
-                if (resource.getResourceURL() == null && foundResource.getResourceURL() != null)
-                    resource.setResourceURL(foundResource.getResourceURL());
+                if (resource.getBody() == null && foundResource.getBody() != null)
+                    resource.setBody(foundResource.getBody());
                 if (resource.getId() == null && foundResource.getId() != null)
                     resource.setId(foundResource.getId());
                 if (resource.getObservedProperties() == null && foundResource.getObservedProperties() != null)

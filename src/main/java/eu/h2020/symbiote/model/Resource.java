@@ -1,8 +1,8 @@
 package eu.h2020.symbiote.model;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
-
-import java.util.List;
 
 /**
  * Registry Resource object
@@ -12,14 +12,10 @@ import java.util.List;
 public class Resource {
     @Id
     private String id;
-    private String name;
-    private String owner;
-    private String description;
-    private List<String> observedProperties;
-    private String resourceURL;
-    private Location location;
-    private String featureOfInterest = null;
-    private String platformId;
+    private String label; //todo array of labels
+    private String comment; //todo array of comments
+    private String body;
+    private String format;
 
     public Resource() {
     }
@@ -41,112 +37,66 @@ public class Resource {
     /**
      * @return
      */
-    public String getName() {
-        return name;
+    public String getLabel() {
+        return label;
     }
 
     /**
-     * @param name
+     * @param label
      */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return
-     */
-    public String getOwner() {
-        return owner;
-    }
-
-    /**
-     * @param owner
-     */
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     /**
      * @return
      */
-    public String getDescription() {
-        return description;
+    public String getComment() {
+        return comment;
     }
 
     /**
-     * @param description
+     * @param comment
      */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return
-     */
-    public List<String> getObservedProperties() {
-        return observedProperties;
-    }
-
-    /**
-     * @param observedProperties
-     */
-    public void setObservedProperties(List<String> observedProperties) {
-        this.observedProperties = observedProperties;
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     /**
      * @return
      */
-    public String getResourceURL() {
-        return resourceURL;
+    public String getBody() {
+        return body;
     }
 
     /**
-     * @param resourceURL
+     * @param body
      */
-    public void setResourceURL(String resourceURL) {
-        this.resourceURL = resourceURL;
-    }
-
-    /**
-     * @return
-     */
-    public Location getLocation() {
-        return location;
-    }
-
-    /**
-     * @param location
-     */
-    public void setLocation(Location location) {
-        this.location = location;
+    public void setBody(String body) {
+        this.body = body;
     }
 
     /**
      * @return
      */
-    public String getFeatureOfInterest() {
-        return featureOfInterest;
+    public String getFormat() {
+        return format;
     }
 
     /**
-     * @param featureOfInterest
+     * @param format
      */
-    public void setFeatureOfInterest(String featureOfInterest) {
-        this.featureOfInterest = featureOfInterest;
+    public void setFormat(String format) {
+        this.format = format;
     }
 
-    /**
-     * @return
-     */
-    public String getPlatformId() {
-        return platformId;
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
     }
 
-    /**
-     * @param platformId
-     */
-    public void setPlatformId(String platformId) {
-        this.platformId = platformId;
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
     }
 }

@@ -17,7 +17,6 @@ public class Location {
     private double altitude;
 
     public Location() {
-
     }
 
     /**
