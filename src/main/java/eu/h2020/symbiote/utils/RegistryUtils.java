@@ -23,10 +23,10 @@ public class RegistryUtils {
      */
     public static boolean validate(Platform platform) {
         boolean b;
-        if (platform.getBody() == null || platform.getLabel() == null || platform.getFormat() == null) {
+        if (platform.getBody() == null || platform.getLabels() == null || platform.getFormat() == null) {
             log.info("Given platform has some null fields");
             b = false;
-        } else if (platform.getBody().isEmpty() || platform.getLabel().isEmpty()
+        } else if (platform.getBody().isEmpty() || platform.getLabels().isEmpty()
                 || platform.getFormat().isEmpty()) {
             log.info("Given platform has some empty fields");
             b = false;
@@ -44,10 +44,10 @@ public class RegistryUtils {
      */
     public static boolean validate(Resource resource) { //todo extend to all fields
         boolean b;
-        if (resource.getBody() == null|| resource.getFormat() == null || resource.getLabel() == null) {
+        if (resource.getBody() == null|| resource.getFormat() == null || resource.getLabels() == null) {
             log.info("Given resource has some null fields");
             b = false;
-        } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty() || resource.getLabel().isEmpty()) {
+        } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty() || resource.getLabels().isEmpty()) {
             log.info("Given resource has some empty fields");
             b = false;
         } else {

@@ -3,6 +3,7 @@ package eu.h2020.symbiote.model;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 
 /**
  * Created by mateuszl on 14.03.2017.
@@ -12,6 +13,7 @@ public class InterworkingService {
     @Id
     private String id;
     private String url;
+    @DBRef
     private InformationModel informationModel;
 
     public String getId() {

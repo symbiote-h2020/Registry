@@ -49,7 +49,7 @@ public class RepositoryManager {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving platform: " + platform.getLabel());
+                log.info("Saving platform: " + platform.getLabels());
                 //todo check if provided platform already exists - somehow
 
                 if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
@@ -137,12 +137,12 @@ public class RepositoryManager {
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
-                if (platform.getComment() == null && foundPlatform.getComment() != null)
-                    platform.setComment(foundPlatform.getComment());
+                if (platform.getComments() == null && foundPlatform.getComments() != null)
+                    platform.setComments(foundPlatform.getComments());
                 if (platform.getFormat() == null && foundPlatform.getFormat() != null)
                     platform.setFormat(foundPlatform.getFormat());
-                if (platform.getLabel() == null && foundPlatform.getLabel() != null)
-                    platform.setLabel(foundPlatform.getLabel());
+                if (platform.getLabels() == null && foundPlatform.getLabels() != null)
+                    platform.setLabels(foundPlatform.getLabels());
                 if (platform.getBody() == null && foundPlatform.getBody() != null)
                     platform.setBody(foundPlatform.getBody());
 
@@ -189,7 +189,7 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving Resource: " + resource.getLabel());
+                log.info("Saving Resource: " + resource.getLabels());
                 //todo check if provided resource already exists - somehow (URL?)
 
                 Resource savedResource = resourceRepository.save(resource);
@@ -244,7 +244,8 @@ public class RepositoryManager {
     }
 
     /**
-     * Modifies given resource in MongoDB
+     * Modifies given resource in MongoDB. If given resource does not consist some of the fields, empty ones are
+     * fulfilled with data from the database.
      *
      * @param resource Resource with given properties in JSON format
      * @return ResourceResponse containing Http status code and Modified Resource, in JSON format
@@ -271,12 +272,12 @@ public class RepositoryManager {
         } else {
             try {
                 //fulfilment of empty Resource fields before saving
-                if (resource.getComment() == null && foundResource.getComment() != null)
-                    resource.setComment(foundResource.getComment());
+                if (resource.getComments() == null && foundResource.getComments() != null)
+                    resource.setComments(foundResource.getComments());
 //                if (resource.getFeatureOfInterest() == null && foundResource.getFeatureOfInterest() != null)
 //                    resource.setFeatureOfInterest(foundResource.getFeatureOfInterest());
-//                if (resource.getLabel() == null && foundResource.getLabel() != null)
-//                    resource.setLabel(foundResource.getLabel());
+//                if (resource.getLabels() == null && foundResource.getLabels() != null)
+//                    resource.setLabels(foundResource.getLabels());
 //                if (resource.getOwner() == null && foundResource.getOwner() != null)
 //                    resource.setOwner(foundResource.getOwner());
 //                if (resource.getBody() == null && foundResource.getBody() != null)

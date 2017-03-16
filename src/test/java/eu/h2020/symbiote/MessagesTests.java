@@ -74,8 +74,8 @@ public class MessagesTests {
 //        String name = "platform" + rand.nextInt(50000);
 //
 //        platform.setId(platformId);
-//        platform.setLabel(name);
-//        platform.setComment("platform_description");
+//        platform.setLabels(name);
+//        platform.setComments("platform_description");
 //        platform.setBody("http://www.symbIoTe.com");
 //        platform.setFormat("platform_info_model");
 //

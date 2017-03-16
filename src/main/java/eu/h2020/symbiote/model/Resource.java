@@ -3,6 +3,9 @@ package eu.h2020.symbiote.model;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+
+import java.util.List;
 
 /**
  * Registry Resource object
@@ -12,10 +15,12 @@ import org.springframework.data.annotation.Id;
 public class Resource {
     @Id
     private String id;
-    private String label; //todo array of labels
-    private String comment; //todo array of comments
+    private List<String> labels;
+    private List<String> comments;
     private String body;
     private String format;
+    @DBRef
+    private InterworkingService interworkingService;
 
     public Resource() {
     }
@@ -37,29 +42,29 @@ public class Resource {
     /**
      * @return
      */
-    public String getLabel() {
-        return label;
+    public List<String> getLabels() {
+        return labels;
     }
 
     /**
-     * @param label
+     * @param labels
      */
-    public void setLabel(String label) {
-        this.label = label;
+    public void setLabels(List<String> labels) {
+        this.labels = labels;
     }
 
     /**
      * @return
      */
-    public String getComment() {
-        return comment;
+    public List<String> getComments() {
+        return comments;
     }
 
     /**
-     * @param comment
+     * @param comments
      */
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setComments(List<String> comments) {
+        this.comments = comments;
     }
 
     /**
@@ -88,6 +93,20 @@ public class Resource {
      */
     public void setFormat(String format) {
         this.format = format;
+    }
+
+    /**
+     * @return
+     */
+    public InterworkingService getInterworkingService() {
+        return interworkingService;
+    }
+
+    /**
+     * @param interworkingService
+     */
+    public void setInterworkingService(InterworkingService interworkingService) {
+        this.interworkingService = interworkingService;
     }
 
     @Override
