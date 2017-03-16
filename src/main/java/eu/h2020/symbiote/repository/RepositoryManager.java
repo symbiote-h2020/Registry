@@ -18,15 +18,12 @@ public class RepositoryManager {
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
-    private LocationRepository locationRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
-                             ResourceRepository resourceRepository,
-                             LocationRepository locationRepository) {
+                             ResourceRepository resourceRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
-        this.locationRepository = locationRepository;
     }
 
     /**

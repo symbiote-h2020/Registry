@@ -42,16 +42,12 @@ public class RegistryUtils {
      * @param resource resource to check
      * @return true if it has all the fields and neither is empty.
      */
-    public static boolean validate(Resource resource) {
+    public static boolean validate(Resource resource) { //todo extend to all fields
         boolean b;
-        if (resource.getBody() == null || resource.getLocation() == null || resource.getFormat() == null
-                || resource.getLabel() == null || resource.getObservedProperties() == null
-                || resource.getOwner() == null) {
+        if (resource.getBody() == null|| resource.getFormat() == null || resource.getLabel() == null) {
             log.info("Given resource has some null fields");
             b = false;
-        } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty()
-                || resource.getLabel().isEmpty() || resource.getObservedProperties().isEmpty()
-                || resource.getOwner().isEmpty()) {
+        } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty() || resource.getLabel().isEmpty()) {
             log.info("Given resource has some empty fields");
             b = false;
         } else {
