@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class RepositoryManager {
 
+    //// TODO: 17.03.2017 methods major update !!
+
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;

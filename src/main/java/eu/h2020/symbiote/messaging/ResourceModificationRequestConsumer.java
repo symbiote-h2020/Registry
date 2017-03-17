@@ -74,6 +74,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             resources = gson.fromJson(message, listType);
             for (Resource resource:resources) {
                 if (RegistryUtils.validate(resource)) {
+                    resource = RegistryUtils.getRdfBodyForObject(resource);
                     resourceResponse = this.repositoryManager.modifyResource(resource);
                     if (resourceResponse.getStatus() == 200) {
                         rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());

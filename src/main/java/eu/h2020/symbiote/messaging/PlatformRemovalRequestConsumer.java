@@ -74,7 +74,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
             platforms = gson.fromJson(message, listType);
             for (Platform platform : platforms) {
                 if (RegistryUtils.validate(platform)) {
-                    platform = RegistryUtils.getRdfBodyFromObject(platform);
+                    platform = RegistryUtils.getRdfBodyForObject(platform);
                     //todo czy do usuwania nie wystarczyłaby lista IDków?
                     platformResponse = this.repositoryManager.removePlatform(platform);
                     if (platformResponse.getStatus() == 200) {

@@ -75,7 +75,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
             for (Platform platform : platforms) {
                 if (RegistryUtils.validate(platform)) {
-                    platform = RegistryUtils.getRdfBodyFromObject(platform);
+                    platform = RegistryUtils.getRdfBodyForObject(platform);
                     platformResponse = this.repositoryManager.savePlatform(platform);
                     if (platformResponse.getStatus() == 200) {
                         rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());

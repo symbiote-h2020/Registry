@@ -58,19 +58,19 @@ public class RegistryUtils {
 
     //todo cooperation with SemanticManager
 
-    public static Resource getRdfBodyFromObject(Resource resource){
+    public static Resource getRdfBodyForObject(Resource resource){
         return resource;
     }
 
-    public static Resource getObjectFromRdf(Resource resource){
+    public static Resource getObjectForRdf(Resource resource){
         return resource;
     }
 
-    public static Platform getRdfBodyFromObject(Platform platform){
+    public static Platform getRdfBodyForObject(Platform platform){
         return platform;
     }
 
-    public static Platform getObjectFromRdf(Platform platform){
+    public static Platform getObjectForRdf(Platform platform){
         return platform;
     }
 

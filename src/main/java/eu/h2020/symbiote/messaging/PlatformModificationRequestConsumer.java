@@ -75,8 +75,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
             for (Platform platform : platforms) {
                 if (RegistryUtils.validate(platform)) {
-                    platform = RegistryUtils.getRdfBodyFromObject(platform);
-
+                    platform = RegistryUtils.getRdfBodyForObject(platform);
                     platformResponse = this.repositoryManager.modifyPlatform(platform);
                     if (platformResponse.getStatus() == 200) {
                         rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());

@@ -74,6 +74,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             resources = gson.fromJson(message, listType);
             for (Resource resource:resources) {
                 if (RegistryUtils.validate(resource)) {
+                    resource = RegistryUtils.getRdfBodyForObject(resource);
                     resourceResponse = this.repositoryManager.removeResource(resource);
                     if (resourceResponse.getStatus() == 200) {
                         rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
