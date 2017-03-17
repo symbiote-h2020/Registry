@@ -62,10 +62,10 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         String response;
-        String message = new String(body, "UTF-8");
         List<Platform> platforms;
         PlatformResponse platformResponse = new PlatformResponse();
-        List<PlatformResponse> platformResponses = new ArrayList<>();
+        List<PlatformResponse> platformResponseList = new ArrayList<>();
+        String message = new String(body, "UTF-8");
 
         log.info(" [x] Received platforms to create: '" + message + "'");
         try {
@@ -86,17 +86,17 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                     log.error("Given Platform has some fields null or empty");
                     platformResponse.setStatus(400);
                 }
-                platformResponses.add(platformResponse);
+                platformResponseList.add(platformResponse);
             }
 
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Platforms from Json", e);
             platformResponse.setStatus(400);
             platformResponse.setMessage("Error occured during getting Platforms from Json");
-            platformResponses.add(platformResponse);
+            platformResponseList.add(platformResponse);
         }
 
-        response = gson.toJson(platformResponses);
+        response = gson.toJson(platformResponseList);
 
         rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }

@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -14,6 +15,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
@@ -58,31 +62,38 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         String response;
-        Resource resource;
         ResourceResponse resourceResponse = new ResourceResponse();
+        List<Resource> resources;
+        List<ResourceResponse> resourceResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
 
-        log.info(" [x] Received resource to create: '" + message + "'");
+        log.info(" [x] Received resources to create: '" + message + "'");
 
         try {
-            resource = gson.fromJson(message, Resource.class);
-            if (RegistryUtils.validate(resource)) {
-//                Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
-//                resource.setLocation(savedLocation);
-                resourceResponse = this.repositoryManager.saveResource(resource);
-                if (resourceResponse.getStatus() == 200) {
-                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+            Type listType = new TypeToken<ArrayList<Resource>>() {
+            }.getType();
+            resources = gson.fromJson(message, listType);
+            for (Resource resource:resources) {
+                if (RegistryUtils.validate(resource)) {
+                    resourceResponse = this.repositoryManager.saveResource(resource);
+                    if (resourceResponse.getStatus() == 200) {
+                        rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+                    }
+                } else {
+                    log.error("Given Resource has some fields null or empty");
+                    resourceResponse.setStatus(400);
                 }
-            } else {
-                log.error("Given Resource has some fields null or empty");
-                resourceResponse.setStatus(400);
+                resourceResponseList.add(resourceResponse);
             }
+
         } catch (JsonSyntaxException e) {
-            log.error("Error occurred during Resource saving to db", e);
+            log.error("Error occured during getting Resources from Json", e);
             resourceResponse.setStatus(400);
+            resourceResponse.setMessage("Error occured during getting Resources from Json");
+            resourceResponseList.add(resourceResponse);
         }
 
-        response = gson.toJson(resourceResponse);
+        response = gson.toJson(resourceResponseList);
 
         rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
