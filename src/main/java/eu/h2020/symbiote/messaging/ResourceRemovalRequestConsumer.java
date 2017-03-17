@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -9,10 +10,14 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Removal actions
@@ -55,25 +60,37 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        String response = "";
+        String response;
+        ResourceResponse resourceResponse = new ResourceResponse();
+        List<Resource> resources;
+        List<ResourceResponse> resourceResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
+
         log.info(" [x] Received resource to remove: '" + message + "'");
 
-        Resource resource;
-        ResourceResponse resourceResponse = new ResourceResponse();
         try {
-            resource = gson.fromJson(message, Resource.class);
-            resourceResponse = this.repositoryManager.removeResource(resource);
-            if (resourceResponse.getStatus()==200) {
-                rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
+            Type listType = new TypeToken<ArrayList<Resource>>() {
+            }.getType();
+            resources = gson.fromJson(message, listType);
+            for (Resource resource:resources) {
+                if (RegistryUtils.validate(resource)) {
+                    resourceResponse = this.repositoryManager.removeResource(resource);
+                    if (resourceResponse.getStatus() == 200) {
+                        rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
+                    }
+                } else {
+                    log.error("Given Resource has some fields null or empty");
+                    resourceResponse.setStatus(400);
+                }
+                resourceResponseList.add(resourceResponse);
             }
         } catch (JsonSyntaxException e) {
-            log.error("Error occured during Resource deleting in db", e);
+            log.error("Error occured during getting Resources from Json", e);
             resourceResponse.setStatus(400);
+            resourceResponse.setMessage("Error occured during getting Resources from Json");
+            resourceResponseList.add(resourceResponse);
         }
-
-        response = gson.toJson(resourceResponse);
-
+        response = gson.toJson(resourceResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

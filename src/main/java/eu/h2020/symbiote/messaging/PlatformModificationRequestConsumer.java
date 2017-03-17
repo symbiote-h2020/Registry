@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -9,10 +10,14 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Modification actions
@@ -56,25 +61,39 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         String response;
-        Platform platform;
+        List<Platform> platforms;
         PlatformResponse platformResponse = new PlatformResponse();
-
+        List<PlatformResponse> platformResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
+
         log.info(" [x] Received platform to modify: '" + message + "'");
 
         try {
-            platform = gson.fromJson(message, Platform.class);
-            platformResponse = this.repositoryManager.modifyPlatform(platform);
-            if (platformResponse.getStatus() == 200) {
-                rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
+            Type listType = new TypeToken<ArrayList<Platform>>() {
+            }.getType();
+            platforms = gson.fromJson(message, listType);
+
+            for (Platform platform : platforms) {
+                if (RegistryUtils.validate(platform)) {
+                    platform = RegistryUtils.getRdfBodyFromObject(platform);
+
+                    platformResponse = this.repositoryManager.modifyPlatform(platform);
+                    if (platformResponse.getStatus() == 200) {
+                        rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
+                    }
+                } else {
+                    log.error("Given Platform has some fields null or empty");
+                    platformResponse.setStatus(400);
+                }
+                platformResponseList.add(platformResponse);
             }
         } catch (JsonSyntaxException e) {
-            log.error("Error occured during Platform saving to db", e);
+            log.error("Error occured during getting Platforms from Json", e);
             platformResponse.setStatus(400);
+            platformResponse.setMessage("Error occured during getting Platforms from Json");
+            platformResponseList.add(platformResponse);
         }
-
-        response = gson.toJson(platformResponse);
-
+        response = gson.toJson(platformResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

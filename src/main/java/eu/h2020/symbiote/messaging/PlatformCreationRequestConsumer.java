@@ -69,7 +69,6 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
         log.info(" [x] Received platforms to create: '" + message + "'");
         try {
-
             Type listType = new TypeToken<ArrayList<Platform>>() {
             }.getType();
             platforms = gson.fromJson(message, listType);
@@ -77,7 +76,6 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             for (Platform platform : platforms) {
                 if (RegistryUtils.validate(platform)) {
                     platform = RegistryUtils.getRdfBodyFromObject(platform);
-
                     platformResponse = this.repositoryManager.savePlatform(platform);
                     if (platformResponse.getStatus() == 200) {
                         rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
@@ -88,16 +86,13 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 }
                 platformResponseList.add(platformResponse);
             }
-
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Platforms from Json", e);
             platformResponse.setStatus(400);
             platformResponse.setMessage("Error occured during getting Platforms from Json");
             platformResponseList.add(platformResponse);
         }
-
         response = gson.toJson(platformResponseList);
-
         rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

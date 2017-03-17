@@ -85,16 +85,13 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 }
                 resourceResponseList.add(resourceResponse);
             }
-
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Resources from Json", e);
             resourceResponse.setStatus(400);
             resourceResponse.setMessage("Error occured during getting Resources from Json");
             resourceResponseList.add(resourceResponse);
         }
-
         response = gson.toJson(resourceResponseList);
-
         rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }
