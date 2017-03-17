@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -14,10 +15,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Creation actions
- *
+ * <p>
  * Created by mateuszl
  */
 public class PlatformCreationRequestConsumer extends DefaultConsumer {
@@ -59,39 +63,41 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         String response;
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received platform to create: '" + message + "'");
-
-        Platform platform;
+        List<Platform> platforms;
         PlatformResponse platformResponse = new PlatformResponse();
+        List<PlatformResponse> platformResponses = new ArrayList<>();
+
+        log.info(" [x] Received platforms to create: '" + message + "'");
         try {
-            platform = gson.fromJson(message, Platform.class);
-            if (RegistryUtils.validate(platform)) {
-                platformResponse = this.repositoryManager.savePlatform(platform);
-                if (platformResponse.getStatus() == 200) {
-                    rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+
+            Type listType = new TypeToken<ArrayList<Platform>>() {
+            }.getType();
+            platforms = gson.fromJson(message, listType);
+
+            for (Platform platform : platforms) {
+                if (RegistryUtils.validate(platform)) {
+                    platform = RegistryUtils.getRdfBodyFromObject(platform);
+
+                    platformResponse = this.repositoryManager.savePlatform(platform);
+                    if (platformResponse.getStatus() == 200) {
+                        rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+                    }
+                } else {
+                    log.error("Given Platform has some fields null or empty");
+                    platformResponse.setStatus(400);
                 }
-            } else {
-                log.error("Given Platform has some fields null or empty");
-                platformResponse.setStatus(400);
+                platformResponses.add(platformResponse);
             }
+
         } catch (JsonSyntaxException e) {
-            log.error("Error occured during Platform saving to db", e);
+            log.error("Error occured during getting Platforms from Json", e);
             platformResponse.setStatus(400);
+            platformResponse.setMessage("Error occured during getting Platforms from Json");
+            platformResponses.add(platformResponse);
         }
-        response = gson.toJson(platformResponse);
 
-        if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
+        response = gson.toJson(platformResponses);
 
-            AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                    .Builder()
-                    .correlationId(properties.getCorrelationId())
-                    .build();
-
-            this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-            log.info("Message with status: " + platformResponse.getStatus() + " sent back");
-        } else {
-            log.warn("Received RPC message without ReplyTo or CorrelationId props.");
-        }
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

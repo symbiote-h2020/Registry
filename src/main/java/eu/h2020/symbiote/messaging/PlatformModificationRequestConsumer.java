@@ -62,11 +62,6 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to modify: '" + message + "'");
 
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
         try {
             platform = gson.fromJson(message, Platform.class);
             platformResponse = this.repositoryManager.modifyPlatform(platform);
@@ -79,9 +74,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         }
 
         response = gson.toJson(platformResponse);
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
 
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

@@ -59,11 +59,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to remove: '" + message + "'");
 
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
         Platform platform;
         PlatformResponse platformResponse = new PlatformResponse();
         try {
@@ -78,9 +73,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         }
 
         response = gson.toJson(platformResponse);
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
 
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+
+        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

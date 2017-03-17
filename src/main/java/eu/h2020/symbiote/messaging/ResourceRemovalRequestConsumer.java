@@ -59,11 +59,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received resource to remove: '" + message + "'");
 
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
         Resource resource;
         ResourceResponse resourceResponse = new ResourceResponse();
         try {
@@ -79,9 +74,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         response = gson.toJson(resourceResponse);
 
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + resourceResponse.getStatus() + " sent back");
-
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }

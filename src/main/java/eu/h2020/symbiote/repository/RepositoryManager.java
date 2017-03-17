@@ -29,7 +29,6 @@ public class RepositoryManager {
     /**
      * Saves given Platform in MongoDB. It triggers save action in Platform Repository and if it ends successfully
      * it returns http status '200' and Platform object with generated ID field.
-     * If given platform URL noe ends with "/", method appends it.
      * If given platform is null or it already has an id the method will return 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      * Url of given platform is appended with "/" if it does not end with it.
@@ -39,10 +38,10 @@ public class RepositoryManager {
      */
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
-
-        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
-            platform.setBody(platform.getBody().trim() + "/");
-        }
+//
+//        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
+//            platform.setBody(platform.getBody().trim() + "/");
+//        }
 
         if (platform.getId() != null) {
             log.error("Given platform has not null PlatformId!");

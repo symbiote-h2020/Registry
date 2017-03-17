@@ -437,4 +437,29 @@ public class RabbitManager {
             e.printStackTrace();
         }
     }
+
+    /**Sends reply message with given body to rabbit queue, for specified RPC sender.
+     *
+     * @param consumer
+     * @param properties
+     * @param envelope
+     * @param response
+     * @throws IOException
+     */
+    public void sendReplyMessage(DefaultConsumer consumer, AMQP.BasicProperties properties, Envelope envelope,
+                                 String response) throws IOException {
+        if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
+
+            AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                    .Builder()
+                    .correlationId(properties.getCorrelationId())
+                    .build();
+
+            consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
+            log.info("Message sent back"); //todo insert content of message also?
+        } else {
+            log.warn("Received RPC message without ReplyTo or CorrelationId props.");
+        }
+        consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
+    }
 }

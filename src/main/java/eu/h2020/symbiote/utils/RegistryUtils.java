@@ -55,4 +55,23 @@ public class RegistryUtils {
         }
         return b;
     }
+
+    //todo cooperation with SemanticManager
+
+    public static Resource getRdfBodyFromObject(Resource resource){
+        return resource;
+    }
+
+    public static Resource getObjectFromRdf(Resource resource){
+        return resource;
+    }
+
+    public static Platform getRdfBodyFromObject(Platform platform){
+        return platform;
+    }
+
+    public static Platform getObjectFromRdf(Platform platform){
+        return platform;
+    }
+
 }

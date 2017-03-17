@@ -17,7 +17,7 @@ import java.io.IOException;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
- *
+ * <p>
  * Created by mateuszl
  */
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
@@ -57,17 +57,13 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        String response = "";
-        String message = new String(body, "UTF-8");
-        log.info(" [x] Received resource to create: '" + message + "'");
-
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
+        String response;
         Resource resource;
         ResourceResponse resourceResponse = new ResourceResponse();
+        String message = new String(body, "UTF-8");
+
+        log.info(" [x] Received resource to create: '" + message + "'");
+
         try {
             resource = gson.fromJson(message, Resource.class);
             if (RegistryUtils.validate(resource)) {
@@ -88,9 +84,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         response = gson.toJson(resourceResponse);
 
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + resourceResponse.getStatus() + " sent back");
-
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
     }
 }
