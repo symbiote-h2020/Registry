@@ -110,6 +110,19 @@ public class Platform {
     }
 
     @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Platform with id: " + this.getId() + ", body: " + body + ", format: " + format + ", labels: [");
+        this.getLabels().forEach(s->sb.append(s + ", "));
+        sb.append("], comments: [");
+        this.getComments().forEach(s->sb.append(s + ", "));
+        sb.append("], interworkingServices: [");
+        this.getInterworkingServices().forEach(s->sb.append(s +", "));
+        sb.append("].");
+        return  sb.toString();
+    }
+
+    @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
     }

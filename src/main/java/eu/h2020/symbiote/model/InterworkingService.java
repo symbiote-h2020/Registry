@@ -42,8 +42,8 @@ public class InterworkingService {
 
     @Override
     public String toString() {
-        return  "InterworkingService with Id: " + this.getId() + ", URL: " + this.getUrl() +
-                ", Inf. Model: " + this.getInformationModel();
+        return  "InterworkingService with id: " + this.getId() + ", url: " + this.getUrl() +
+                ", informationModel: " + this.getInformationModel();
     }
 
     @Override

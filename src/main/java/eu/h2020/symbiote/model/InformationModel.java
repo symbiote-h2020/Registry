@@ -40,7 +40,7 @@ public class InformationModel {
 
     @Override
     public String toString() {
-        return  "InformationModel with URI: " + this.getUri() + ", body: " + body + ", format: " + format;
+        return  "InformationModel with uri: " + this.getUri() + ", body: " + body + ", format: " + format;
     }
 
     @Override

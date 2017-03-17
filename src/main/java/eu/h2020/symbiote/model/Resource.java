@@ -110,6 +110,17 @@ public class Resource {
     }
 
     @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Resource with id: " + this.getId() + ", body: " + body + ", format: " + format + ", labels: [");
+        this.getLabels().forEach(s->sb.append(s + ", "));
+        sb.append("], comments: [");
+        this.getComments().forEach(s->sb.append(s + ", "));
+        sb.append("], interworkingService: " + this.getInterworkingService() +".");
+        return  sb.toString();
+    }
+
+    @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
     }
