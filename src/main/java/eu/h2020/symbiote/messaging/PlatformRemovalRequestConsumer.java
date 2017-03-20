@@ -66,7 +66,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         List<PlatformResponse> platformResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
 
-        log.info(" [x] Received platform to remove: '" + message + "'");
+        log.info(" [x] Received platforms to remove: '" + message + "'");
 
         try {
             Type listType = new TypeToken<ArrayList<Platform>>() {
@@ -74,8 +74,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
             platforms = gson.fromJson(message, listType);
             for (Platform platform : platforms) {
                 if (RegistryUtils.validate(platform)) {
-                    platform = RegistryUtils.getRdfBodyForObject(platform); //todo needed here?
-                    //todo czy do usuwania nie wystarczyłaby lista IDków?
+                    platform = RegistryUtils.getRdfBodyForObject(platform);
                     platformResponse = this.repositoryManager.removePlatform(platform);
                     if (platformResponse.getStatus() == 200) {
                         rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());

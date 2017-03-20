@@ -128,6 +128,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
 
+        //if resources List is empty, platformResponseList will still contain needed information
         response = gson.toJson(platformResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }

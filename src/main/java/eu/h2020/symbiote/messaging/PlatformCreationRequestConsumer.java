@@ -110,7 +110,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             log.error("Unable to get OperationRequest from Message body!");
             e.printStackTrace();
         }
-        //todo platforms list can be empty
+
         for (Platform platform : platforms) {
             if (RegistryUtils.validate(platform)) {
                 platform = RegistryUtils.getRdfBodyForObject(platform);
@@ -126,6 +126,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
 
+        //if platforms List is empty, platformResponseList will still contain needed information
         response = gson.toJson(platformResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }

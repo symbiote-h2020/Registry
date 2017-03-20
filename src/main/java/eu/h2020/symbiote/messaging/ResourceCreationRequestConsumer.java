@@ -112,7 +112,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             log.error("Unable to get OperationRequest from Message body!");
             e.printStackTrace();
         }
-        //todo resources list can be empty
+
         for (Resource resource : resources) {
             if (RegistryUtils.validate(resource)) {
                 resource = RegistryUtils.getRdfBodyForObject(resource);
@@ -128,6 +128,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             resourceResponseList.add(resourceResponse);
         }
 
+        //if resources List is empty, resourceResponseList will still contain needed information
         response = gson.toJson(resourceResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }

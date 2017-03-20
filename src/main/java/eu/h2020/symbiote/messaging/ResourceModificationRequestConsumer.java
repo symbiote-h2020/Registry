@@ -7,8 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceResponse;
+import eu.h2020.symbiote.model.*;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -60,37 +59,70 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
+        OperationRequest request;
+        SemanticResponse semanticResponse;
         String response;
+        List<Resource> resources = new ArrayList<>();
         ResourceResponse resourceResponse = new ResourceResponse();
-        List<Resource> resources;
         List<ResourceResponse> resourceResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
-
-        log.info(" [x] Received resource to modify: '" + message + "'");
+        Type listType = new TypeToken<ArrayList<Resource>>() {
+        }.getType();
+        log.info(" [x] Received resources to modify: '" + message + "'");
 
         try {
-            Type listType = new TypeToken<ArrayList<Resource>>() {
-            }.getType();
-            resources = gson.fromJson(message, listType);
-            for (Resource resource:resources) {
-                if (RegistryUtils.validate(resource)) {
-                    resource = RegistryUtils.getRdfBodyForObject(resource);
-                    resourceResponse = this.repositoryManager.modifyResource(resource);
-                    if (resourceResponse.getStatus() == 200) {
-                        rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());
+            request = gson.fromJson(message, OperationRequest.class);
+            switch (request.getType()) {
+                case RDF:
+                    try {
+                        semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
+                        if (semanticResponse.getStatus() == 200) {
+                            resources = gson.fromJson(semanticResponse.getBody(), listType);
+                        } else {
+                            log.error("Error occured during rdf verification. Semantic Manager info: "
+                                    + semanticResponse.getMessage());
+                            resourceResponse.setStatus(400);
+                            resourceResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
+                                    + semanticResponse.getMessage());
+                            resourceResponseList.add(resourceResponse);
+                        }
+                    } catch (JsonSyntaxException e) {
+                        log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
+                        resourceResponse.setStatus(400);
+                        resourceResponse.setMessage("Error occured during getting Resources from Json");
+                        resourceResponseList.add(resourceResponse);
                     }
-                } else {
-                    log.error("Given Resource has some fields null or empty");
-                    resourceResponse.setStatus(400);
-                }
-                resourceResponseList.add(resourceResponse);
+                case BASIC:
+                    try {
+                        resources = gson.fromJson(request.getBody(), listType);
+                    } catch (JsonSyntaxException e) {
+                        log.error("Error occured during getting Resources from Json", e);
+                        resourceResponse.setStatus(400);
+                        resourceResponse.setMessage("Error occured during getting Resources from Json");
+                        resourceResponseList.add(resourceResponse);
+                    }
             }
         } catch (JsonSyntaxException e) {
-            log.error("Error occured during getting Resources from Json", e);
-            resourceResponse.setStatus(400);
-            resourceResponse.setMessage("Error occured during getting Resources from Json");
+            log.error("Unable to get OperationRequest from Message body!");
+            e.printStackTrace();
+        }
+
+        for (Resource resource : resources) {
+            if (RegistryUtils.validate(resource)) {
+                resource = RegistryUtils.getRdfBodyForObject(resource);
+                resourceResponse = this.repositoryManager.modifyResource(resource);
+                if (resourceResponse.getStatus() == 200) {
+                    rabbitManager.sendResourceModifiedMessage(resourceResponse.getResource());
+                }
+            } else {
+                log.error("Given Resource has some fields null or empty");
+                resourceResponse.setMessage("Given Resource has some fields null or empty");
+                resourceResponse.setStatus(400);
+            }
             resourceResponseList.add(resourceResponse);
         }
+
+        //if resources List is empty, resourceResponseList will still contain needed information
         response = gson.toJson(resourceResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
