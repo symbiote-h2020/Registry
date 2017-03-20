@@ -80,14 +80,14 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 case RDF:
                     try {
                         semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
-                        if (semanticResponse.getStatus()==200) {
+                        if (semanticResponse.getStatus() == 200) {
                             platforms = gson.fromJson(semanticResponse.getBody(), listType);
                         } else {
                             log.error("Error occured during rdf verification. Semantic Manager info: "
                                     + semanticResponse.getMessage());
                             platformResponse.setStatus(400);
-                            platformResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
-                            + semanticResponse.getMessage());
+                            platformResponse.setMessage("Error occured during rdf verification! Semantic Manager info: "
+                                    + semanticResponse.getMessage());
                             platformResponseList.add(platformResponse);
                         }
                     } catch (JsonSyntaxException e) {

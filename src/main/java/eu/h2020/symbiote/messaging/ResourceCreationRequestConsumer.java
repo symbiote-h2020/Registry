@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.OperationRequest;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
+import eu.h2020.symbiote.model.SemanticResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -63,38 +64,43 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         OperationRequest request;
+        SemanticResponse semanticResponse;
         String response;
         ResourceResponse resourceResponse = new ResourceResponse();
-        List<Resource> resources;
+        List<Resource> resources = new ArrayList<>();
         List<ResourceResponse> resourceResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
 
         log.info(" [x] Received resources to create: '" + message + "'");
 
+        Type listType = new TypeToken<ArrayList<Resource>>() {
+        }.getType();
 
         try {
             request = gson.fromJson(message, OperationRequest.class);
             switch (request.getType()) {
                 case RDF:
-                    resources = RegistryUtils.getResourcesFromRdf(request.getBody());
-                case BASIC:
                     try {
-                        Type listType = new TypeToken<ArrayList<Resource>>() {
-                        }.getType();
-                        resources = gson.fromJson(message, listType);
-                        for (Resource resource : resources) {
-                            if (RegistryUtils.validate(resource)) {
-                                resourceResponse = this.repositoryManager.saveResource(resource);
-                                if (resourceResponse.getStatus() == 200) {
-                                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
-                                }
-                            } else {
-                                log.error("Given Resource has some fields null or empty");
-                                resourceResponse.setMessage("Given Resource has some fields null or empty");
-                                resourceResponse.setStatus(400);
-                            }
+                        semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
+                        if (semanticResponse.getStatus() == 200) {
+                            resources = gson.fromJson(semanticResponse.getBody(), listType);
+                        } else {
+                            log.error("Error occured during rdf verification! Semantic Manager info: "
+                                    + semanticResponse.getMessage());
+                            resourceResponse.setStatus(400);
+                            resourceResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
+                                    + semanticResponse.getMessage());
                             resourceResponseList.add(resourceResponse);
                         }
+                    } catch (JsonSyntaxException e) {
+                        log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
+                        resourceResponse.setStatus(400);
+                        resourceResponse.setMessage("Error occured during getting Platforms from Json");
+                        resourceResponseList.add(resourceResponse);
+                    }
+                case BASIC:
+                    try {
+                        resources = gson.fromJson(message, listType);
                     } catch (JsonSyntaxException e) {
                         log.error("Error occured during getting Resources from Json", e);
                         resourceResponse.setStatus(400);
@@ -106,6 +112,22 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             log.error("Unable to get OperationRequest from Message body!");
             e.printStackTrace();
         }
+        //todo resources list can be empty
+        for (Resource resource : resources) {
+            if (RegistryUtils.validate(resource)) {
+                resource = RegistryUtils.getRdfBodyForObject(resource);
+                resourceResponse = this.repositoryManager.saveResource(resource);
+                if (resourceResponse.getStatus() == 200) {
+                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+                }
+            } else {
+                log.error("Given Resource has some fields null or empty");
+                resourceResponse.setMessage("Given Resource has some fields null or empty");
+                resourceResponse.setStatus(400);
+            }
+            resourceResponseList.add(resourceResponse);
+        }
+
         response = gson.toJson(resourceResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
