@@ -1,9 +1,12 @@
 package eu.h2020.symbiote.utils;
 
+import com.google.gson.Gson;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
+import eu.h2020.symbiote.model.SemanticResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +17,6 @@ import java.util.List;
  * Created by mateuszl on 14.02.2017.
  */
 public class RegistryUtils {
-
 
     private static Log log = LogFactory.getLog(RegistryUtils.class);
 
@@ -71,6 +73,7 @@ public class RegistryUtils {
     }
 
     public static Platform getRdfBodyForObject(Platform platform){
+        if (platform.getBody()==null) platform.setBody("mocked body"); //todo get body from Sem. Man.
         return platform;
     }
 
@@ -78,7 +81,9 @@ public class RegistryUtils {
         return platform;
     }
 
-    public static List<Platform> getPlatformsFromRdf(String rdf) {
+    public static SemanticResponse getPlatformsFromRdf(String rdf) {
+        Gson gson = new Gson();
+        SemanticResponse semanticResponse = new SemanticResponse();
         Platform p1 = new Platform();
         p1.getLabels().add("p1");
         Platform p2 = new Platform();
@@ -86,10 +91,15 @@ public class RegistryUtils {
         List<Platform> platforms = new ArrayList<>();
         platforms.add(p1);
         platforms.add(p2);
-        return platforms;
+        semanticResponse.setStatus(HttpStatus.SC_OK);
+        semanticResponse.setMessage("OK");
+        semanticResponse.setBody(gson.toJson(platforms));
+        return semanticResponse;
     }
 
-    public static List<Resource> getResourcesFromRdf(String rdf){
+    public static SemanticResponse getResourcesFromRdf(String rdf){
+        Gson gson = new Gson();
+        SemanticResponse semanticResponse = new SemanticResponse();
         Resource r1 = new Resource();
         r1.getLabels().add("r1");
         Resource r2 = new Resource();
@@ -97,7 +107,10 @@ public class RegistryUtils {
         List<Resource> resources = new ArrayList<>();
         resources.add(r1);
         resources.add(r2);
-        return resources;
+        semanticResponse.setStatus(HttpStatus.SC_OK);
+        semanticResponse.setMessage("OK");
+        semanticResponse.setBody(gson.toJson(resources));
+        return semanticResponse;
     }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

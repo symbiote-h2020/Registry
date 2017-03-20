@@ -5,9 +5,9 @@ package eu.h2020.symbiote.model;
  */
 
 public class OperationRequest {
-    public RequestType type;
-    public String body;
-    public String token;
+    private RequestType type;
+    private String body;
+    private String token;
 
     public RequestType getType() {
         return type;

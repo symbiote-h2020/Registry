@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.model.OperationRequest;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -61,6 +62,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
+        OperationRequest request;
         String response;
         ResourceResponse resourceResponse = new ResourceResponse();
         List<Resource> resources;
@@ -69,27 +71,40 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         log.info(" [x] Received resources to create: '" + message + "'");
 
+
         try {
-            Type listType = new TypeToken<ArrayList<Resource>>() {
-            }.getType();
-            resources = gson.fromJson(message, listType);
-            for (Resource resource:resources) {
-                if (RegistryUtils.validate(resource)) {
-                    resourceResponse = this.repositoryManager.saveResource(resource);
-                    if (resourceResponse.getStatus() == 200) {
-                        rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+            request = gson.fromJson(message, OperationRequest.class);
+            switch (request.getType()) {
+                case RDF:
+                    resources = RegistryUtils.getResourcesFromRdf(request.getBody());
+                case BASIC:
+                    try {
+                        Type listType = new TypeToken<ArrayList<Resource>>() {
+                        }.getType();
+                        resources = gson.fromJson(message, listType);
+                        for (Resource resource : resources) {
+                            if (RegistryUtils.validate(resource)) {
+                                resourceResponse = this.repositoryManager.saveResource(resource);
+                                if (resourceResponse.getStatus() == 200) {
+                                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
+                                }
+                            } else {
+                                log.error("Given Resource has some fields null or empty");
+                                resourceResponse.setMessage("Given Resource has some fields null or empty");
+                                resourceResponse.setStatus(400);
+                            }
+                            resourceResponseList.add(resourceResponse);
+                        }
+                    } catch (JsonSyntaxException e) {
+                        log.error("Error occured during getting Resources from Json", e);
+                        resourceResponse.setStatus(400);
+                        resourceResponse.setMessage("Error occured during getting Resources from Json");
+                        resourceResponseList.add(resourceResponse);
                     }
-                } else {
-                    log.error("Given Resource has some fields null or empty");
-                    resourceResponse.setStatus(400);
-                }
-                resourceResponseList.add(resourceResponse);
             }
         } catch (JsonSyntaxException e) {
-            log.error("Error occured during getting Resources from Json", e);
-            resourceResponse.setStatus(400);
-            resourceResponse.setMessage("Error occured during getting Resources from Json");
-            resourceResponseList.add(resourceResponse);
+            log.error("Unable to get OperationRequest from Message body!");
+            e.printStackTrace();
         }
         response = gson.toJson(resourceResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
