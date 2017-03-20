@@ -91,7 +91,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             resourceResponse.setMessage("Error occured during getting Resources from Json");
             resourceResponseList.add(resourceResponse);
         }
-        response = gson.toJson(resourceResponse);
+        response = gson.toJson(resourceResponseList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }

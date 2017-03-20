@@ -65,6 +65,7 @@ public class RegistryUtils {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Resource getRdfBodyForObject(Resource resource){
+        if (resource.getBody()==null) resource.setBody("mocked body"); //todo get body from Sem. Man.
         return resource;
     }
 

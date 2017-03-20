@@ -70,10 +70,10 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         PlatformResponse platformResponse = new PlatformResponse();
         List<PlatformResponse> platformResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
-
-        log.info(" [x] Received platforms to create: '" + message + "'");
         Type listType = new TypeToken<ArrayList<Platform>>() {
         }.getType();
+        log.info(" [x] Received platforms to create: '" + message + "'");
+
         try {
             request = gson.fromJson(message, OperationRequest.class);
             switch (request.getType()) {
@@ -86,7 +86,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                             log.error("Error occured during rdf verification. Semantic Manager info: "
                                     + semanticResponse.getMessage());
                             platformResponse.setStatus(400);
-                            platformResponse.setMessage("Error occured during rdf verification! Semantic Manager info: "
+                            platformResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
                                     + semanticResponse.getMessage());
                             platformResponseList.add(platformResponse);
                         }
