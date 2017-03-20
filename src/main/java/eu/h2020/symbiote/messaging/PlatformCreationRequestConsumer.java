@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.model.OperationRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -60,6 +61,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
+        OperationRequest request;
         Gson gson = new Gson();
         String response;
         List<Platform> platforms;
@@ -68,31 +70,59 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
 
         log.info(" [x] Received platforms to create: '" + message + "'");
-        try {
-            Type listType = new TypeToken<ArrayList<Platform>>() {
-            }.getType();
-            platforms = gson.fromJson(message, listType);
 
-            for (Platform platform : platforms) {
-                if (RegistryUtils.validate(platform)) {
-                    platform = RegistryUtils.getRdfBodyForObject(platform);
-                    platformResponse = this.repositoryManager.savePlatform(platform);
-                    if (platformResponse.getStatus() == 200) {
-                        rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+        try {
+            request = gson.fromJson(message, OperationRequest.class);
+            switch (request.getType()) {
+                case RDF:
+                    platforms = RegistryUtils.getPlatformsFromRdf(request.getBody());
+
+                    for (Platform platform : platforms) {
+                        if (RegistryUtils.validate(platform)) {
+                            platformResponse = this.repositoryManager.savePlatform(platform);
+                            if (platformResponse.getStatus() == 200) {
+                                rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+                            }
+                        } else {
+                            log.error("Given Platform has some fields null or empty");
+                            platformResponse.setMessage("Given Platform has some fields null or empty");
+                            platformResponse.setStatus(400);
+                        }
+                        platformResponseList.add(platformResponse);
                     }
-                } else {
-                    log.error("Given Platform has some fields null or empty");
-                    platformResponse.setStatus(400);
-                }
-                platformResponseList.add(platformResponse);
+                case BASIC:
+                    try {
+                        Type listType = new TypeToken<ArrayList<Platform>>() {
+                        }.getType();
+                        platforms = gson.fromJson(request.getBody(), listType);
+
+                        for (Platform platform : platforms) {
+                            if (RegistryUtils.validate(platform)) {
+                                platform = RegistryUtils.getRdfBodyForObject(platform);
+                                platformResponse = this.repositoryManager.savePlatform(platform);
+                                if (platformResponse.getStatus() == 200) {
+                                    rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+                                }
+                            } else {
+                                log.error("Given Platform has some fields null or empty");
+                                platformResponse.setMessage("Given Platform has some fields null or empty");
+                                platformResponse.setStatus(400);
+                            }
+                            platformResponseList.add(platformResponse);
+                        }
+                    } catch (JsonSyntaxException e) {
+                        log.error("Error occured during getting Platforms from Json", e);
+                        platformResponse.setStatus(400);
+                        platformResponse.setMessage("Error occured during getting Platforms from Json");
+                        platformResponseList.add(platformResponse);
+                    }
             }
         } catch (JsonSyntaxException e) {
-            log.error("Error occured during getting Platforms from Json", e);
-            platformResponse.setStatus(400);
-            platformResponse.setMessage("Error occured during getting Platforms from Json");
-            platformResponseList.add(platformResponse);
+            log.error("Unable to get OperationRequest from Message body!");
+            e.printStackTrace();
         }
+
         response = gson.toJson(platformResponseList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
+        rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }

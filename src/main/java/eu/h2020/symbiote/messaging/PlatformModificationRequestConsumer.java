@@ -93,6 +93,6 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
         response = gson.toJson(platformResponseList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
+        rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }

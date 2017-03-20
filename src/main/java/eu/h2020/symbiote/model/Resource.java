@@ -5,6 +5,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,7 +44,9 @@ public class Resource {
      * @return
      */
     public List<String> getLabels() {
-        return labels;
+        if (this.labels == null) {
+            this.labels = new ArrayList<>();
+        }        return labels;
     }
 
     /**
@@ -57,6 +60,9 @@ public class Resource {
      * @return
      */
     public List<String> getComments() {
+        if (this.comments == null) {
+            this.comments = new ArrayList<>();
+        }
         return comments;
     }
 

@@ -5,6 +5,9 @@ import eu.h2020.symbiote.model.Resource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Utils for manipulating POJOs in Registry project.
  *
@@ -21,7 +24,7 @@ public class RegistryUtils {
      * @param platform platform to check
      * @return true if it has all the fields and neither is empty
      */
-    public static boolean validate(Platform platform) {
+    public static boolean validate(Platform platform) { //todo extend validation to all fields
         boolean b;
         if (platform.getBody() == null || platform.getLabels() == null || platform.getFormat() == null) {
             log.info("Given platform has some null fields");
@@ -42,7 +45,7 @@ public class RegistryUtils {
      * @param resource resource to check
      * @return true if it has all the fields and neither is empty.
      */
-    public static boolean validate(Resource resource) { //todo extend to all fields
+    public static boolean validate(Resource resource) { //todo extend validation to all fields
         boolean b;
         if (resource.getBody() == null|| resource.getFormat() == null || resource.getLabels() == null) {
             log.info("Given resource has some null fields");
@@ -56,7 +59,8 @@ public class RegistryUtils {
         return b;
     }
 
-    //todo cooperation with SemanticManager
+    //todo MOCKED!! waiting for cooperation with SemanticManager
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Resource getRdfBodyForObject(Resource resource){
         return resource;
@@ -74,4 +78,26 @@ public class RegistryUtils {
         return platform;
     }
 
+    public static List<Platform> getPlatformsFromRdf(String rdf) {
+        Platform p1 = new Platform();
+        p1.getLabels().add("p1");
+        Platform p2 = new Platform();
+        p1.getLabels().add("p2");
+        List<Platform> platforms = new ArrayList<>();
+        platforms.add(p1);
+        platforms.add(p2);
+        return platforms;
+    }
+
+    public static List<Resource> getResourcesFromRdf(String rdf){
+        Resource r1 = new Resource();
+        r1.getLabels().add("r1");
+        Resource r2 = new Resource();
+        r2.getLabels().add("r2");
+        List<Resource> resources = new ArrayList<>();
+        resources.add(r1);
+        resources.add(r2);
+        return resources;
+    }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

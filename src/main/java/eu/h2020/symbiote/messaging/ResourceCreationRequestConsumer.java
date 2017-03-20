@@ -92,6 +92,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             resourceResponseList.add(resourceResponse);
         }
         response = gson.toJson(resourceResponseList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
+        rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }
