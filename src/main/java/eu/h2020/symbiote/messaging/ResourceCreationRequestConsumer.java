@@ -78,35 +78,42 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         try {
             request = gson.fromJson(message, OperationRequest.class);
-            switch (request.getType()) {
-                case RDF:
-                    try {
-                        semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
-                        if (semanticResponse.getStatus() == 200) {
-                            resources = gson.fromJson(semanticResponse.getBody(), listType);
-                        } else {
-                            log.error("Error occured during rdf verification! Semantic Manager info: "
-                                    + semanticResponse.getMessage());
+            if (RegistryUtils.checkToken(request.getToken())) {
+                switch (request.getType()) {
+                    case RDF:
+                        try {
+                            semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
+                            if (semanticResponse.getStatus() == 200) {
+                                resources = gson.fromJson(semanticResponse.getBody(), listType);
+                            } else {
+                                log.error("Error occured during rdf verification! Semantic Manager info: "
+                                        + semanticResponse.getMessage());
+                                resourceResponse.setStatus(400);
+                                resourceResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
+                                        + semanticResponse.getMessage());
+                                resourceResponseList.add(resourceResponse);
+                            }
+                        } catch (JsonSyntaxException e) {
+                            log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
                             resourceResponse.setStatus(400);
-                            resourceResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
-                                    + semanticResponse.getMessage());
+                            resourceResponse.setMessage("Error occured during getting Platforms from Json");
                             resourceResponseList.add(resourceResponse);
                         }
-                    } catch (JsonSyntaxException e) {
-                        log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
-                        resourceResponse.setStatus(400);
-                        resourceResponse.setMessage("Error occured during getting Platforms from Json");
-                        resourceResponseList.add(resourceResponse);
-                    }
-                case BASIC:
-                    try {
-                        resources = gson.fromJson(message, listType);
-                    } catch (JsonSyntaxException e) {
-                        log.error("Error occured during getting Resources from Json", e);
-                        resourceResponse.setStatus(400);
-                        resourceResponse.setMessage("Error occured during getting Resources from Json");
-                        resourceResponseList.add(resourceResponse);
-                    }
+                    case BASIC:
+                        try {
+                            resources = gson.fromJson(message, listType);
+                        } catch (JsonSyntaxException e) {
+                            log.error("Error occured during getting Resources from Json", e);
+                            resourceResponse.setStatus(400);
+                            resourceResponse.setMessage("Error occured during getting Resources from Json");
+                            resourceResponseList.add(resourceResponse);
+                        }
+                }
+            } else {
+                log.error("Token invalid");
+                resourceResponse.setStatus(400);
+                resourceResponse.setMessage("Token invalid");
+                resourceResponseList.add(resourceResponse);
             }
         } catch (JsonSyntaxException e) {
             log.error("Unable to get OperationRequest from Message body!");

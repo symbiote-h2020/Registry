@@ -63,8 +63,9 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        OperationRequest request;
-        SemanticResponse semanticResponse;
+        OperationRequest request = null;
+        SemanticResponse semanticResponse = new SemanticResponse();
+        semanticResponse.setStatus(400);
         String response;
         List<Platform> platforms = new ArrayList<>();
         PlatformResponse platformResponse = new PlatformResponse();
@@ -76,10 +77,25 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
         try {
             request = gson.fromJson(message, OperationRequest.class);
-            switch (request.getType()) {
-                case RDF:
-                    try {
-                        semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during getting Operation Request from Json", e);
+            platformResponse.setStatus(400);
+            platformResponse.setMessage("Error occured during getting Operation Request from Json");
+            platformResponseList.add(platformResponse);
+        }
+
+        if (request != null) {
+            if (RegistryUtils.checkToken(request.getToken())) {
+                switch (request.getType()) {
+                    case RDF:
+                        try {
+                            semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
+                        } catch (JsonSyntaxException e) {
+                            log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
+                            platformResponse.setStatus(400);
+                            platformResponse.setMessage("Error occured during getting Platforms from Json");
+                            platformResponseList.add(platformResponse);
+                        }
                         if (semanticResponse.getStatus() == 200) {
                             platforms = gson.fromJson(semanticResponse.getBody(), listType);
                         } else {
@@ -90,25 +106,22 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                                     + semanticResponse.getMessage());
                             platformResponseList.add(platformResponse);
                         }
-                    } catch (JsonSyntaxException e) {
-                        log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
-                        platformResponse.setStatus(400);
-                        platformResponse.setMessage("Error occured during getting Platforms from Json");
-                        platformResponseList.add(platformResponse);
-                    }
-                case BASIC:
-                    try {
-                        platforms = gson.fromJson(request.getBody(), listType);
-                    } catch (JsonSyntaxException e) {
-                        log.error("Error occured during getting Platforms from Json", e);
-                        platformResponse.setStatus(400);
-                        platformResponse.setMessage("Error occured during getting Platforms from Json");
-                        platformResponseList.add(platformResponse);
-                    }
+                    case BASIC:
+                        try {
+                            platforms = gson.fromJson(request.getBody(), listType);
+                        } catch (JsonSyntaxException e) {
+                            log.error("Error occured during getting Platforms from Json", e);
+                            platformResponse.setStatus(400);
+                            platformResponse.setMessage("Error occured during getting Platforms from Json");
+                            platformResponseList.add(platformResponse);
+                        }
+                }
+            } else {
+                log.error("Token invalid");
+                platformResponse.setStatus(400);
+                platformResponse.setMessage("Token invalid");
+                platformResponseList.add(platformResponse);
             }
-        } catch (JsonSyntaxException e) {
-            log.error("Unable to get OperationRequest from Message body!");
-            e.printStackTrace();
         }
 
         for (Platform platform : platforms) {

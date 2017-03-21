@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.model.OperationRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -21,7 +22,7 @@ import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Removal actions
- *
+ * <p>
  * Created by mateuszl
  */
 public class PlatformRemovalRequestConsumer extends DefaultConsumer {
@@ -34,8 +35,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel the channel to which this consumer is attached
-     * @param rabbitManager rabbit manager bean passed for access to messages manager
+     * @param channel           the channel to which this consumer is attached
+     * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public PlatformRemovalRequestConsumer(Channel channel,
@@ -48,10 +49,11 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
+     *
      * @param consumerTag the <i>consumer tag</i> associated with the consumer
-     * @param envelope packaging data for the message
-     * @param properties content header data for the message
-     * @param body the message body (opaque, client-specific byte array)
+     * @param envelope    packaging data for the message
+     * @param properties  content header data for the message
+     * @param body        the message body (opaque, client-specific byte array)
      * @throws IOException if the consumer encounters an I/O error while processing the message
      * @see Envelope
      */
@@ -59,36 +61,53 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
+
+        //only BASIC type of objects accepted for remove !!
+
         Gson gson = new Gson();
+        OperationRequest request = null;
         String response;
-        List<Platform> platforms;
+        List<Platform> platforms = new ArrayList<>();
         PlatformResponse platformResponse = new PlatformResponse();
         List<PlatformResponse> platformResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
+        Type listType = new TypeToken<ArrayList<Platform>>() {
+        }.getType();
 
         log.info(" [x] Received platforms to remove: '" + message + "'");
 
         try {
-            Type listType = new TypeToken<ArrayList<Platform>>() {
-            }.getType();
-            platforms = gson.fromJson(message, listType);
-            for (Platform platform : platforms) {
-                if (RegistryUtils.validate(platform)) {
-                    platform = RegistryUtils.getRdfBodyForObject(platform);
-                    platformResponse = this.repositoryManager.removePlatform(platform);
-                    if (platformResponse.getStatus() == 200) {
-                        rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
-                    }
-                } else {
-                    log.error("Given Platform has some fields null or empty");
-                    platformResponse.setStatus(400);
-                }
+            request = gson.fromJson(message, listType);
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during getting Operation Request from Json", e);
+            platformResponse.setStatus(400);
+            platformResponse.setMessage("Error occured during getting Operation Request from Json");
+            platformResponseList.add(platformResponse);
+        }
+
+        if (request != null) {
+            try {
+                platforms = gson.fromJson(request.getBody(), listType);
+            } catch (JsonSyntaxException e) {
+                log.error("Error occured during getting Platforms from Json", e);
+                platformResponse.setStatus(400);
+                platformResponse.setMessage("Error occured during getting Platforms from Json");
                 platformResponseList.add(platformResponse);
             }
-        } catch (JsonSyntaxException e) {
-            log.error("Error occured during getting Platforms from Json", e);
-            platformResponse.setStatus(400);
-            platformResponse.setMessage("Error occured during getting Platforms from Json");
+        }
+
+        for (Platform platform : platforms) {
+            if (platform.getId() != null || !platform.getId().isEmpty()) {
+                platform = RegistryUtils.getRdfBodyForObject(platform);
+                platformResponse = this.repositoryManager.removePlatform(platform);
+                if (platformResponse.getStatus() == 200) {
+                    rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
+                }
+            } else {
+                log.error("Given Platform has ID null or empty");
+                platformResponse.setMessage("Given Platform has ID null or empty");
+                platformResponse.setStatus(400);
+            }
             platformResponseList.add(platformResponse);
         }
         response = gson.toJson(platformResponseList);
