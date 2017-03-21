@@ -3,7 +3,6 @@ package eu.h2020.symbiote.model;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +19,7 @@ public class Resource {
     private List<String> comments;
     private String body;
     private String format;
-    @DBRef
-    private InterworkingService interworkingService;
+    private String interworkingServiceUrl; //todo Object or only URL od object
 
     public Resource() {
     }
@@ -104,15 +102,15 @@ public class Resource {
     /**
      * @return
      */
-    public InterworkingService getInterworkingService() {
-        return interworkingService;
+    public String getInterworkingServiceUrl() {
+        return interworkingServiceUrl;
     }
 
     /**
-     * @param interworkingService
+     * @param interworkingServiceUrl
      */
-    public void setInterworkingService(InterworkingService interworkingService) {
-        this.interworkingService = interworkingService;
+    public void setInterworkingServiceUrl(String interworkingServiceUrl) {
+        this.interworkingServiceUrl = interworkingServiceUrl;
     }
 
     @Override
@@ -122,7 +120,7 @@ public class Resource {
         this.getLabels().forEach(s->sb.append(s + ", "));
         sb.append("], comments: [");
         this.getComments().forEach(s->sb.append(s + ", "));
-        sb.append("], interworkingService: " + this.getInterworkingService() +".");
+        sb.append("], interworkingServiceUrl: " + this.getInterworkingServiceUrl() +".");
         return  sb.toString();
     }
 

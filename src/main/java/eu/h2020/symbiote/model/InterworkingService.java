@@ -11,7 +11,7 @@ public class InterworkingService {
 
     @Id
     private String url;
-    private String informationModelId;
+    private String informationModelUri;
 
     public String getUrl() {
         return url;
@@ -21,18 +21,18 @@ public class InterworkingService {
         this.url = url;
     }
 
-    public String getInformationModelId() {
-        return informationModelId;
+    public String getInformationModelUri() {
+        return informationModelUri;
     }
 
-    public void setInformationModelId(String informationModelId) {
-        this.informationModelId = informationModelId;
+    public void setInformationModelUri(String informationModelUri) {
+        this.informationModelUri = informationModelUri;
     }
 
     @Override
     public String toString() {
         return  "InterworkingService with url (id): " + this.getUrl() +
-                ", informationModelId: " + this.getInformationModelId();
+                ", informationModelUri: " + this.getInformationModelUri();
     }
 
     @Override
