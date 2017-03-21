@@ -119,7 +119,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         }
 
         for (Resource resource : resources) {
-            if (RegistryUtils.validate(resource)) {
+            if (RegistryUtils.validateFields(resource)) {
                 resource = RegistryUtils.getRdfBodyForObject(resource);
                 resourceResponse = this.repositoryManager.modifyResource(resource);
                 if (resourceResponse.getStatus() == 200) {

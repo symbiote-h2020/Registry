@@ -8,12 +8,6 @@ public class InformationModelResponse {
     private String message;
     private InformationModel informationModel;
 
-    public InformationModelResponse(int status, String message, InformationModel informationModel) {
-        this.status = status;
-        this.message = message;
-        this.informationModel = informationModel;
-    }
-
     /**
      * @return
      */

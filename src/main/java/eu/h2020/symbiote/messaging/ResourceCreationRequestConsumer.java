@@ -121,7 +121,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         }
 
         for (Resource resource : resources) {
-            if (RegistryUtils.validate(resource)) {
+            if (RegistryUtils.validateFields(resource)) {
                 resource = RegistryUtils.getRdfBodyForObject(resource);
                 resourceResponse = this.repositoryManager.saveResource(resource);
                 if (resourceResponse.getStatus() == 200) {

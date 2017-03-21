@@ -20,12 +20,17 @@ public class RepositoryManager {
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
+    private InterworkingServiceRepository serviceRepository;
+    private InformationModelRepository modelRepository;
 
     @Autowired
-    public RepositoryManager(PlatformRepository platformRepository,
-                             ResourceRepository resourceRepository) {
+    public RepositoryManager(PlatformRepository platformRepository, ResourceRepository resourceRepository,
+                             InterworkingServiceRepository serviceRepository,
+                             InformationModelRepository modelRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
+        this.serviceRepository = serviceRepository;
+        this.modelRepository = modelRepository;
     }
 
     /**
@@ -46,17 +51,13 @@ public class RepositoryManager {
 //        }
 
         if (platform.getId() != null) {
-            log.error("Given platform has not null PlatformId!");
-            platformResponse.setMessage("Given platform has not null PlatformId!");
+            log.error("Given platform has not null id!");
+            platformResponse.setMessage("Given platform has not null id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 log.info("Saving platform: " + platform.getLabels());
                 //todo check if provided platform already exists - somehow
-
-                if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
-                    platform.setBody(platform.getBody().trim() + "/");
-                }
 
                 Platform savedPlatform = platformRepository.save(platform);
                 log.info("Platform with id: " + savedPlatform.getId() + " saved !");
@@ -326,6 +327,41 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
+    //todo during implementation
+    /**
+     * @param interworkingService
+     * @return
+     */
+    public InterworkingServiceResponse saveInterworkingService(InterworkingService interworkingService) {
+        InterworkingServiceResponse serviceResponse = new InterworkingServiceResponse();
+//
+//        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
+//            platform.setBody(platform.getBody().trim() + "/");
+//        }
+
+        if (interworkingService.getUrl() != null) {
+            log.error("Given interworking service has not null url!");
+            serviceResponse.setMessage("Given interworking service  has not null url!");
+            serviceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                log.info("Saving interworking service : " + interworkingService);
+                //todo check if provided interworking service already exists - somehow
+
+                InterworkingService savedInterworkingService = serviceRepository.save(interworkingService);
+                log.info("interworking service  with id: " + savedInterworkingService.getUrl() + " saved !");
+
+                serviceResponse.setStatus(HttpStatus.SC_OK);
+                serviceResponse.setMessage("OK");
+                serviceResponse.setInterworkingService(savedInterworkingService);
+            } catch (Exception e) {
+                log.error("Error occurred during interworking service saving to db", e);
+                serviceResponse.setMessage("Error occurred during interworking service saving to db");
+                serviceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return serviceResponse;
+    }
 //    /**
 //     * Removes from mongoDB given Location.
 //     *

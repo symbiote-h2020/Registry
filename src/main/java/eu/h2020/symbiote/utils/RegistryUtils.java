@@ -26,7 +26,7 @@ public class RegistryUtils {
      * @param platform platform to check
      * @return true if it has all the fields and neither is empty
      */
-    public static boolean validate(Platform platform) { //todo extend validation to all fields
+    public static boolean validateFields(Platform platform) { //todo extend validation to all fields
         boolean b;
         if (platform.getBody() == null || platform.getLabels() == null || platform.getFormat() == null) {
             log.info("Given platform has some null fields");
@@ -47,7 +47,7 @@ public class RegistryUtils {
      * @param resource resource to check
      * @return true if it has all the fields and neither is empty.
      */
-    public static boolean validate(Resource resource) { //todo extend validation to all fields
+    public static boolean validateFields(Resource resource) { //todo extend validation to all fields
         boolean b;
         if (resource.getBody() == null|| resource.getFormat() == null || resource.getLabels() == null) {
             log.info("Given resource has some null fields");

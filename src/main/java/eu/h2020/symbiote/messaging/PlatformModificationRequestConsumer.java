@@ -121,7 +121,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         //todo platforms list can be empty
         for (Platform platform : platforms) {
-            if (RegistryUtils.validate(platform)) {
+            if (RegistryUtils.validateFields(platform)) {
                 platform = RegistryUtils.getRdfBodyForObject(platform);
                 platformResponse = this.repositoryManager.modifyPlatform(platform);
                 if (platformResponse.getStatus() == 200) {
