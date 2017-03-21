@@ -3,7 +3,6 @@ package eu.h2020.symbiote.model;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,6 @@ public class Platform {
     private List<String> comments;
     private String body;
     private String format;
-    @DBRef
     private List<InterworkingService> interworkingServices;
 
     public Platform() {

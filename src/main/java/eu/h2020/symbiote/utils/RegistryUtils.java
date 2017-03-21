@@ -21,7 +21,7 @@ public class RegistryUtils {
     private static Log log = LogFactory.getLog(RegistryUtils.class);
 
     /**
-     * Checks if given platform has all of the needed fields and that neither is empty.
+     * Checks if given platform has all of the needed fields (besides the id field) and that neither is empty.
      *
      * @param platform platform to check
      * @return true if it has all the fields and neither is empty
@@ -42,7 +42,7 @@ public class RegistryUtils {
     }
 
     /**
-     * Checks if given resource has all of the needed fields and that neither is empty.
+     * Checks if given resource has all of the needed fields (besides the id field) and that neither is empty.
      *
      * @param resource resource to check
      * @return true if it has all the fields and neither is empty.

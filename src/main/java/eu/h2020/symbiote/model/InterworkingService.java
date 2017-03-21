@@ -2,14 +2,12 @@ package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.springframework.data.annotation.Id;
 
 /**
  * Created by mateuszl on 14.03.2017.
  */
 public class InterworkingService {
 
-    @Id
     private String url;
     private String informationModelUri;
 

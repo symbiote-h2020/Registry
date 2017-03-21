@@ -20,16 +20,13 @@ public class RepositoryManager {
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
-    private InterworkingServiceRepository serviceRepository;
     private InformationModelRepository modelRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository, ResourceRepository resourceRepository,
-                             InterworkingServiceRepository serviceRepository,
                              InformationModelRepository modelRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
-        this.serviceRepository = serviceRepository;
         this.modelRepository = modelRepository;
     }
 
@@ -45,6 +42,8 @@ public class RepositoryManager {
      */
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
+        Platform savedPlatform = null;
+        platformResponse.setPlatform(platform);
 //
 //        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
 //            platform.setBody(platform.getBody().trim() + "/");
@@ -59,17 +58,19 @@ public class RepositoryManager {
                 log.info("Saving platform: " + platform.getLabels());
                 //todo check if provided platform already exists - somehow
 
-                Platform savedPlatform = platformRepository.save(platform);
-                log.info("Platform with id: " + savedPlatform.getId() + " saved !");
+                //todo Interworking service !!
 
-                platformResponse.setStatus(HttpStatus.SC_OK);
-                platformResponse.setMessage("OK");
-                platformResponse.setPlatform(savedPlatform);
+                savedPlatform = platformRepository.save(platform);
+
             } catch (Exception e) {
                 log.error("Error occurred during Platform saving to db", e);
                 platformResponse.setMessage("Error occurred during Platform saving to db");
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
+                log.info("Platform \"" + savedPlatform + "\" saved !");
+                platformResponse.setStatus(HttpStatus.SC_OK);
+                platformResponse.setMessage("OK");
+                platformResponse.setPlatform(savedPlatform);
         }
         return platformResponse;
     }
@@ -127,6 +128,7 @@ public class RepositoryManager {
      */
     public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
+        platformResponse.setPlatform(platform);
 
         if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
             platform.setBody(platform.getBody().trim() + "/");
@@ -327,41 +329,6 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
-    //todo during implementation
-    /**
-     * @param interworkingService
-     * @return
-     */
-    public InterworkingServiceResponse saveInterworkingService(InterworkingService interworkingService) {
-        InterworkingServiceResponse serviceResponse = new InterworkingServiceResponse();
-//
-//        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
-//            platform.setBody(platform.getBody().trim() + "/");
-//        }
-
-        if (interworkingService.getUrl() != null) {
-            log.error("Given interworking service has not null url!");
-            serviceResponse.setMessage("Given interworking service  has not null url!");
-            serviceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else {
-            try {
-                log.info("Saving interworking service : " + interworkingService);
-                //todo check if provided interworking service already exists - somehow
-
-                InterworkingService savedInterworkingService = serviceRepository.save(interworkingService);
-                log.info("interworking service  with id: " + savedInterworkingService.getUrl() + " saved !");
-
-                serviceResponse.setStatus(HttpStatus.SC_OK);
-                serviceResponse.setMessage("OK");
-                serviceResponse.setInterworkingService(savedInterworkingService);
-            } catch (Exception e) {
-                log.error("Error occurred during interworking service saving to db", e);
-                serviceResponse.setMessage("Error occurred during interworking service saving to db");
-                serviceResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            }
-        }
-        return serviceResponse;
-    }
 //    /**
 //     * Removes from mongoDB given Location.
 //     *

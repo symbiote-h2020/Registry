@@ -15,6 +15,7 @@ import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -118,7 +119,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 }
             } else {
                 log.error("Token invalid");
-                platformResponse.setStatus(400);
+                platformResponse.setStatus(HttpStatus.SC_UNAUTHORIZED);
                 platformResponse.setMessage("Token invalid");
                 platformResponseList.add(platformResponse);
             }
@@ -135,6 +136,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 log.error("Given Platform has some fields null or empty");
                 platformResponse.setMessage("Given Platform has some fields null or empty");
                 platformResponse.setStatus(400);
+                platformResponse.setPlatform(platform);
             }
             platformResponseList.add(platformResponse);
         }
