@@ -86,19 +86,26 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            try {
-                platforms = gson.fromJson(request.getBody(), listType);
-            } catch (JsonSyntaxException e) {
-                log.error("Error occured during getting Platforms from Json", e);
+            if (RegistryUtils.checkToken(request.getToken())) {
+                try {
+                    platforms = gson.fromJson(request.getBody(), listType);
+                } catch (JsonSyntaxException e) {
+                    log.error("Error occured during getting Platforms from Json", e);
+                    platformResponse.setStatus(400);
+                    platformResponse.setMessage("Error occured during getting Platforms from Json");
+                    platformResponseList.add(platformResponse);
+                }
+            } else {
+                log.error("Token invalid");
                 platformResponse.setStatus(400);
-                platformResponse.setMessage("Error occured during getting Platforms from Json");
+                platformResponse.setMessage("Token invalid");
                 platformResponseList.add(platformResponse);
             }
         }
 
         for (Platform platform : platforms) {
             if (platform.getId() != null || !platform.getId().isEmpty()) {
-                platform = RegistryUtils.getRdfBodyForObject(platform);
+                platform = RegistryUtils.getRdfBodyForObject(platform); //fixme needed? or not completed object is fine?
                 platformResponse = this.repositoryManager.removePlatform(platform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
@@ -111,6 +118,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
         response = gson.toJson(platformResponseList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response); //todo check wywołanie metody
+        rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }

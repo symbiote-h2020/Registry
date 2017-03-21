@@ -94,9 +94,9 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                 resourceResponseList.add(resourceResponse);
                             }
                         } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
+                            log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
                             resourceResponse.setStatus(400);
-                            resourceResponse.setMessage("Error occured during getting Platforms from Json");
+                            resourceResponse.setMessage("Error occured during getting Resources from Json");
                             resourceResponseList.add(resourceResponse);
                         }
                     case BASIC:
