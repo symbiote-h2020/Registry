@@ -1,5 +1,7 @@
 package eu.h2020.symbiote.model;
 
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+
 /**
  * Created by mateuszl on 20.03.2017.
  */
@@ -31,5 +33,10 @@ public class SemanticResponse {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this);
     }
 }

@@ -1,5 +1,7 @@
 package eu.h2020.symbiote.model;
 
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+
 /**
  * Created by mateuszl on 16.03.2017.
  */
@@ -48,5 +50,10 @@ public class InformationModelResponse {
      */
     public void setInformationModel(InformationModel informationModel) {
         this.informationModel = informationModel;
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this);
     }
 }

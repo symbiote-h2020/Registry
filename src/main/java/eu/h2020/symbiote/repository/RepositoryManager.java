@@ -55,7 +55,7 @@ public class RepositoryManager {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving platform: " + platform.getLabels());
+                log.info("Saving platform: " + platform.getId());
                 //todo check if provided platform already exists - somehow
 
                 //todo Interworking service !!

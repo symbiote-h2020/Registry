@@ -2,6 +2,7 @@ package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.List;
 
 /**
  * Registry Platform object
- *
+ * <p>
  * Created by mateuszl
  */
 public class Platform {
@@ -114,6 +115,7 @@ public class Platform {
 
     @Override
     public String toString() {
+        /*
         StringBuilder sb = new StringBuilder();
         sb.append("Platform with id: " + this.getId() + ", body: " + body + ", format: " + format + ", labels: [");
         this.getLabels().forEach(s->sb.append(s + ", "));
@@ -123,6 +125,8 @@ public class Platform {
         this.getInterworkingServices().forEach(s->sb.append(s +", "));
         sb.append("].");
         return  sb.toString();
+        */
+        return ReflectionToStringBuilder.toString(this);
     }
 
     @Override

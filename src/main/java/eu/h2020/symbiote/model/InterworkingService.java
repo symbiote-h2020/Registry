@@ -2,6 +2,7 @@ package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 /**
  * Created by mateuszl on 14.03.2017.
@@ -29,8 +30,7 @@ public class InterworkingService {
 
     @Override
     public String toString() {
-        return  "InterworkingService with url (id): " + this.getUrl() +
-                ", informationModelUri: " + this.getInformationModelUri();
+        return ReflectionToStringBuilder.toString(this);
     }
 
     @Override

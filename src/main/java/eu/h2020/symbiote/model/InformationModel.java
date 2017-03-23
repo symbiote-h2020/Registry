@@ -2,6 +2,7 @@ package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.springframework.data.annotation.Id;
 
 /**
@@ -40,7 +41,7 @@ public class InformationModel {
 
     @Override
     public String toString() {
-        return  "InformationModel with uri: " + this.getUri() + ", body: " + body + ", format: " + format;
+        return ReflectionToStringBuilder.toString(this);
     }
 
     @Override

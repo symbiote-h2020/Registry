@@ -2,6 +2,7 @@ package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.springframework.data.annotation.Id;
 
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.List;
 
 /**
  * Registry Resource object
- *
+ * <p>
  * Created by mateuszl
  */
 public class Resource {
@@ -44,7 +45,8 @@ public class Resource {
     public List<String> getLabels() {
         if (this.labels == null) {
             this.labels = new ArrayList<>();
-        }        return labels;
+        }
+        return labels;
     }
 
     /**
@@ -115,6 +117,7 @@ public class Resource {
 
     @Override
     public String toString() {
+        /*
         StringBuilder sb = new StringBuilder();
         sb.append("Resource with id: " + this.getId() + ", body: " + body + ", format: " + format + ", labels: [");
         this.getLabels().forEach(s->sb.append(s + ", "));
@@ -122,6 +125,8 @@ public class Resource {
         this.getComments().forEach(s->sb.append(s + ", "));
         sb.append("], interworkingServiceUrl: " + this.getInterworkingServiceUrl() +".");
         return  sb.toString();
+        */
+        return ReflectionToStringBuilder.toString(this);
     }
 
     @Override

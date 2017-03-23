@@ -1,5 +1,7 @@
 package eu.h2020.symbiote.model;
 
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+
 /**
  * Class used as a response to RPC call requesting platform actions
  *
@@ -59,5 +61,10 @@ public class PlatformResponse {
      */
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this);
     }
 }
