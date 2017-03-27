@@ -62,7 +62,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
 
-        //only BASIC type of objects accepted for remove !!
+        //only REGISTRATION_BASIC type of objects accepted for remove !!
 
         Gson gson = new Gson();
         OperationRequest request = null;

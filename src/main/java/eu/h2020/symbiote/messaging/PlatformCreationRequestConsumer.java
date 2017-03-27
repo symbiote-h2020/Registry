@@ -66,7 +66,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         OperationRequest request = null;
         SemanticResponse semanticResponse = new SemanticResponse();
-        semanticResponse.setStatus(400);
+        semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         String response;
         List<Platform> platforms = new ArrayList<>();
         PlatformResponse platformResponse = new PlatformResponse();
@@ -80,7 +80,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             request = gson.fromJson(message, OperationRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
-            platformResponse.setStatus(400);
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
             platformResponse.setMessage("Error occured during getting Operation Request from Json");
             platformResponseList.add(platformResponse);
         }
@@ -88,12 +88,12 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
                 switch (request.getType()) {
-                    case RDF:
+                    case REGISTRATION_RDF:
                         try {
                             semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
-                            platformResponse.setStatus(400);
+                            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                             platformResponse.setMessage("Error occured during getting Platforms from Json");
                             platformResponseList.add(platformResponse);
                         }
@@ -102,17 +102,17 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                         } else {
                             log.error("Error occured during rdf verification. Semantic Manager info: "
                                     + semanticResponse.getMessage());
-                            platformResponse.setStatus(400);
+                            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                             platformResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
                                     + semanticResponse.getMessage());
                             platformResponseList.add(platformResponse);
                         }
-                    case BASIC:
+                    case REGISTRATION_BASIC:
                         try {
                             platforms = gson.fromJson(request.getBody(), listType);
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Platforms from Json", e);
-                            platformResponse.setStatus(400);
+                            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                             platformResponse.setMessage("Error occured during getting Platforms from Json");
                             platformResponseList.add(platformResponse);
                         }
@@ -135,7 +135,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             } else {
                 log.error("Given Platform has some fields null or empty");
                 platformResponse.setMessage("Given Platform has some fields null or empty");
-                platformResponse.setStatus(400);
+                platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 platformResponse.setPlatform(platform);
             }
             platformResponseList.add(platformResponse);

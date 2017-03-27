@@ -78,7 +78,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             request = gson.fromJson(message, OperationRequest.class);
             if (RegistryUtils.checkToken(request.getToken())) {
                 switch (request.getType()) {
-                    case RDF:
+                    case REGISTRATION_RDF:
                         try {
                             semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
                             if (semanticResponse.getStatus() == 200) {
@@ -97,7 +97,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                             platformResponse.setMessage("Error occured during getting Platforms from Json");
                             platformResponseList.add(platformResponse);
                         }
-                    case BASIC:
+                    case REGISTRATION_BASIC:
 
                         try {
                             platforms = gson.fromJson(message, listType);

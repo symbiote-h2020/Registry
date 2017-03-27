@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.utils;
 
 import com.google.gson.Gson;
+import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.SemanticResponse;
@@ -54,6 +55,28 @@ public class RegistryUtils {
             b = false;
         } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty() || resource.getLabels().isEmpty()) {
             log.info("Given resource has some empty fields");
+            b = false;
+        } else {
+            b = true;
+        }
+        return b;
+    }
+
+    /**
+     * Checks if given informationModel has all of the needed fields and that neither is empty.
+     *
+     * @param informationModel informationModel to check
+     * @return true if it has all the fields and neither is empty.
+     */
+    public static boolean validateFields(InformationModel informationModel) { //todo extend validation to all fields
+        boolean b;
+        if (informationModel.getBody() == null || informationModel.getFormat() == null ||
+                informationModel.getUri() == null) {
+            log.info("Given informationModel has some null fields");
+            b = false;
+        } else if (informationModel.getBody().isEmpty() || informationModel.getFormat().isEmpty() ||
+                informationModel.getUri().isEmpty()) {
+            log.info("Given informationModel has some empty fields");
             b = false;
         } else {
             b = true;

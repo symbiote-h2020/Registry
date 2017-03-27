@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Class managing persistence actions for Platforms, Resources and Locations using MongoDB repositories.
- *
+ * <p>
  * Created by mateuszl
  */
 @Component
@@ -44,33 +44,37 @@ public class RepositoryManager {
         PlatformResponse platformResponse = new PlatformResponse();
         Platform savedPlatform = null;
         platformResponse.setPlatform(platform);
-//
-//        if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
-//            platform.setBody(platform.getBody().trim() + "/");
-//        }
+        platformResponse.setMessage("Unknown error"); //// FIXME: 27.03.2017
+        platformResponse.setStatus(400);
 
         if (platform.getId() != null) {
             log.error("Given platform has not null id!");
             platformResponse.setMessage("Given platform has not null id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            try {
-                log.info("Saving platform: " + platform.getId());
-                //todo check if provided platform already exists - somehow
-
-                //todo Interworking service !!
-
-                savedPlatform = platformRepository.save(platform);
-
-            } catch (Exception e) {
-                log.error("Error occurred during Platform saving to db", e);
-                platformResponse.setMessage("Error occurred during Platform saving to db");
-                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            for (InterworkingService interworkingService : platform.getInterworkingServices()) {
+                if (modelRepository.findOne(interworkingService.getInformationModelUri()) == null) {
+                    platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+                    platformResponse.setMessage("There is wrong informationModelUri in one of interworkingServices" +
+                            "in given Platform");
+                }
             }
-                log.info("Platform \"" + savedPlatform + "\" saved !");
-                platformResponse.setStatus(HttpStatus.SC_OK);
-                platformResponse.setMessage("OK");
-                platformResponse.setPlatform(savedPlatform);
+            if (platformResponse.getStatus() != HttpStatus.SC_BAD_REQUEST) {
+                try {
+                    log.info("Saving platform: " + platform.getId());
+                    //todo check if provided platform already exists - somehow
+
+                    savedPlatform = platformRepository.save(platform);
+                    log.info("Platform \"" + savedPlatform + "\" saved !");
+                    platformResponse.setStatus(HttpStatus.SC_OK);
+                    platformResponse.setMessage("OK");
+                    platformResponse.setPlatform(savedPlatform);
+                } catch (Exception e) {
+                    log.error("Error occurred during Platform saving to db", e);
+                    platformResponse.setMessage("Error occurred during Platform saving to db");
+                    platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                }
+            }
         }
         return platformResponse;
     }
@@ -197,7 +201,7 @@ public class RepositoryManager {
             log.error("Given PlatformId does not exist in database");
             resourceResponse.setMessage("Given PlatformId does not exist in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resource.getId() != null){
+        } else if (resource.getId() != null) {
             log.error("Resource has not null ID!");
             resourceResponse.setMessage("Resource has not null ID!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -329,38 +333,33 @@ public class RepositoryManager {
         return resourceResponse;
     }
 
-//    /**
-//     * Removes from mongoDB given Location.
-//     *
-//     * @param location Location object to delete.
-//     */
-//    private void removeLocation(Location location) {
-//        try {
-//            locationRepository.delete(location.getId());
-//        } catch (Exception e) {
-//            log.error("Error occurred during Location deleting from db", e);
-//        }
-//    }
+    /** todo
+     *
+     * @param informationModel
+     * @return
+     */
+    public InformationModelResponse saveInformationModel(InformationModel informationModel) {
+        InformationModelResponse response = new InformationModelResponse();
+        response.setInformationModel(informationModel);
+        response.setMessage("Unknown error"); //// FIXME: 27.03.2017
+        response.setStatus(400);
 
-//    /**
-//     * Saves in MongoDB given Location.
-//     *
-//     * @param location Location object to save.
-//     * @return saved Location with ID field fulfilled.
-//     */
-//    public Location saveLocation(Location location) {
-//        Location savedLocation = null;
-//        log.info("Adding Location to db");
-//        if (location == null) {
-//            return null;
-//        } else {
-//            try {
-//                savedLocation = locationRepository.save(location);
-//                log.info("Location with id: " + savedLocation.getId() + " saved !");
-//            } catch (Exception e) {
-//                log.error("Error occurred during Location saving in db", e);
-//            }
-//        }
-//        return savedLocation;
-//    }
+        if (informationModel.getUri().trim().charAt(informationModel.getUri().length() - 1) != "/".charAt(0)) {
+            informationModel.setUri(informationModel.getUri().trim() + "/");
+        }
+
+        try {
+            modelRepository.save(informationModel);
+            log.info("Information Model \"" + informationModel + "\" saved !");
+            response.setStatus(HttpStatus.SC_OK);
+            response.setMessage("OK");
+            response.setInformationModel(informationModel);
+        } catch (Exception e) {
+            log.error("Error occurred during Information Model saving to db", e);
+            response.setMessage("Error occurred during Information Model saving to db");
+            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        }
+
+        return response;
+    }
 }
