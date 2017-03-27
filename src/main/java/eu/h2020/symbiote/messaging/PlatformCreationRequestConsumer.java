@@ -123,6 +123,11 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 platformResponse.setMessage("Token invalid");
                 platformResponseList.add(platformResponse);
             }
+        } else {
+            log.error("Request is null");
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            platformResponse.setMessage("Request is null");
+            platformResponseList.add(platformResponse);
         }
 
         for (Platform platform : platforms) {

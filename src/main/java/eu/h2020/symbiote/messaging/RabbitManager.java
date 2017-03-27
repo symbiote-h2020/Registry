@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -23,6 +24,8 @@ import java.util.concurrent.TimeoutException;
  */
 @Component
 public class RabbitManager {
+
+    //// TODO: 27.03.2017 prepare and start Information Model queues and Consumers
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
 
@@ -461,5 +464,9 @@ public class RabbitManager {
             log.warn("Received RPC message without ReplyTo or CorrelationId props.");
         }
         consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
+    }
+
+    public void sendInformationModelCreatedMessage(InformationModel informationModel) {
+        //// TODO: 27.03.2017
     }
 }

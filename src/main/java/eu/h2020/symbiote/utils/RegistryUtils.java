@@ -88,21 +88,21 @@ public class RegistryUtils {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Resource getRdfBodyForObject(Resource resource){
-        if (resource.getBody()==null) resource.setBody("mocked body"); //todo get body from Sem. Man.
-        return resource;
-    }
-
-    public static Resource getObjectForRdf(Resource resource){
+        if (resource.getBody()==null) resource.setBody("mocked body");
+        if (resource.getFormat()==null) resource.setFormat("mocked format"); //todo get properties from Sem. Man.
         return resource;
     }
 
     public static Platform getRdfBodyForObject(Platform platform){
-        if (platform.getBody()==null) platform.setBody("mocked body"); //todo get body from Sem. Man.
+        if (platform.getBody()==null) platform.setBody("mocked body");
+        if (platform.getFormat()==null) platform.setFormat("mocked format"); //todo get properties from Sem. Man.
         return platform;
     }
 
-    public static Platform getObjectForRdf(Platform platform){
-        return platform;
+    public static InformationModel getRdfBodyForObject(InformationModel informationModel){
+        if (informationModel.getBody()==null) informationModel.setBody("mocked body");
+        if (informationModel.getFormat()==null) informationModel.setFormat("mocked format"); //todo get properties from Sem. Man.
+        return informationModel;
     }
 
     public static SemanticResponse getPlatformsFromRdf(String rdf) {
@@ -136,12 +136,28 @@ public class RegistryUtils {
         semanticResponse.setBody(gson.toJson(resources));
         return semanticResponse;
     }
+
+
+    public static SemanticResponse getInformationModelFromRdf(String body) {
+        Gson gson = new Gson();
+        SemanticResponse semanticResponse = new SemanticResponse();
+        InformationModel im = new InformationModel();
+        im.setUri("http://test_uri.com/");
+        im.setBody("Test body");
+        im.setFormat("Test format");
+        semanticResponse.setBody(gson.toJson(im));
+        semanticResponse.setStatus(200);
+        semanticResponse.setMessage("OK");
+        return semanticResponse;
+    }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //todo MOCKED!! waiting for cooperation with SecurityHandler
     public static boolean checkToken(String token){
         return true;
     }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
