@@ -50,6 +50,7 @@ dependencies {
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:master-SNAPSHOT')
 
     // Use JUnit4
     testCompile 'junit:junit:4.12'
