@@ -26,8 +26,8 @@ jar {
 
 repositories {
     mavenCentral()
-    maven { 
-        url "https://jitpack.io" 
+    maven {
+        url "https://jitpack.io"
     }
     maven {
         url 'https://repo.spring.io/libs-snapshot'
@@ -45,12 +45,12 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
     compile('com.google.code.gson:gson:2.7')
 
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:master-SNAPSHOT')
+
 //    compile('org.springframework.boot:spring-boot-starter-data-rest')
 //    compile('org.springframework.boot:spring-boot-starter-web')
 
     testCompile('org.springframework.boot:spring-boot-starter-test')
-
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:master-SNAPSHOT')
 
     // Use JUnit4
     testCompile 'junit:junit:4.12'
