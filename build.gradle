@@ -45,7 +45,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
     compile('com.google.code.gson:gson:2.7')
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:master-SNAPSHOT')
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:master-SNAPSHOT') { changing = true }
 
 //    compile('org.springframework.boot:spring-boot-starter-data-rest')
 //    compile('org.springframework.boot:spring-boot-starter-web')
@@ -75,3 +75,8 @@ jacocoTestReport {
 }
 
 check.dependsOn jacocoTestReport
+
+configurations.all {
+    // Check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
