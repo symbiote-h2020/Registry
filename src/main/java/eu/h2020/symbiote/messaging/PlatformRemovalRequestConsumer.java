@@ -7,7 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.OperationRequest;
+import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -65,7 +65,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         //only REGISTRATION_BASIC type of objects accepted for remove !!
 
         Gson gson = new Gson();
-        OperationRequest request = null;
+        RegistryRequest request = null;
         String response;
         List<Platform> platforms = new ArrayList<>();
         PlatformResponse platformResponse = new PlatformResponse();

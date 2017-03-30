@@ -7,10 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.OperationRequest;
-import eu.h2020.symbiote.model.Platform;
-import eu.h2020.symbiote.model.PlatformResponse;
-import eu.h2020.symbiote.model.SemanticResponse;
+import eu.h2020.symbiote.model.*;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -64,10 +61,11 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        OperationRequest request = null;
-        SemanticResponse semanticResponse = new SemanticResponse();
-        semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        RegistryRequest request = null;
         String response;
+        RegistryResponse registryResponse;
+        boolean bulkRequestSuccess = true;
+        String responseBody;
         List<Platform> platforms = new ArrayList<>();
         PlatformResponse platformResponse = new PlatformResponse();
         List<PlatformResponse> platformResponseList = new ArrayList<>();
@@ -77,7 +75,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received platforms to create: '" + message + "'");
 
         try {
-            request = gson.fromJson(message, OperationRequest.class);
+            request = gson.fromJson(message, RegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -87,6 +85,8 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
+                SemanticResponse semanticResponse = new SemanticResponse();
+                semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 switch (request.getType()) {
                     case REGISTRATION_RDF:
                         try {
@@ -130,13 +130,15 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
 
+        //// TODO: 29.03.2017 przyjmuje request, sprawdzam go, wyciagam obiekty, uruchamiam zapis. Po uzyskaniu
+        // odpowiedzi od zapisu, sprawdzam czy wszystko jest ok, jak tak to rozsylam wiadomosci. jesli jest jakikolwiek
+        // nie OK to robie reczny rollback tych z OK
+
+
         for (Platform platform : platforms) {
             if (RegistryUtils.validateFields(platform)) {
                 if (platform.getBody()==null) platform = RegistryUtils.getRdfBodyForObject(platform);
                 platformResponse = this.repositoryManager.savePlatform(platform);
-                if (platformResponse.getStatus() == 200) {
-                    rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
-                }
             } else {
                 log.error("Given Platform has some fields null or empty");
                 platformResponse.setMessage("Given Platform has some fields null or empty");
@@ -146,8 +148,38 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
 
-        //if platforms List is empty, platformResponseList will still contain needed information
-        response = gson.toJson(platformResponseList);
+        registryResponse = new RegistryResponse();
+
+        for (PlatformResponse platformResponse1 : platformResponseList) {
+            if (platformResponse1.getStatus()!=200) {
+                rollback(platformResponse1.getPlatform());
+                bulkRequestSuccess = false;
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("One of objects could not be registered. Check list of response " +
+                        "objects for details.");
+            }
+        }
+
+        if (bulkRequestSuccess) {
+            for (PlatformResponse platformResponse2 : platformResponseList) {
+                rabbitManager.sendPlatformCreatedMessage(platformResponse2.getPlatform());
+            }
+            registryResponse.setStatus(200);
+            registryResponse.setMessage("Bulk registration successful!");
+        }
+
+        responseBody = gson.toJson(platformResponseList);
+        registryResponse.setBody(responseBody);
+        response = gson.toJson(registryResponse);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
+
+    /** Form of transaction rollback used for bulk registration, when any of given objects does not save in database.
+     *
+     * @param platform
+     */
+    private void rollback(Platform platform){
+        repositoryManager.removePlatform(platform);
+    }
+
 }

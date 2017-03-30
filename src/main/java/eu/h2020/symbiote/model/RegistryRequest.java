@@ -6,7 +6,7 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
  * Created by mateuszl on 20.03.2017.
  */
 
-public class OperationRequest {
+public class RegistryRequest {
     private RequestType type;
     private String body;
     private String token;

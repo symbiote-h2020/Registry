@@ -8,7 +8,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.InformationModelResponse;
-import eu.h2020.symbiote.model.OperationRequest;
+import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.SemanticResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -59,7 +59,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        OperationRequest request = null;
+        RegistryRequest request = null;
         SemanticResponse semanticResponse = new SemanticResponse();
         semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         String response;
@@ -70,7 +70,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received information model to create: '" + message + "'");
 
         try {
-            request = gson.fromJson(message, OperationRequest.class);
+            request = gson.fromJson(message, RegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);

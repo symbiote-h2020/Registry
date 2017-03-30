@@ -7,7 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.OperationRequest;
+import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.SemanticResponse;
@@ -63,7 +63,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        OperationRequest request;
+        RegistryRequest request;
         SemanticResponse semanticResponse;
         String response;
         List<Platform> platforms = new ArrayList<>();
@@ -75,7 +75,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received platform to modify: '" + message + "'");
 
         try {
-            request = gson.fromJson(message, OperationRequest.class);
+            request = gson.fromJson(message, RegistryRequest.class);
             if (RegistryUtils.checkToken(request.getToken())) {
                 switch (request.getType()) {
                     case REGISTRATION_RDF:
@@ -115,7 +115,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                 platformResponseList.add(platformResponse);
             }
         } catch (JsonSyntaxException e) {
-            log.error("Unable to get OperationRequest from Message body!");
+            log.error("Unable to get RegistryRequest from Message body!");
             e.printStackTrace();
         }
 
