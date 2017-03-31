@@ -3,6 +3,9 @@ package eu.h2020.symbiote.model;
 /**
  * Created by mateuszl on 29.03.2017.
  */
+
+
+//// TODO: 30.03.2017 Response for general use
 public class RegistryResponse {
 
     private int status;

@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.repository;
 
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.model.Resource;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,5 +14,5 @@ import java.util.List;
 @Repository
 public interface ResourceRepository extends MongoRepository<CoreResource, String> {
 
-    public List<Resource> findByPlatformId(String platformId);
+    List<CoreResource> findByPlatformId(String platformId);
 }

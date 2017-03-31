@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.repository;
 
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.model.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -190,31 +191,28 @@ public class RepositoryManager {
      * @return ResourceResponse containing Http status code and Resource with added 'Id' (generated in MongoDB),
      * in JSON format
      */
-    public ResourceResponse saveResource(Resource resource) {
+    public ResourceResponse saveResource(CoreResource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
-        if (resource.getBody().trim().charAt(resource.getBody().length() - 1) != "/".charAt(0)) {
-            resource.setBody(resource.getBody().trim() + "/");
+        if (resource.getHasInterworkingServiceURL().trim().charAt(resource.getHasInterworkingServiceURL().length() - 1)
+                != "/".charAt(0)) {
+            resource.setHasInterworkingServiceURL(resource.getHasInterworkingServiceURL().trim() + "/");
         }
 
-        if (platformRepository.findOne(resource.getFormat()) == null) {
-            log.error("Given PlatformId does not exist in database");
-            resourceResponse.setMessage("Given PlatformId does not exist in database");
+        if (platformRepository.findByInterworkingServiceURL(resource.getHasInterworkingServiceURL()) == null) {
+            log.error("Given Interworking Service does not exist in any Platform in database");
+            resourceResponse.setMessage("Given Interworking Service does not exist in any Platform in database");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resource.getId() != null) {
             log.error("Resource has not null ID!");
             resourceResponse.setMessage("Resource has not null ID!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (!platformRepository.findOne(resource.getFormat()).getBody().equals(resource.getBody())) {
-            log.error("Platform with given resourceURL does not exist in database");
-            resourceResponse.setMessage("Platform with given resourceURL does not exist in database");
-            resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                log.info("Saving Resource: " + resource.getLabels());
+                log.info("Saving Resource: " + resource.toString());
                 //todo check if provided resource already exists - somehow (URL?)
 
-                Resource savedResource = resourceRepository.save(resource);
+                CoreResource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
 
                 resourceResponse.setStatus(HttpStatus.SC_OK);
@@ -235,7 +233,7 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceResponse containing Http status code and Deleted Resource, in JSON format
      */
-    public ResourceResponse removeResource(Resource resource) {
+    public ResourceResponse removeResource(CoreResource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
 
         if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
@@ -244,7 +242,7 @@ public class RepositoryManager {
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
-                Resource foundResource = resourceRepository.findOne(resource.getId());
+                CoreResource foundResource = resourceRepository.findOne(resource.getId());
                 if (foundResource != null) {
 //                    if (foundResource.getLocation() != null) {
 //                        Location loc = foundResource.getLocation();
@@ -277,20 +275,19 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceResponse containing Http status code and Modified Resource, in JSON format
      */
-    public ResourceResponse modifyResource(Resource resource) {
+    public ResourceResponse modifyResource(CoreResource resource) {
         ResourceResponse resourceResponse = new ResourceResponse();
+        CoreResource foundResource = null;
 
-        if (resource.getBody().trim().charAt(resource.getBody().length() - 1) != "/".charAt(0)) {
-            resource.setBody(resource.getBody().trim() + "/");
-        }
-
-        Resource foundResource = null;
-
-        if (resource.getFormat().isEmpty() || resource.getFormat() == null) {
-            log.error("Given resource has empty or null PlatformID!");
-            resourceResponse.setMessage("Given resource has empty or null PlatformID!");
+        if (resource.getHasInterworkingServiceURL().isEmpty() || resource.getHasInterworkingServiceURL() == null) {
+            log.error("Given resource has empty or null Interworking service URL!");
+            resourceResponse.setMessage("Given resource has empty or null Interworking service URL!");
             resourceResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
+            if (resource.getHasInterworkingServiceURL().trim().charAt(resource.getHasInterworkingServiceURL().length() - 1)
+                    != "/".charAt(0)) {
+                resource.setHasInterworkingServiceURL(resource.getHasInterworkingServiceURL().trim() + "/");
+            }
             foundResource = resourceRepository.findOne(resource.getId());
         }
 
@@ -303,20 +300,6 @@ public class RepositoryManager {
                 //fulfilment of empty Resource fields before saving
                 if (resource.getComments() == null && foundResource.getComments() != null)
                     resource.setComments(foundResource.getComments());
-//                if (resource.getFeatureOfInterest() == null && foundResource.getFeatureOfInterest() != null)
-//                    resource.setFeatureOfInterest(foundResource.getFeatureOfInterest());
-//                if (resource.getLabels() == null && foundResource.getLabels() != null)
-//                    resource.setLabels(foundResource.getLabels());
-//                if (resource.getOwner() == null && foundResource.getOwner() != null)
-//                    resource.setOwner(foundResource.getOwner());
-//                if (resource.getBody() == null && foundResource.getBody() != null)
-//                    resource.setBody(foundResource.getBody());
-//                if (resource.getId() == null && foundResource.getId() != null)
-//                    resource.setId(foundResource.getId());
-//                if (resource.getObservedProperties() == null && foundResource.getObservedProperties() != null)
-//                    resource.setObservedProperties(foundResource.getObservedProperties());
-//                if (resource.getLocation() == null && foundResource.getLocation() != null)
-//                    resource.setLocation(foundResource.getLocation());
 
                 resourceRepository.save(resource);
                 log.info("Resource with id: " + resource.getId() + " modified !");

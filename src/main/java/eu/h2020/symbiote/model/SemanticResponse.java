@@ -9,7 +9,7 @@ public class SemanticResponse {
 
     private int status;
     private String message;
-    private String body;
+    private String body; //todo List<CoreResources>
 
     public int getStatus() {
         return status;

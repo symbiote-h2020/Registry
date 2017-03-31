@@ -7,10 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.RegistryRequest;
-import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceResponse;
-import eu.h2020.symbiote.model.SemanticResponse;
+import eu.h2020.symbiote.model.*;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -63,9 +60,9 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        RegistryRequest request;
-        SemanticResponse semanticResponse;
+        RegistryRequest request = null;
         String response;
+        RegistryResponse registryResponse = new RegistryResponse();
         ResourceResponse resourceResponse = new ResourceResponse();
         List<Resource> resources = new ArrayList<>();
         List<ResourceResponse> resourceResponseList = new ArrayList<>();
@@ -76,22 +73,40 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         Type listType = new TypeToken<ArrayList<Resource>>() {
         }.getType();
 
+
         try {
+            //otrzymuje request
             request = gson.fromJson(message, RegistryRequest.class);
+        } catch (JsonSyntaxException e) {
+            log.error("Unable to get RegistryRequest from Message body!");
+            e.printStackTrace();
+        }
+
+
+        if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
+                //sprawdzam typ requesta
                 switch (request.getType()) {
-                    case REGISTRATION_RDF:
+                    case RDF:
+
+                        //wysłanie RDFowejlisty resourców do Sem.Man. i czekanie na odpowiedz consumerem
+                        rabbitManager.sendRDFResourceValidationMessage(request.getBody());
+
+                            /*
+
                         try {
                             semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
+
                             if (semanticResponse.getStatus() == 200) {
                                 resources = gson.fromJson(semanticResponse.getBody(), listType);
                             } else {
                                 log.error("Error occured during rdf verification! Semantic Manager info: "
                                         + semanticResponse.getMessage());
-                                resourceResponse.setStatus(400);
-                                resourceResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
+
+                                registryResponse.setStatus(400);
+                                registryResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
                                         + semanticResponse.getMessage());
-                                resourceResponseList.add(resourceResponse);
+
                             }
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
@@ -99,7 +114,15 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                             resourceResponse.setMessage("Error occured during getting Resources from Json");
                             resourceResponseList.add(resourceResponse);
                         }
-                    case REGISTRATION_BASIC:
+                        */
+
+
+                    case BASIC:
+
+                        //wysłanie JSONowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
+                        rabbitManager.sendJSONResourceValidationMessage(request.getBody());
+
+                        /*
                         try {
                             resources = gson.fromJson(message, listType);
                         } catch (JsonSyntaxException e) {
@@ -108,35 +131,17 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                             resourceResponse.setMessage("Error occured during getting Resources from Json");
                             resourceResponseList.add(resourceResponse);
                         }
+                        */
                 }
             } else {
                 log.error("Token invalid");
-                resourceResponse.setStatus(400);
-                resourceResponse.setMessage("Token invalid");
-                resourceResponseList.add(resourceResponse);
+                registryResponse.setStatus(400);
+                registryResponse.setMessage("Token invalid");
+                rabbitManager.sendReplyMessage(this, properties, envelope, gson.toJson(registryResponse));
             }
-        } catch (JsonSyntaxException e) {
-            log.error("Unable to get RegistryRequest from Message body!");
-            e.printStackTrace();
         }
 
-        for (Resource resource : resources) {
-            if (RegistryUtils.validateFields(resource)) {
-                resource = RegistryUtils.getRdfBodyForObject(resource);
-                resourceResponse = this.repositoryManager.saveResource(resource);
-                if (resourceResponse.getStatus() == 200) {
-                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
-                }
-            } else {
-                log.error("Given Resource has some fields null or empty");
-                resourceResponse.setMessage("Given Resource has some fields null or empty");
-                resourceResponse.setStatus(400);
-            }
-            resourceResponseList.add(resourceResponse);
-        }
 
-        //if resources List is empty, resourceResponseList will still contain needed information
-        response = gson.toJson(resourceResponseList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response);
+
     }
 }

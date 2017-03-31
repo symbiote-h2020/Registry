@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.model;
 
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 /**
@@ -10,9 +11,9 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 public class ResourceResponse {
     private int status;
     private String message;
-    private Resource resource;
+    private CoreResource resource;
 
-    public ResourceResponse(int status, String message, Resource resource) {
+    public ResourceResponse(int status, String message, CoreResource resource) {
         this.status = status;
         this.message = message;
         this.resource = resource;
@@ -38,14 +39,14 @@ public class ResourceResponse {
     /**
      * @return
      */
-    public Resource getResource() {
+    public CoreResource getResource() {
         return resource;
     }
 
     /**
      * @param resource
      */
-    public void setResource(Resource resource) {
+    public void setResource(CoreResource resource) {
         this.resource = resource;
     }
 

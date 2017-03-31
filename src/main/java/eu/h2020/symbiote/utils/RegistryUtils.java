@@ -153,8 +153,24 @@ public class RegistryUtils {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //todo MOCKED!! waiting for cooperation with SecurityHandler
-    public static boolean checkToken(String token){
+    public static boolean checkToken(String tokenString){
+
+/*
+        SecurityHandler securityHandler = new SecurityHandler(); //TODO CIEKAWE CO TU NIBY MAM PRZEKZAć?!?!
+        try {
+            SymbIoTeToken token = securityHandler.verifyCoreToken(tokenString);
+            log.info("Token " + token + " was verified");
+        }
+        catch (TokenVerificationException e) {
+            log.error("Token could not be verified");
+//            JSONObject error = new JSONObject();
+//            error.put("error", "Token could not be verified");
+//            return error;
+            return false;
+        }
+*/
+
+
         return true;
     }
 

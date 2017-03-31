@@ -82,6 +82,12 @@ public class RabbitManager {
     private Connection connection;
     RepositoryManager repositoryManager;
 
+    @Value("${rabbit.routingKey.resource.instance.validationRequested}")
+    private String jsonResourceValidationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.resource.instance.translationRequested}")
+    private String rdfResourceValidationRequestedRoutingKey;
+
+
     @Autowired
     public RabbitManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
@@ -152,7 +158,6 @@ public class RabbitManager {
      */
     @PreDestroy
     public void cleanup() {
-        //FIXME check if there is better exception handling in @predestroy method
         log.info("Rabbit cleaned!");
         try {
             Channel channel;
@@ -242,6 +247,16 @@ public class RabbitManager {
         String message = gson.toJson(resource);
         sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
         log.info("- resource modified message sent");
+    }
+
+    public void sendRDFResourceValidationMessage(String message) {
+        sendMessage(this.platformExchangeName, this.rdfResourceValidationRequestedRoutingKey, message); //todo check
+        log.info("- rdf resource to validation message sent");
+    }
+
+    public void sendJSONResourceValidationMessage(String message) {
+        sendMessage(this.platformExchangeName, this.jsonResourceValidationRequestedRoutingKey, message); //todo check
+        log.info("- json resource to validation message sent");
     }
 
     public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
@@ -398,6 +413,35 @@ public class RabbitManager {
             e.printStackTrace();
         }
     }
+
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfResourceValidationMessages() throws InterruptedException, IOException {
+        String queueName = "resourceValidationRequestedQueue";
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, this.semanticManagerExchangeName, this.rdfResourceValidationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Semantic Manager messages....");
+
+            Consumer consumer = new ResourceValidationResponseConsumer(channel, repositoryManager, this);
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
 
     /**
      * Method publishes given message to the given exchange and routing key.

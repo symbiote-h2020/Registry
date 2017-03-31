@@ -88,7 +88,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 SemanticResponse semanticResponse = new SemanticResponse();
                 semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 switch (request.getType()) {
-                    case REGISTRATION_RDF:
+                    case RDF:
                         try {
                             semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
                         } catch (JsonSyntaxException e) {
@@ -107,7 +107,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                                     + semanticResponse.getMessage());
                             platformResponseList.add(platformResponse);
                         }
-                    case REGISTRATION_BASIC:
+                    case BASIC:
                         try {
                             platforms = gson.fromJson(request.getBody(), listType);
                         } catch (JsonSyntaxException e) {
@@ -129,11 +129,6 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             platformResponse.setMessage("Request is null");
             platformResponseList.add(platformResponse);
         }
-
-        //// TODO: 29.03.2017 przyjmuje request, sprawdzam go, wyciagam obiekty, uruchamiam zapis. Po uzyskaniu
-        // odpowiedzi od zapisu, sprawdzam czy wszystko jest ok, jak tak to rozsylam wiadomosci. jesli jest jakikolwiek
-        // nie OK to robie reczny rollback tych z OK
-
 
         for (Platform platform : platforms) {
             if (RegistryUtils.validateFields(platform)) {

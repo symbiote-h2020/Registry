@@ -78,7 +78,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             request = gson.fromJson(message, RegistryRequest.class);
             if (RegistryUtils.checkToken(request.getToken())) {
                 switch (request.getType()) {
-                    case REGISTRATION_RDF:
+                    case RDF:
                         try {
                             semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
                             if (semanticResponse.getStatus() == 200) {
@@ -97,7 +97,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                             resourceResponse.setMessage("Error occured during getting Resources from Json");
                             resourceResponseList.add(resourceResponse);
                         }
-                    case REGISTRATION_BASIC:
+                    case BASIC:
                         try {
                             resources = gson.fromJson(request.getBody(), listType);
                         } catch (JsonSyntaxException e) {
