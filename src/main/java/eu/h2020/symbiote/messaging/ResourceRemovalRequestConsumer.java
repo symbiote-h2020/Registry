@@ -115,6 +115,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             resourceSavingResultList.add(resourceSavingResult);
         }
         response = gson.toJson(resourceSavingResultList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

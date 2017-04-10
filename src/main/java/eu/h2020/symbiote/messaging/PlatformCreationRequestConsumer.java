@@ -166,7 +166,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         responseBody = gson.toJson(platformResponseList);
         registryResponse.setBody(responseBody);
         response = gson.toJson(registryResponse);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 
     /** Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when

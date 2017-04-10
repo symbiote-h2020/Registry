@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -203,7 +204,6 @@ public class RabbitManager {
             startConsumerOfResourceRemovalMessages();
             startConsumerOfPlatformModificationMessages();
             startConsumerOfResourceModificationMessages();
-            startConsumerOfResourceValidationMessages();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -278,13 +278,19 @@ public class RabbitManager {
         }
     }
 
-    public void sendRdfResourceValidationRpcMessage(String message) {
-        sendMessage(this.platformExchangeName, this.rdfResourceValidationRequestedRoutingKey, message); //todo check
+    public void sendRdfResourceValidationRpcMessage(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
+                                                    Envelope rpcEnvelope, String message) {
+        sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
+                this.resourceExchangeName, this.rdfResourceValidationRequestedRoutingKey,
+                message); //todo check
         log.info("- rdf resource to validation message sent");
     }
 
-    public void sendJsonResourceValidationRpcMessage(String message) {
-        sendMessage(this.platformExchangeName, this.jsonResourceValidationRequestedRoutingKey, message); //todo check
+    public void sendJsonResourceValidationRpcMessage(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
+                                                     Envelope rpcEnvelope, String message) {
+        sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
+                this.resourceExchangeName, this.jsonResourceValidationRequestedRoutingKey,
+                message); //todo check
         log.info("- json resource to validation message sent");
     }
 
@@ -443,16 +449,8 @@ public class RabbitManager {
         }
     }
 
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
+    /*
     private void startConsumerOfResourceValidationMessages() throws InterruptedException, IOException {
-        //// TODO: 05.04.2017 check!
         String queueName = "resourceValidationRequestedQueue";
         Channel channel;
         try {
@@ -463,13 +461,13 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Semantic Manager messages....");
 
-            Consumer consumer = new ResourceValidationResponseConsumer(channel, repositoryManager, this);
+            Consumer consumer = new ResourceJsonValidationResponseConsumer(channel, repositoryManager, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
+*/
 
     /**
      * Method publishes given message to the given exchange and routing key.
@@ -480,11 +478,10 @@ public class RabbitManager {
      * @param message    message content in JSON String format
      */
     private void sendMessage(String exchange, String routingKey, String message) {
-        AMQP.BasicProperties props;
         Channel channel = null;
         try {
             channel = this.connection.createChannel();
-            props = new AMQP.BasicProperties()
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
                     .builder()
                     .contentType("application/json")
                     .build();
@@ -521,8 +518,8 @@ public class RabbitManager {
      * @param response
      * @throws IOException
      */
-    public void sendReplyMessage(DefaultConsumer consumer, AMQP.BasicProperties properties, Envelope envelope,
-                                 String response) throws IOException {
+    public void sendRPCReplyMessage(DefaultConsumer consumer, AMQP.BasicProperties properties, Envelope envelope,
+                                    String response) throws IOException {
         if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
 
             AMQP.BasicProperties replyProps = new AMQP.BasicProperties
@@ -531,7 +528,7 @@ public class RabbitManager {
                     .build();
 
             consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-            log.info("Message sent back"); //todo insert content of message also?
+            log.info("Message sent back"); //fixme show content of message also?
         } else {
             log.warn("Received RPC message without ReplyTo or CorrelationId props.");
         }
@@ -541,4 +538,35 @@ public class RabbitManager {
     public void sendInformationModelCreatedMessage(InformationModel informationModel) {
         //// TODO: 27.03.2017
     }
+
+
+    public void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
+                                                Envelope rpcEnvelope, String exchangeName, String routingKey,
+                                                String message) {
+        try {
+            log.info("Sending RPC message to Semantic Manager...");
+
+            Channel channel = this.connection.createChannel();
+
+            String replyQueueName = channel.queueDeclare().getQueue();
+
+            String correlationId = UUID.randomUUID().toString();
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
+                    .builder()
+                    .correlationId(correlationId)
+                    .replyTo(replyQueueName)
+                    .build();
+
+            ResourceJsonValidationResponseConsumer consumer =
+                    new ResourceJsonValidationResponseConsumer(message, rpcConsumer, rpcProperties, rpcEnvelope,
+                            channel, repositoryManager, this);
+            channel.basicConsume(replyQueueName, true, consumer);
+
+            channel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

@@ -118,6 +118,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
             platformResponseList.add(platformResponse);
         }
         response = gson.toJson(platformResponseList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

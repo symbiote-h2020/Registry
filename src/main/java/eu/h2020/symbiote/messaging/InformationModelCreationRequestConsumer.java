@@ -129,6 +129,6 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
         }
 
         response = gson.toJson(informationModelResponse);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

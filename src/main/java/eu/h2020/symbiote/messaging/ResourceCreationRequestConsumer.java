@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
@@ -60,7 +60,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
+        ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
         RegistryResponse registryResponse = new RegistryResponse();
         String message = new String(body, "UTF-8");
@@ -72,7 +72,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         try {
             //otrzymuje request od CCI
-            request = gson.fromJson(message, CoreResourceRegistryRequest.class);
+            request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get RegistryRequest from Message body!");
             e.printStackTrace();
@@ -86,7 +86,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
                         log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request);
                         //wysłanie RDFowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
-                        rabbitManager.sendRdfResourceValidationRpcMessage(request.getBody());
+                        rabbitManager.sendRdfResourceValidationRpcMessage(this, properties, envelope, request.getBody());
 
                             /*
                         try {
@@ -114,9 +114,16 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
                         log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request);
                         //wysłanie JSONowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
-                        rabbitManager.sendJsonResourceValidationRpcMessage(request.getBody());
+                        rabbitManager.sendJsonResourceValidationRpcMessage(this, properties, envelope, request.getBody());
 
                         /*
+
+
+                        RPCINFO: this, properties, envelope,
+
+
+
+
                         try {
                             resources = gson.fromJson(message, listType);
                         } catch (JsonSyntaxException e) {
@@ -131,7 +138,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 log.error("Token invalid");
                 registryResponse.setStatus(400);
                 registryResponse.setMessage("Token invalid");
-                rabbitManager.sendReplyMessage(this, properties, envelope, gson.toJson(registryResponse));
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
             }
         }
 

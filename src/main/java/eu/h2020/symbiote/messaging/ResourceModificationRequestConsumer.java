@@ -134,6 +134,6 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
         //if resources List is empty, resourceSavingResultList will still contain needed information
         response = gson.toJson(resourceSavingResultList);
-        rabbitManager.sendReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.ResourceSavingResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import org.apache.commons.logging.Log;
@@ -23,9 +24,13 @@ import java.util.stream.Collectors;
 /**
  * Created by mateuszl on 30.03.2017.
  */
-public class ResourceValidationResponseConsumer extends DefaultConsumer {
+public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
+    DefaultConsumer rpcConsumer;
+    AMQP.BasicProperties rpcProperties;
+    Envelope rpcEnvelope;
+    String cciResources;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -37,12 +42,20 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public ResourceValidationResponseConsumer(Channel channel,
-                                              RepositoryManager repositoryManager,
-                                              RabbitManager rabbitManager) {
+    public ResourceJsonValidationResponseConsumer(String cciResources,
+                                                  DefaultConsumer rpcConsumer,
+                                                  AMQP.BasicProperties rpcProperties,
+                                                  Envelope rpcEnvelope,
+                                                  Channel channel,
+                                                  RepositoryManager repositoryManager,
+                                                  RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        this.rpcConsumer = rpcConsumer;
+        this.rpcEnvelope = rpcEnvelope;
+        this.rpcProperties = rpcProperties;
+        this.cciResources = cciResources;
     }
 
     /**
@@ -62,11 +75,12 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        TypeReference listType = new TypeReference<ArrayList<CoreResource>>() {
+        TypeReference listType = new TypeReference<ArrayList<Resource>>() {
         };
+        List<Resource> cciResourcesList = mapper.readValue(cciResources, listType);
+        List<CoreResource> savedCoreResourcesList = new ArrayList<>();
 
         boolean bulkRequestSuccess = true;
-        String response;
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         ResourceSavingResult resourceSavingResult;
         List<ResourceSavingResult> resourceSavingResultsList = new ArrayList<>();
@@ -120,7 +134,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
 
         if (bulkRequestSuccess) {
-            List<CoreResource> savedCoreResourcesList = resourceSavingResultsList.stream()
+            savedCoreResourcesList = resourceSavingResultsList.stream()
                     .map(ResourceSavingResult::getResource)
                     .collect(Collectors.toList());
 
@@ -129,6 +143,16 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk registration successful!");
+
+
+            //utworzenie listy otrzymanych resourców z uzupelnionymi ID'kami
+            for (int i = 0; i < cciResourcesList.size(); i++) {
+                cciResourcesList.get(i).setId(savedCoreResourcesList.get(i).getId());
+            }
+
+            //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
+            registryResponse.setBody(mapper.writeValueAsString(cciResourcesList));
+
         } else {
             //todo ustawiam jakis błąd i messydż
             registryResponse.setStatus(500);
@@ -136,16 +160,10 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         }
 
 
-        //utworzenie listy otrzymanych resourców z uzupelnionymi ID'kami
+        String response = mapper.writeValueAsString(registryResponse);
 
-        registryResponse.setBody();
-
-
-        response = mapper.writeValueAsString(registryResponse);
-
-        //odeslanie core respnse z listą resourców z ID'kami
-        rabbitManager.sendReplyMessage(CCIconsumer, CCIproperties, CCIenvelope, response);
-
+        //odeslanie na RPC core response (z listą resourców z ID'kami jesl izapis sie powiódł)
+        rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
 
     }
 
