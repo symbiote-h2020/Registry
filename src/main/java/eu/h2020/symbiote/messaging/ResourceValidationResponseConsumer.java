@@ -1,19 +1,21 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.model.*;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,26 +58,28 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
+
+        ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        Type listType = new TypeToken<ArrayList<Resource>>() {
-        }.getType();
+        TypeReference listType = new TypeReference<ArrayList<Resource>>(){};
 
-
-        RegistryRequest request = null;
+        boolean bulkRequestSuccess = true;
         SemanticResponse semanticResponse = new SemanticResponse();
         String response;
-        RegistryResponse registryResponse = new RegistryResponse();
+        RegistryResponse registryResponse;
         ResourceResponse resourceResponse = new ResourceResponse();
         List<CoreResource> resources = new ArrayList<>();
         List<ResourceResponse> resourceResponseList = new ArrayList<>();
 
 
+        ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
+        List<CoreResource> lista = resourceInstanceValidationResult.getObjectDescription();
+
         log.info(" [x] Received validated resources: '" + message + "'");
 
         try {
             //otrzymuje odpowiedz od semantic managera
-            semanticResponse = gson.fromJson(message, SemanticResponse.class);
+            semanticResponse = mapper.readValue(message, SemanticResponse.class);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get semantic response from Message body!");
             e.printStackTrace();
@@ -83,7 +87,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         try {
             //wyciagam z niej resourcy
-            resources = gson.fromJson(semanticResponse.getBody(), listType);
+            resources = mapper.readValue(semanticResponse.getBody(), listType);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get Resources List from semantic response body!");
             e.printStackTrace();
@@ -91,21 +95,53 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
 
         for (CoreResource resource : resources) {
-                resourceResponse = this.repositoryManager.saveResource(resource);
-                if (resourceResponse.getStatus() == 200) {
-                    rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
-                }
+            //zapisuje kazdy z Core resourców
+            resourceResponse = this.repositoryManager.saveResource(resource);
             resourceResponseList.add(resourceResponse);
         }
 
+
+        registryResponse = new RegistryResponse();
+
+        for (ResourceResponse resourceResponse1 : resourceResponseList){
+            if (resourceResponse1.getStatus() != 200) {
+                rollback(resourceResponse1.getResource());
+                bulkRequestSuccess = false;
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("One of objects could not be registered. Check list of response " +
+                        "objects for details.");
+            }
+        }
+
+
+
+        if (bulkRequestSuccess) {
+
+            //wysłanie całej listy zapisanych resourców
+            rabbitManager.sendResourcesCreatedMessage(resourceResponseList);
+
+            registryResponse.setStatus(200);
+            registryResponse.setMessage("Bulk registration successful!");
+        }
+
+        responseBody = gson.toJson(platformResponseList);
+        registryResponse.setBody(responseBody);
+        response = gson.toJson(registryResponse);
+        rabbitManager.sendReplyMessage(this, properties, envelope, response);
 
 
     }
 
 
 
-
-
+    /** Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when
+     * any of given objects in list did not save successfully in database.
+     *
+     * @param platform
+     */
+    private void rollback(CoreResource resource){
+        repositoryManager.removeResource(resource);
+    }
 
 
 

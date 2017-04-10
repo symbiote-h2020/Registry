@@ -7,7 +7,9 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.*;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.model.RegistryResponse;
+import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -16,7 +18,6 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
@@ -60,12 +61,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        RegistryRequest request = null;
-        String response;
+        CoreResourceRegistryRequest request = null;
         RegistryResponse registryResponse = new RegistryResponse();
-        ResourceResponse resourceResponse = new ResourceResponse();
-        List<Resource> resources = new ArrayList<>();
-        List<ResourceResponse> resourceResponseList = new ArrayList<>();
         String message = new String(body, "UTF-8");
 
         log.info(" [x] Received resources to create: '" + message + "'");
@@ -73,27 +70,25 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         Type listType = new TypeToken<ArrayList<Resource>>() {
         }.getType();
 
-
         try {
-            //otrzymuje request
-            request = gson.fromJson(message, RegistryRequest.class);
+            //otrzymuje request od CCI
+            request = gson.fromJson(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get RegistryRequest from Message body!");
             e.printStackTrace();
         }
 
-
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
                 //sprawdzam typ requesta
-                switch (request.getType()) {
+                switch (request.getDescriptionType()) {
                     case RDF:
 
-                        //wysłanie RDFowejlisty resourców do Sem.Man. i czekanie na odpowiedz consumerem
-                        rabbitManager.sendRDFResourceValidationMessage(request.getBody());
+                        log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request);
+                        //wysłanie RDFowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
+                        rabbitManager.sendRdfResourceValidationRpcMessage(request.getBody());
 
                             /*
-
                         try {
                             semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
 
@@ -106,7 +101,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                 registryResponse.setStatus(400);
                                 registryResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
                                         + semanticResponse.getMessage());
-
                             }
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
@@ -116,11 +110,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                         }
                         */
 
-
                     case BASIC:
 
+                        log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request);
                         //wysłanie JSONowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
-                        rabbitManager.sendJSONResourceValidationMessage(request.getBody());
+                        rabbitManager.sendJsonResourceValidationRpcMessage(request.getBody());
 
                         /*
                         try {
@@ -140,8 +134,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendReplyMessage(this, properties, envelope, gson.toJson(registryResponse));
             }
         }
-
-
 
     }
 }

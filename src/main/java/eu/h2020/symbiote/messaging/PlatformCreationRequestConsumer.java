@@ -169,7 +169,8 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 
-    /** Form of transaction rollback used for bulk registration, when any of given objects does not save in database.
+    /** Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when
+     * any of given objects in list did not save successfully in database.
      *
      * @param platform
      */

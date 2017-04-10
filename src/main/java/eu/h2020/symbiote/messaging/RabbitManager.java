@@ -1,7 +1,9 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -200,6 +203,7 @@ public class RabbitManager {
             startConsumerOfResourceRemovalMessages();
             startConsumerOfPlatformModificationMessages();
             startConsumerOfResourceModificationMessages();
+            startConsumerOfResourceValidationMessages();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -208,53 +212,78 @@ public class RabbitManager {
     }
 
     public void sendPlatformCreatedMessage(Platform platform) {
-        Gson gson = new Gson();
-        String message = gson.toJson(platform);
-        sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
-        log.info("- platform created message sent");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(platform);
+            sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
+            log.info("- platform created message sent");
+        } catch( JsonProcessingException e ) {
+            log.error("Error occurred when parsing Resource object JSON: " + platform, e);
+        }
+
     }
 
     public void sendPlatformRemovedMessage(Platform platform) {
-        Gson gson = new Gson();
-        String message = gson.toJson(platform);
-        sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message);
-        log.info("- platform removed message sent");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(platform);
+            sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message);
+            log.info("- platform removed message sent");
+        } catch( JsonProcessingException e ) {
+            log.error("Error occurred when parsing Resource object JSON: " + platform, e);
+        }
     }
 
     public void sendPlatformModifiedMessage(Platform platform) {
-        Gson gson = new Gson();
-        String message = gson.toJson(platform);
-        sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message);
-        log.info("- platform modified message sent");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(platform);
+            sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message);
+            log.info("- platform modified message sent");
+        } catch( JsonProcessingException e ) {
+            log.error("Error occurred when parsing Resource object JSON: " + platform, e);
+        }
     }
 
-    public void sendResourceCreatedMessage(Resource resource) {
-        Gson gson = new Gson();
-        String message = gson.toJson(resource);
-        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
-        log.info("- resource created message sent");
+    public void sendResourcesCreatedMessage(List<CoreResource> resources) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(resources);
+            sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
+            log.info("- resource created message sent");
+        } catch( JsonProcessingException e ) {
+            log.error("Error occurred when parsing Resource object JSON: " + resources, e);
+        }
     }
 
     public void sendResourceRemovedMessage(Resource resource) {
-        Gson gson = new Gson();
-        String message = gson.toJson(resource);
-        sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
-        log.info("- resource removed message sent");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(resource);
+            sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
+            log.info("- resource removed message sent");
+        } catch( JsonProcessingException e ) {
+            log.error("Error occurred when parsing Resource object JSON: " + resource, e);
+        }
     }
 
     public void sendResourceModifiedMessage(Resource resource) {
-        Gson gson = new Gson();
-        String message = gson.toJson(resource);
-        sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
-        log.info("- resource modified message sent");
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(resource);
+            sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
+            log.info("- resource modified message sent");
+        } catch (JsonProcessingException e) {
+            log.error("Error occurred when parsing Resource object JSON: " + resource, e);
+        }
     }
 
-    public void sendRDFResourceValidationMessage(String message) {
+    public void sendRdfResourceValidationRpcMessage(String message) {
         sendMessage(this.platformExchangeName, this.rdfResourceValidationRequestedRoutingKey, message); //todo check
         log.info("- rdf resource to validation message sent");
     }
 
-    public void sendJSONResourceValidationMessage(String message) {
+    public void sendJsonResourceValidationRpcMessage(String message) {
         sendMessage(this.platformExchangeName, this.jsonResourceValidationRequestedRoutingKey, message); //todo check
         log.info("- json resource to validation message sent");
     }
@@ -423,12 +452,13 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfResourceValidationMessages() throws InterruptedException, IOException {
+        //// TODO: 05.04.2017 check!
         String queueName = "resourceValidationRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.semanticManagerExchangeName, this.rdfResourceValidationRequestedRoutingKey);
+            channel.queueBind(queueName, this.platformExchangeName, this.rdfResourceValidationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Semantic Manager messages....");
@@ -439,8 +469,6 @@ public class RabbitManager {
             e.printStackTrace();
         }
     }
-
-
 
 
     /**
