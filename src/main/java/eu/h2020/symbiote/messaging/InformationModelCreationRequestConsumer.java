@@ -9,7 +9,6 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.InformationModelResponse;
 import eu.h2020.symbiote.model.RegistryRequest;
-import eu.h2020.symbiote.model.SemanticResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;

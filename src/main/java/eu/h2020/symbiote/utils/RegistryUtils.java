@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.SemanticResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;

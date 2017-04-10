@@ -9,7 +9,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceResponse;
+import eu.h2020.symbiote.model.ResourceSavingResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -64,9 +64,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         RegistryRequest request = null;
         String response;
-        ResourceResponse resourceResponse = new ResourceResponse();
+        ResourceSavingResult resourceSavingResult = new ResourceSavingResult();
         List<Resource> resources = new ArrayList<>();
-        List<ResourceResponse> resourceResponseList = new ArrayList<>();
+        List<ResourceSavingResult> resourceSavingResultList = new ArrayList<>();
         String message = new String(body, "UTF-8");
         Type listType = new TypeToken<ArrayList<Resource>>() {
         }.getType();
@@ -77,9 +77,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             request = gson.fromJson(message, listType);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
-            resourceResponse.setStatus(400);
-            resourceResponse.setMessage("Error occured during getting Operation Request from Json");
-            resourceResponseList.add(resourceResponse);
+            resourceSavingResult.setStatus(400);
+            resourceSavingResult.setMessage("Error occured during getting Operation Request from Json");
+            resourceSavingResultList.add(resourceSavingResult);
         }
 
         if (request != null) {
@@ -88,33 +88,33 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                     resources = gson.fromJson(request.getBody(), listType);
                 } catch (JsonSyntaxException e) {
                     log.error("Error occured during getting Resources from Json", e);
-                    resourceResponse.setStatus(400);
-                    resourceResponse.setMessage("Error occured during getting Resources from Json");
-                    resourceResponseList.add(resourceResponse);
+                    resourceSavingResult.setStatus(400);
+                    resourceSavingResult.setMessage("Error occured during getting Resources from Json");
+                    resourceSavingResultList.add(resourceSavingResult);
                 }
             } else {
                 log.error("Token invalid");
-                resourceResponse.setStatus(400);
-                resourceResponse.setMessage("Token invalid");
-                resourceResponseList.add(resourceResponse);
+                resourceSavingResult.setStatus(400);
+                resourceSavingResult.setMessage("Token invalid");
+                resourceSavingResultList.add(resourceSavingResult);
             }
         }
 
         for (Resource resource : resources) {
             if (resource.getId() != null || !resource.getId().isEmpty()) {
                 resource = RegistryUtils.getRdfBodyForObject(resource); //fixme needed? or not completed object is fine?
-                resourceResponse = this.repositoryManager.removeResource(resource);
-                if (resourceResponse.getStatus() == 200) {
-                    rabbitManager.sendResourceRemovedMessage(resourceResponse.getResource());
+                resourceSavingResult = this.repositoryManager.removeResource(resource);
+                if (resourceSavingResult.getStatus() == 200) {
+                    rabbitManager.sendResourceRemovedMessage(resourceSavingResult.getResource());
                 }
             } else {
                 log.error("Given Resource has id null or empty");
-                resourceResponse.setMessage("Given Resource has ID null or empty");
-                resourceResponse.setStatus(400);
+                resourceSavingResult.setMessage("Given Resource has ID null or empty");
+                resourceSavingResult.setStatus(400);
             }
-            resourceResponseList.add(resourceResponse);
+            resourceSavingResultList.add(resourceSavingResult);
         }
-        response = gson.toJson(resourceResponseList);
+        response = gson.toJson(resourceSavingResultList);
         rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }
