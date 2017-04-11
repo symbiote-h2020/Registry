@@ -73,11 +73,11 @@ public class MessagesTests {
 //        String platformId = Integer.toString(rand.nextInt(50));
 //        String name = "platform" + rand.nextInt(50000);
 //
-//        platform.setPlatformId(platformId);
-//        platform.setName(name);
-//        platform.setDescription("platform_description");
-//        platform.setUrl("http://www.symbIoTe.com");
-//        platform.setInformationModelId("platform_info_model");
+//        platform.setId(platformId);
+//        platform.setLabels(name);
+//        platform.setComments("platform_description");
+//        platform.setBody("http://www.symbIoTe.com");
+//        platform.setFormat("platform_info_model");
 //
 //        Gson gson = new Gson();
 //        String message = gson.toJson(platform);

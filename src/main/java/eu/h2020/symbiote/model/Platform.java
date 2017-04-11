@@ -2,93 +2,131 @@ package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.springframework.data.annotation.Id;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Registry Platform object
- *
+ * <p>
  * Created by mateuszl
  */
 public class Platform {
     @Id
-    private String platformId;
-    private String name;
-    private String description;
-    private String url;
-    private String informationModelId;
+    private String id;
+    private List<String> labels;
+    private List<String> comments;
+    private String body;
+    private String format;
+    private List<InterworkingService> interworkingServices;
 
     public Platform() {
-
     }
 
     /**
      * @return
      */
-    public String getPlatformId() {
-        return platformId;
+    public String getId() {
+        return id;
     }
 
     /**
-     * @param platformId
+     * @param id
      */
-    public void setPlatformId(String platformId) {
-        this.platformId = platformId;
-    }
-
-    /**
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**
      * @return
      */
-    public String getDescription() {
-        return description;
+    public List<String> getLabels() {
+        if (this.labels == null) this.labels = new ArrayList<>();
+        return labels;
     }
 
     /**
-     * @param description
+     * @param labels
      */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * @return
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * @param url
-     */
-    public void setUrl(String url) {
-        this.url = url;
+    public void setLabels(List<String> labels) {
+        this.labels = labels;
     }
 
     /**
      * @return
      */
-    public String getInformationModelId() {
-        return informationModelId;
+    public List<String> getComments() {
+        if (this.comments == null) {
+            this.comments = new ArrayList<>();
+        }
+        return comments;
     }
 
     /**
-     * @param informationModelId
+     * @param comments
      */
-    public void setInformationModelId(String informationModelId) {
-        this.informationModelId = informationModelId;
+    public void setComments(List<String> comments) {
+        this.comments = comments;
+    }
+
+    /**
+     * @return
+     */
+    public String getBody() {
+        return body;
+    }
+
+    /**
+     * @param body
+     */
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    /**
+     * @return
+     */
+    public String getFormat() {
+        return format;
+    }
+
+    /**
+     * @param format
+     */
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    /**
+     * @return
+     */
+    public List<InterworkingService> getInterworkingServices() {
+        return interworkingServices;
+    }
+
+    /**
+     * @param interworkingServices
+     */
+    public void setInterworkingServices(List<InterworkingService> interworkingServices) {
+        this.interworkingServices = interworkingServices;
+    }
+
+    @Override
+    public String toString() {
+        /*
+        StringBuilder sb = new StringBuilder();
+        sb.append("Platform with id: " + this.getId() + ", body: " + body + ", format: " + format + ", labels: [");
+        this.getLabels().forEach(s->sb.append(s + ", "));
+        sb.append("], comments: [");
+        this.getComments().forEach(s->sb.append(s + ", "));
+        sb.append("], interworkingServices: [");
+        this.getInterworkingServices().forEach(s->sb.append(s +", "));
+        sb.append("].");
+        return  sb.toString();
+        */
+        return ReflectionToStringBuilder.toString(this);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package eu.h2020.symbiote.model;
 
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+
 /**
  * Class used as a response to RPC call requesting platform actions
  *
@@ -7,13 +9,15 @@ package eu.h2020.symbiote.model;
  */
 public class PlatformResponse {
     private int status;
+    private String message;
     private Platform platform;
 
     public PlatformResponse() {
     }
 
-    public PlatformResponse(int status, Platform platform) {
+    public PlatformResponse(int status, String message, Platform platform) {
         this.status = status;
+        this.message = message;
         this.platform = platform;
     }
 
@@ -43,5 +47,24 @@ public class PlatformResponse {
      */
     public void setPlatform(Platform platform) {
         this.platform = platform;
+    }
+
+    /**
+     * @return
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * @param message
+     */
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this);
     }
 }

@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -23,6 +24,8 @@ import java.util.concurrent.TimeoutException;
  */
 @Component
 public class RabbitManager {
+
+    //// TODO: 27.03.2017 prepare and start Information Model queues and Consumers
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
 
@@ -436,5 +439,34 @@ public class RabbitManager {
         } catch (TimeoutException e) {
             e.printStackTrace();
         }
+    }
+
+    /**Sends reply message with given body to rabbit queue, for specified RPC sender.
+     *
+     * @param consumer
+     * @param properties
+     * @param envelope
+     * @param response
+     * @throws IOException
+     */
+    public void sendReplyMessage(DefaultConsumer consumer, AMQP.BasicProperties properties, Envelope envelope,
+                                 String response) throws IOException {
+        if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
+
+            AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                    .Builder()
+                    .correlationId(properties.getCorrelationId())
+                    .build();
+
+            consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
+            log.info("Message sent back"); //todo insert content of message also?
+        } else {
+            log.warn("Received RPC message without ReplyTo or CorrelationId props.");
+        }
+        consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
+    }
+
+    public void sendInformationModelCreatedMessage(InformationModel informationModel) {
+        //// TODO: 27.03.2017
     }
 }

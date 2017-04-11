@@ -2,23 +2,28 @@ package eu.h2020.symbiote.messaging;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.Location;
+import eu.h2020.symbiote.model.OperationRequest;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceResponse;
+import eu.h2020.symbiote.model.SemanticResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
- *
+ * <p>
  * Created by mateuszl
  */
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
@@ -58,40 +63,80 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         Gson gson = new Gson();
-        String response = "";
-        String message = new String(body, "UTF-8");
-        log.info(" [x] Received resource to create: '" + message + "'");
-
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
-        Resource resource;
+        OperationRequest request;
+        SemanticResponse semanticResponse;
+        String response;
         ResourceResponse resourceResponse = new ResourceResponse();
+        List<Resource> resources = new ArrayList<>();
+        List<ResourceResponse> resourceResponseList = new ArrayList<>();
+        String message = new String(body, "UTF-8");
+
+        log.info(" [x] Received resources to create: '" + message + "'");
+
+        Type listType = new TypeToken<ArrayList<Resource>>() {
+        }.getType();
+
         try {
-            resource = gson.fromJson(message, Resource.class);
-            if (RegistryUtils.validate(resource)) {
-                Location savedLocation = this.repositoryManager.saveLocation(resource.getLocation());
-                resource.setLocation(savedLocation);
+            request = gson.fromJson(message, OperationRequest.class);
+            if (RegistryUtils.checkToken(request.getToken())) {
+                switch (request.getType()) {
+                    case REGISTRATION_RDF:
+                        try {
+                            semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
+                            if (semanticResponse.getStatus() == 200) {
+                                resources = gson.fromJson(semanticResponse.getBody(), listType);
+                            } else {
+                                log.error("Error occured during rdf verification! Semantic Manager info: "
+                                        + semanticResponse.getMessage());
+                                resourceResponse.setStatus(400);
+                                resourceResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
+                                        + semanticResponse.getMessage());
+                                resourceResponseList.add(resourceResponse);
+                            }
+                        } catch (JsonSyntaxException e) {
+                            log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
+                            resourceResponse.setStatus(400);
+                            resourceResponse.setMessage("Error occured during getting Resources from Json");
+                            resourceResponseList.add(resourceResponse);
+                        }
+                    case REGISTRATION_BASIC:
+                        try {
+                            resources = gson.fromJson(message, listType);
+                        } catch (JsonSyntaxException e) {
+                            log.error("Error occured during getting Resources from Json", e);
+                            resourceResponse.setStatus(400);
+                            resourceResponse.setMessage("Error occured during getting Resources from Json");
+                            resourceResponseList.add(resourceResponse);
+                        }
+                }
+            } else {
+                log.error("Token invalid");
+                resourceResponse.setStatus(400);
+                resourceResponse.setMessage("Token invalid");
+                resourceResponseList.add(resourceResponse);
+            }
+        } catch (JsonSyntaxException e) {
+            log.error("Unable to get OperationRequest from Message body!");
+            e.printStackTrace();
+        }
+
+        for (Resource resource : resources) {
+            if (RegistryUtils.validateFields(resource)) {
+                resource = RegistryUtils.getRdfBodyForObject(resource);
                 resourceResponse = this.repositoryManager.saveResource(resource);
                 if (resourceResponse.getStatus() == 200) {
                     rabbitManager.sendResourceCreatedMessage(resourceResponse.getResource());
                 }
             } else {
                 log.error("Given Resource has some fields null or empty");
+                resourceResponse.setMessage("Given Resource has some fields null or empty");
                 resourceResponse.setStatus(400);
             }
-        } catch (JsonSyntaxException e) {
-            log.error("Error occurred during Resource saving to db", e);
-            resourceResponse.setStatus(400);
+            resourceResponseList.add(resourceResponse);
         }
 
-        response = gson.toJson(resourceResponse);
-
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + resourceResponse.getStatus() + " sent back");
-
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        //if resources List is empty, resourceResponseList will still contain needed information
+        response = gson.toJson(resourceResponseList);
+        rabbitManager.sendReplyMessage(this, properties, envelope, response);
     }
 }
