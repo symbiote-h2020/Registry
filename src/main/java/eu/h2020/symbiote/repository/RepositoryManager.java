@@ -279,6 +279,7 @@ public class RepositoryManager {
         ResourceSavingResult resourceSavingResult = new ResourceSavingResult();
         CoreResource foundResource = null;
 
+        /*
         if (resource.getHasInterworkingServiceURL().isEmpty() || resource.getHasInterworkingServiceURL() == null) {
             log.error("Given resource has empty or null Interworking service URL!");
             resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
@@ -290,6 +291,7 @@ public class RepositoryManager {
             }
             foundResource = resourceRepository.findOne(resource.getId());
         }
+*/
 
         if (foundResource == null) {
             log.error("Given resource does not exist in database!");

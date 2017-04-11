@@ -85,26 +85,26 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-                SemanticResponse semanticResponse = new SemanticResponse();
-                semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+                RegistryResponse RegistryResponse = new RegistryResponse();
+                RegistryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 switch (request.getType()) {
                     case RDF:
                         try {
-                            semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
+                            RegistryResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
                             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                             platformResponse.setMessage("Error occured during getting Platforms from Json");
                             platformResponseList.add(platformResponse);
                         }
-                        if (semanticResponse.getStatus() == 200) {
-                            platforms = gson.fromJson(semanticResponse.getBody(), listType);
+                        if (RegistryResponse.getStatus() == 200) {
+                            platforms = gson.fromJson(RegistryResponse.getBody(), listType);
                         } else {
                             log.error("Error occured during rdf verification. Semantic Manager info: "
-                                    + semanticResponse.getMessage());
+                                    + RegistryResponse.getMessage());
                             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                             platformResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
-                                    + semanticResponse.getMessage());
+                                    + RegistryResponse.getMessage());
                             platformResponseList.add(platformResponse);
                         }
                     case BASIC:

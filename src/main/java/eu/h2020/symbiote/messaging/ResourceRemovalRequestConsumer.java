@@ -99,7 +99,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 resourceSavingResultList.add(resourceSavingResult);
             }
         }
-
+/*
         for (Resource resource : resources) {
             if (resource.getId() != null || !resource.getId().isEmpty()) {
                 resource = RegistryUtils.getRdfBodyForObject(resource); //fixme needed? or not completed object is fine?
@@ -114,6 +114,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             }
             resourceSavingResultList.add(resourceSavingResult);
         }
+        */
+
         response = gson.toJson(resourceSavingResultList);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }

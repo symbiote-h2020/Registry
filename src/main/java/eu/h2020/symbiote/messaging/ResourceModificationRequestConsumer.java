@@ -8,6 +8,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.RegistryRequest;
+import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.model.ResourceSavingResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -63,7 +64,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         RegistryRequest request;
-        SemanticResponse semanticResponse;
+        RegistryResponse registryResponse;
         String response;
         List<Resource> resources = new ArrayList<>();
         ResourceSavingResult resourceSavingResult = new ResourceSavingResult();
@@ -79,15 +80,15 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 switch (request.getType()) {
                     case RDF:
                         try {
-                            semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
-                            if (semanticResponse.getStatus() == 200) {
-                                resources = gson.fromJson(semanticResponse.getBody(), listType);
+                            registryResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
+                            if (registryResponse.getStatus() == 200) {
+                                resources = gson.fromJson(registryResponse.getBody(), listType);
                             } else {
                                 log.error("Error occured during rdf verification. Semantic Manager info: "
-                                        + semanticResponse.getMessage());
+                                        + registryResponse.getMessage());
                                 resourceSavingResult.setStatus(400);
                                 resourceSavingResult.setMessage("Error occured during rdf verification. Semantic Manager info: "
-                                        + semanticResponse.getMessage());
+                                        + registryResponse.getMessage());
                                 resourceSavingResultList.add(resourceSavingResult);
                             }
                         } catch (JsonSyntaxException e) {
@@ -117,6 +118,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             e.printStackTrace();
         }
 
+        /*
         for (Resource resource : resources) {
             if (RegistryUtils.validateFields(resource)) {
                 resource = RegistryUtils.getRdfBodyForObject(resource);
@@ -131,6 +133,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             }
             resourceSavingResultList.add(resourceSavingResult);
         }
+*/
 
         //if resources List is empty, resourceSavingResultList will still contain needed information
         response = gson.toJson(resourceSavingResultList);

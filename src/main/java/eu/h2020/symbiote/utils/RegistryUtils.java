@@ -3,6 +3,7 @@ package eu.h2020.symbiote.utils;
 import com.google.gson.Gson;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.model.Resource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -104,9 +105,9 @@ public class RegistryUtils {
         return informationModel;
     }
 
-    public static SemanticResponse getPlatformsFromRdf(String rdf) {
+    public static RegistryResponse getPlatformsFromRdf(String rdf) {
         Gson gson = new Gson();
-        SemanticResponse semanticResponse = new SemanticResponse();
+        RegistryResponse RegistryResponse = new RegistryResponse();
         Platform p1 = new Platform();
         p1.getLabels().add("p1");
         Platform p2 = new Platform();
@@ -114,15 +115,15 @@ public class RegistryUtils {
         List<Platform> platforms = new ArrayList<>();
         platforms.add(p1);
         platforms.add(p2);
-        semanticResponse.setStatus(HttpStatus.SC_OK);
-        semanticResponse.setMessage("OK");
-        semanticResponse.setBody(gson.toJson(platforms));
-        return semanticResponse;
+        RegistryResponse.setStatus(HttpStatus.SC_OK);
+        RegistryResponse.setMessage("OK");
+        RegistryResponse.setBody(gson.toJson(platforms));
+        return RegistryResponse;
     }
 
-    public static SemanticResponse getResourcesFromRdf(String rdf){
+    public static RegistryResponse getResourcesFromRdf(String rdf){
         Gson gson = new Gson();
-        SemanticResponse semanticResponse = new SemanticResponse();
+        RegistryResponse RegistryResponse = new RegistryResponse();
         Resource r1 = new Resource();
         r1.getLabels().add("r1");
         Resource r2 = new Resource();
@@ -130,24 +131,24 @@ public class RegistryUtils {
         List<Resource> resources = new ArrayList<>();
         resources.add(r1);
         resources.add(r2);
-        semanticResponse.setStatus(HttpStatus.SC_OK);
-        semanticResponse.setMessage("OK");
-        semanticResponse.setBody(gson.toJson(resources));
-        return semanticResponse;
+        RegistryResponse.setStatus(HttpStatus.SC_OK);
+        RegistryResponse.setMessage("OK");
+        RegistryResponse.setBody(gson.toJson(resources));
+        return RegistryResponse;
     }
 
 
-    public static SemanticResponse getInformationModelFromRdf(String body) {
+    public static RegistryResponse getInformationModelFromRdf(String body) {
         Gson gson = new Gson();
-        SemanticResponse semanticResponse = new SemanticResponse();
+        RegistryResponse RegistryResponse = new RegistryResponse();
         InformationModel im = new InformationModel();
         im.setUri("http://test_uri.com/");
         im.setBody("Test body");
         im.setFormat("Test format");
-        semanticResponse.setBody(gson.toJson(im));
-        semanticResponse.setStatus(200);
-        semanticResponse.setMessage("OK");
-        return semanticResponse;
+        RegistryResponse.setBody(gson.toJson(im));
+        RegistryResponse.setStatus(200);
+        RegistryResponse.setMessage("OK");
+        return RegistryResponse;
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -9,6 +9,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.InformationModelResponse;
 import eu.h2020.symbiote.model.RegistryRequest;
+import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -59,7 +60,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         RegistryRequest request = null;
-        SemanticResponse semanticResponse = new SemanticResponse();
+        RegistryResponse semanticResponse = new RegistryResponse();
         semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         String response;
         String message = new String(body, "UTF-8");
@@ -82,7 +83,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             if (RegistryUtils.checkToken(request.getToken())) {
 
                 switch (request.getType()) {
-                    case REGISTRATION_RDF:
+                    case RDF:
                         try {
                             semanticResponse = RegistryUtils.getInformationModelFromRdf(request.getBody());
                         } catch (JsonSyntaxException e) {
@@ -91,7 +92,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
                             informationModelResponse.setMessage("Error occured during getting Platforms from Json");
                             informationModelResponse.setInformationModel(informationModel);
                         }
-                    case REGISTRATION_BASIC:
+                    case BASIC:
                         try {
                             informationModel = gson.fromJson(request.getBody(), InformationModel.class);
                         } catch (JsonSyntaxException e) {
