@@ -86,10 +86,10 @@ public class RabbitManager {
     private Connection connection;
     RepositoryManager repositoryManager;
 
-    @Value("${rabbit.routingKey.resource.instance.validationRequested}")
-    private String jsonResourceValidationRequestedRoutingKey;
     @Value("${rabbit.routingKey.resource.instance.translationRequested}")
-    private String rdfResourceValidationRequestedRoutingKey;
+    private String jsonResourceTranslationRequestedRoutingKey; //dla RDFów
+    @Value("${rabbit.routingKey.resource.instance.validationRequested}")
+    private String rdfResourceValidationRequestedRoutingKey; //dla JSONów
 
 
     @Autowired
@@ -289,7 +289,7 @@ public class RabbitManager {
     public void sendJsonResourceValidationRpcMessage(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                      Envelope rpcEnvelope, String message) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
-                this.resourceExchangeName, this.jsonResourceValidationRequestedRoutingKey,
+                this.resourceExchangeName, this.jsonResourceTranslationRequestedRoutingKey,
                 message); //todo check
         log.info("- json resource to validation message sent");
     }
