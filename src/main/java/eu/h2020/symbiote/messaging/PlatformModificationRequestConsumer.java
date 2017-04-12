@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
+import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -63,7 +64,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             throws IOException {
         Gson gson = new Gson();
         RegistryRequest request;
-        SemanticResponse semanticResponse;
+        RegistryResponse semanticResponse;
         String response;
         List<Platform> platforms = new ArrayList<>();
         PlatformResponse platformResponse = new PlatformResponse();
@@ -77,7 +78,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             request = gson.fromJson(message, RegistryRequest.class);
             if (RegistryUtils.checkToken(request.getToken())) {
                 switch (request.getType()) {
-                    case REGISTRATION_RDF:
+                    case RDF:
                         try {
                             semanticResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
                             if (semanticResponse.getStatus() == 200) {
@@ -96,7 +97,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                             platformResponse.setMessage("Error occured during getting Platforms from Json");
                             platformResponseList.add(platformResponse);
                         }
-                    case REGISTRATION_BASIC:
+                    case BASIC:
 
                         try {
                             platforms = gson.fromJson(message, listType);
