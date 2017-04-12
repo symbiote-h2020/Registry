@@ -65,7 +65,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         RegistryResponse registryResponse = new RegistryResponse();
         String message = new String(body, "UTF-8");
 
-        log.info(" [x] Received resources to create: '" + message + "'");
+        log.info(" [x] Received resources to create (CoreResourceRegistryRequest): '" + message + "'");
 
         Type listType = new TypeToken<ArrayList<Resource>>() {
         }.getType();
@@ -84,7 +84,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 switch (request.getDescriptionType()) {
                     case RDF:
 
-                        log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request);
+                        log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
                         //wysłanie RDFowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
                         rabbitManager.sendRdfResourceValidationRpcMessage(this, properties, envelope, request.getBody());
 
@@ -112,7 +112,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
                     case BASIC:
 
-                        log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request);
+                        log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
                         //wysłanie JSONowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
                         rabbitManager.sendJsonResourceValidationRpcMessage(this, properties, envelope, request.getBody());
 

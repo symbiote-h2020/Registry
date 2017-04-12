@@ -96,8 +96,9 @@ public class RepositoryManager {
             log.error("Given platform is null or has empty PlatformId!");
             platformResponse.setMessage("Given platform is null or has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resourceRepository.findByPlatformId(platform.getId()) != null
-                && resourceRepository.findByPlatformId(platform.getId()).size() > 0) {
+        } else if (resourceRepository.findByInterworkingServiceURL(platform.getId()) != null
+                && resourceRepository.findByInterworkingServiceURL(platform.getId()).size() > 0) {
+            //// TODO: 12.04.2017 fields checking fix
             log.error("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
@@ -199,7 +200,7 @@ public class RepositoryManager {
             resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
         }
 
-        if (platformRepository.findByInterworkingServiceURL(resource.getInterworkingServiceURL()) == null) {
+        if (false){ //platformRepository.findByInterworkingServiceURL(resource.getInterworkingServiceURL()) == null) {
             log.error("Given Interworking Service does not exist in any Platform in database");
             resourceSavingResult.setMessage("Given Interworking Service does not exist in any Platform in database");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);

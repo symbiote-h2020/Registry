@@ -151,7 +151,9 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             }
 
             //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
-            registryResponse.setBody(mapper.writeValueAsString(cciResourcesList));
+            registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
+            }).writeValueAsString(cciResourcesList));
+
 
         } else {
             //todo ustawiam jakis błąd i messydż

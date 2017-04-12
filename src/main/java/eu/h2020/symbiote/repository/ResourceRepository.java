@@ -14,5 +14,5 @@ import java.util.List;
 @Repository
 public interface ResourceRepository extends MongoRepository<CoreResource, String> {
 
-    List<CoreResource> findByPlatformId(String platformId);
+    List<CoreResource> findByInterworkingServiceURL(String interworkingServiceURL);
 }

@@ -12,6 +12,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PlatformRepository extends MongoRepository<Platform, String>{
 
-    public Platform findByInterworkingServiceURL(String interworkingServiceURL);
-
 }

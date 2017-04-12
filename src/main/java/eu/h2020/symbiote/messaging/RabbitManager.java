@@ -87,9 +87,9 @@ public class RabbitManager {
     RepositoryManager repositoryManager;
 
     @Value("${rabbit.routingKey.resource.instance.translationRequested}")
-    private String jsonResourceTranslationRequestedRoutingKey; //dla RDFów
+    private String jsonResourceTranslationRequestedRoutingKey; //dla JSONów
     @Value("${rabbit.routingKey.resource.instance.validationRequested}")
-    private String rdfResourceValidationRequestedRoutingKey; //dla JSONów
+    private String rdfResourceValidationRequestedRoutingKey; //dla RDFów
 
 
     @Autowired
@@ -291,7 +291,6 @@ public class RabbitManager {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName, this.jsonResourceTranslationRequestedRoutingKey,
                 message); //todo check
-        log.info("- json resource to validation message sent");
     }
 
     public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
@@ -544,7 +543,6 @@ public class RabbitManager {
                                                 Envelope rpcEnvelope, String exchangeName, String routingKey,
                                                 String message) {
         try {
-            log.info("Sending RPC message to Semantic Manager...");
 
             Channel channel = this.connection.createChannel();
 
@@ -561,6 +559,10 @@ public class RabbitManager {
                     new ResourceJsonValidationResponseConsumer(message, rpcConsumer, rpcProperties, rpcEnvelope,
                             channel, repositoryManager, this);
             channel.basicConsume(replyQueueName, true, consumer);
+
+            log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
+                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
+                    + message.getBytes());
 
             channel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
