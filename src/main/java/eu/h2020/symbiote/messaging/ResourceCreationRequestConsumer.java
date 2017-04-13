@@ -81,11 +81,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                     case RDF:
                         log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
                         //sending RDF content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendRdfResourceValidationRpcMessage(this, properties, envelope, request.getBody());
+                        rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope, request.getBody());
                     case BASIC:
                         log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
                         //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendJsonResourceValidationRpcMessage(this, properties, envelope, request.getBody());
+                        rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope, request.getBody());
                 }
             } else {
                 log.error("Token invalid");

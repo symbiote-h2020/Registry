@@ -280,7 +280,7 @@ public class RabbitManager {
         }
     }
 
-    public void sendRdfResourceValidationRpcMessage(DefaultConsumer rpcConsumer,
+    public void sendResourceRdfValidationRpcMessage(DefaultConsumer rpcConsumer,
                                                     AMQP.BasicProperties rpcProperties,
                                                     Envelope rpcEnvelope,
                                                     String message) {
@@ -292,10 +292,10 @@ public class RabbitManager {
         log.info("- rdf resource to validation message sent");
     }
 
-    public void sendJsonResourceValidationRpcMessage(DefaultConsumer rpcConsumer,
-                                                     AMQP.BasicProperties rpcProperties,
-                                                     Envelope rpcEnvelope,
-                                                     String message) {
+    public void sendResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
+                                                      AMQP.BasicProperties rpcProperties,
+                                                      Envelope rpcEnvelope,
+                                                      String message) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
