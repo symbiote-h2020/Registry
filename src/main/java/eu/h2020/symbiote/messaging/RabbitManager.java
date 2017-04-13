@@ -567,12 +567,12 @@ public class RabbitManager {
             switch (descriptionType){
                 case BASIC:
                     ResourceJsonValidationResponseConsumer jsonConsumer =
-                            new ResourceJsonValidationResponseConsumer(message, rpcConsumer, rpcProperties, rpcEnvelope,
+                            new ResourceJsonValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             channel, repositoryManager, this);
                     channel.basicConsume(replyQueueName, true, jsonConsumer);
                 case RDF:
                     ResourceRdfValidationResponseConsumer rdfConsumer =
-                            new ResourceRdfValidationResponseConsumer(message, rpcConsumer, rpcProperties, rpcEnvelope,
+                            new ResourceRdfValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             channel, repositoryManager, this);
                     channel.basicConsume(replyQueueName, true, rdfConsumer);
             }

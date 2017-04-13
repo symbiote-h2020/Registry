@@ -32,7 +32,6 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
     DefaultConsumer rpcConsumer;
     AMQP.BasicProperties rpcProperties;
     Envelope rpcEnvelope;
-    String rdfDescription;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -44,8 +43,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public ResourceRdfValidationResponseConsumer(String rdfDescription,
-                                                 DefaultConsumer rpcConsumer,
+    public ResourceRdfValidationResponseConsumer(DefaultConsumer rpcConsumer,
                                                  AMQP.BasicProperties rpcProperties,
                                                  Envelope rpcEnvelope,
                                                  Channel channel,
@@ -57,7 +55,6 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
         this.rpcConsumer = rpcConsumer;
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
-        this.rdfDescription = rdfDescription;
     }
 
     /**

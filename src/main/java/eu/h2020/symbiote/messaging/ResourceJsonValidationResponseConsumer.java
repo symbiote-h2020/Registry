@@ -13,6 +13,7 @@ import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.CoreResourceSavingResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,7 +31,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
     DefaultConsumer rpcConsumer;
     AMQP.BasicProperties rpcProperties;
     Envelope rpcEnvelope;
-    String cciResources;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -42,8 +42,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public ResourceJsonValidationResponseConsumer(String cciResources,
-                                                  DefaultConsumer rpcConsumer,
+    public ResourceJsonValidationResponseConsumer(DefaultConsumer rpcConsumer,
                                                   AMQP.BasicProperties rpcProperties,
                                                   Envelope rpcEnvelope,
                                                   Channel channel,
@@ -55,7 +54,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         this.rpcConsumer = rpcConsumer;
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
-        this.cciResources = cciResources;
     }
 
     /**
@@ -75,9 +73,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        TypeReference listType = new TypeReference<ArrayList<Resource>>() {
-        };
-        List<Resource> cciResourcesList = mapper.readValue(cciResources, listType);
         List<CoreResource> savedCoreResourcesList = new ArrayList<>();
 
         boolean bulkRequestSuccess = true;
@@ -140,15 +135,11 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk registration successful!");
 
-
-            //utworzenie listy otrzymanych resourców z uzupelnionymi ID'kami
-            for (int i = 0; i < cciResourcesList.size(); i++) {
-                cciResourcesList.get(i).setId(savedCoreResourcesList.get(i).getId());
-            }
+            List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
 
             //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
             registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-            }).writeValueAsString(cciResourcesList));
+            }).writeValueAsString(resources));
 
 
         } else {
