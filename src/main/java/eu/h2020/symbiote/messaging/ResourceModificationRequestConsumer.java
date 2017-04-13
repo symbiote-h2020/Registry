@@ -7,10 +7,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.RegistryResponse;
-import eu.h2020.symbiote.model.Resource;
-import eu.h2020.symbiote.model.ResourceSavingResult;
+import eu.h2020.symbiote.model.CoreResourceSavingResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -67,8 +67,8 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         RegistryResponse registryResponse;
         String response;
         List<Resource> resources = new ArrayList<>();
-        ResourceSavingResult resourceSavingResult = new ResourceSavingResult();
-        List<ResourceSavingResult> resourceSavingResultList = new ArrayList<>();
+        CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
+        List<CoreResourceSavingResult> resourceSavingResultList = new ArrayList<>();
         String message = new String(body, "UTF-8");
         Type listType = new TypeToken<ArrayList<Resource>>() {
         }.getType();

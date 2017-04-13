@@ -1,10 +1,11 @@
 package eu.h2020.symbiote.utils;
 
 import com.google.gson.Gson;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.RegistryResponse;
-import eu.h2020.symbiote.model.Resource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -14,7 +15,7 @@ import java.util.List;
 
 /**
  * Utils for manipulating POJOs in Registry project.
- *
+ * <p>
  * Created by mateuszl on 14.02.2017.
  */
 public class RegistryUtils {
@@ -50,10 +51,14 @@ public class RegistryUtils {
      */
     public static boolean validateFields(Resource resource) { //todo extend validation to all fields
         boolean b;
-        if (resource.getBody() == null|| resource.getFormat() == null || resource.getLabels() == null) {
+        if (resource.getInterworkingServiceURL() == null
+                || resource.getComments() == null
+                || resource.getLabels() == null) {
             log.info("Given resource has some null fields");
             b = false;
-        } else if (resource.getBody().isEmpty() || resource.getFormat().isEmpty() || resource.getLabels().isEmpty()) {
+        } else if (resource.getInterworkingServiceURL().isEmpty()
+                || resource.getComments().isEmpty()
+                || resource.getLabels().isEmpty()) {
             log.info("Given resource has some empty fields");
             b = false;
         } else {
@@ -84,24 +89,33 @@ public class RegistryUtils {
         return b;
     }
 
+    public static List<Resource> convertCoreResourcesToResources(List<CoreResource> coreResources) {
+        List<Resource> resources = new ArrayList<>();
+        for (CoreResource coreResource : coreResources) {
+            Resource resource = new Resource();
+            resource.setId(coreResource.getId());
+            resource.setComments(coreResource.getComments());
+            resource.setLabels(coreResource.getLabels());
+            resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
+            resources.add(resource);
+        }
+        return resources;
+    }
+
+
     //todo MOCKED!! waiting for cooperation with SemanticManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static Resource getRdfBodyForObject(Resource resource){
-        if (resource.getBody()==null) resource.setBody("mocked body");
-        if (resource.getFormat()==null) resource.setFormat("mocked format"); //todo get properties from Sem. Man.
-        return resource;
-    }
-
-    public static Platform getRdfBodyForObject(Platform platform){
-        if (platform.getBody()==null) platform.setBody("mocked body");
-        if (platform.getFormat()==null) platform.setFormat("mocked format"); //todo get properties from Sem. Man.
+    public static Platform getRdfBodyForObject(Platform platform) {
+        if (platform.getBody() == null) platform.setBody("mocked body");
+        if (platform.getFormat() == null) platform.setFormat("mocked format"); //todo get properties from Sem. Man.
         return platform;
     }
 
-    public static InformationModel getRdfBodyForObject(InformationModel informationModel){
-        if (informationModel.getBody()==null) informationModel.setBody("mocked body");
-        if (informationModel.getFormat()==null) informationModel.setFormat("mocked format"); //todo get properties from Sem. Man.
+    public static InformationModel getRdfBodyForObject(InformationModel informationModel) {
+        if (informationModel.getBody() == null) informationModel.setBody("mocked body");
+        if (informationModel.getFormat() == null)
+            informationModel.setFormat("mocked format"); //todo get properties from Sem. Man.
         return informationModel;
     }
 
@@ -121,7 +135,7 @@ public class RegistryUtils {
         return RegistryResponse;
     }
 
-    public static RegistryResponse getResourcesFromRdf(String rdf){
+    public static RegistryResponse getResourcesFromRdf(String rdf) {
         Gson gson = new Gson();
         RegistryResponse RegistryResponse = new RegistryResponse();
         Resource r1 = new Resource();
@@ -152,9 +166,10 @@ public class RegistryUtils {
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// TODO: MOCKED waiting for Security implementation
 
-    public static boolean checkToken(String tokenString){
 
+    public static boolean checkToken(String tokenString) {
 /*
         SecurityHandler securityHandler = new SecurityHandler(); //TODO CIEKAWE CO TU NIBY MAM PRZEKZAć?!?!
         try {
@@ -169,11 +184,8 @@ public class RegistryUtils {
             return false;
         }
 */
-
-
         return true;
     }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

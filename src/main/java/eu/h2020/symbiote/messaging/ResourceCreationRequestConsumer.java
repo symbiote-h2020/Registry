@@ -2,22 +2,19 @@ package eu.h2020.symbiote.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.model.RegistryResponse;
-import eu.h2020.symbiote.model.Resource;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
@@ -67,72 +64,28 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         log.info(" [x] Received resources to create (CoreResourceRegistryRequest): '" + message + "'");
 
-        Type listType = new TypeToken<ArrayList<Resource>>() {
-        }.getType();
-
         try {
-            //otrzymuje request od CCI
+            //request from CCI received and deserialized
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
-            log.error("Unable to get RegistryRequest from Message body!");
-            e.printStackTrace();
+            log.error("Unable to get RegistryRequest from Message body!", e);
+            registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            registryResponse.setMessage("Content invalid. Could not deserialize.");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
         }
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-                //sprawdzam typ requesta
+                //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:
-
                         log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
-                        //wysłanie RDFowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
+                        //sending RDF content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendRdfResourceValidationRpcMessage(this, properties, envelope, request.getBody());
-
-                            /*
-                        try {
-                            semanticResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
-
-                            if (semanticResponse.getStatus() == 200) {
-                                resources = gson.fromJson(semanticResponse.getBody(), listType);
-                            } else {
-                                log.error("Error occured during rdf verification! Semantic Manager info: "
-                                        + semanticResponse.getMessage());
-
-                                registryResponse.setStatus(400);
-                                registryResponse.setMessage("Error occured during rdf verification. Semantic Manager info: "
-                                        + semanticResponse.getMessage());
-                            }
-                        } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
-                            resourceResponse.setStatus(400);
-                            resourceResponse.setMessage("Error occured during getting Resources from Json");
-                            resourceResponseList.add(resourceResponse);
-                        }
-                        */
-
                     case BASIC:
-
                         log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
-                        //wysłanie JSONowej listy resourców do Sem.Man. i czekanie na odpowiedz consumerem
+                        //sending JSON content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendJsonResourceValidationRpcMessage(this, properties, envelope, request.getBody());
-
-                        /*
-
-
-                        RPCINFO: this, properties, envelope,
-
-
-
-
-                        try {
-                            resources = gson.fromJson(message, listType);
-                        } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting Resources from Json", e);
-                            resourceResponse.setStatus(400);
-                            resourceResponse.setMessage("Error occured during getting Resources from Json");
-                            resourceResponseList.add(resourceResponse);
-                        }
-                        */
                 }
             } else {
                 log.error("Token invalid");
@@ -141,6 +94,5 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
             }
         }
-
     }
 }

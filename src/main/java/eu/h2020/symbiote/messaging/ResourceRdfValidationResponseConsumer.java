@@ -13,8 +13,10 @@ import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.CoreResourceSavingResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,15 +24,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Created by mateuszl on 30.03.2017.
+ * Created by mateuszl on 13.04.2017.
  */
-public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
+public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
     DefaultConsumer rpcConsumer;
     AMQP.BasicProperties rpcProperties;
     Envelope rpcEnvelope;
-    String cciResources;
+    String rdfDescription;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -42,20 +44,20 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public ResourceJsonValidationResponseConsumer(String cciResources,
-                                                  DefaultConsumer rpcConsumer,
-                                                  AMQP.BasicProperties rpcProperties,
-                                                  Envelope rpcEnvelope,
-                                                  Channel channel,
-                                                  RepositoryManager repositoryManager,
-                                                  RabbitManager rabbitManager) {
+    public ResourceRdfValidationResponseConsumer(String rdfDescription,
+                                                 DefaultConsumer rpcConsumer,
+                                                 AMQP.BasicProperties rpcProperties,
+                                                 Envelope rpcEnvelope,
+                                                 Channel channel,
+                                                 RepositoryManager repositoryManager,
+                                                 RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
         this.rpcConsumer = rpcConsumer;
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
-        this.cciResources = cciResources;
+        this.rdfDescription = rdfDescription;
     }
 
     /**
@@ -75,9 +77,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        TypeReference listType = new TypeReference<ArrayList<Resource>>() {
-        };
-        List<Resource> cciResourcesList = mapper.readValue(cciResources, listType);
         List<CoreResource> savedCoreResourcesList = new ArrayList<>();
 
         boolean bulkRequestSuccess = true;
@@ -88,10 +87,12 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
 
+        List<Resource> resources = new ArrayList<>();
+
         log.info(" [x] Received validation result: '" + message + "'");
 
         try {
-            //otrzymuje i odpakowauje odpowiedz od semantic managera
+            //otrzymuje i odpakowauje odpowiedz od semantic managera w której body to CoreResourcy
             resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get resource validation result from Message body!");
@@ -100,7 +101,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
 
         if (resourceInstanceValidationResult.isSuccess()) {
             try {
-                //wyciagam z niej CoreResourcy
+                //wyciagam z niej resourcy
                 coreResources = resourceInstanceValidationResult.getObjectDescription();
             } catch (JsonSyntaxException e) {
                 log.error("Unable to get Resources List from semantic response body!");
@@ -123,11 +124,9 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                 }
             }
         } else {
-            //todo ustawiam jakis błąd i messydż
-            registryResponse.setStatus(500);
-            registryResponse.setMessage("VALIDATION ERROR");
+            registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            registryResponse.setMessage("VALIDATION ERROR. Message from SM:" + resourceInstanceValidationResult.getMessage());
         }
-
 
         if (bulkRequestSuccess) {
             savedCoreResourcesList = resourceSavingResultsList.stream()
@@ -138,25 +137,19 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             rabbitManager.sendResourcesCreatedMessage(savedCoreResourcesList);
 
             registryResponse.setStatus(200);
-            registryResponse.setMessage("Bulk registration successful!");
+            registryResponse.setMessage("Rdf registration successful!");
 
-
-            //utworzenie listy otrzymanych resourców z uzupelnionymi ID'kami
-            for (int i = 0; i < cciResourcesList.size(); i++) {
-                cciResourcesList.get(i).setId(savedCoreResourcesList.get(i).getId());
-            }
+            resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
 
             //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
             registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-            }).writeValueAsString(cciResourcesList));
+            }).writeValueAsString(resources));
 
 
         } else {
-            //todo ustawiam jakis błąd i messydż
             registryResponse.setStatus(500);
             registryResponse.setMessage("BULK SAVE ERROR");
         }
-
 
         String response = mapper.writeValueAsString(registryResponse);
 
