@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
@@ -29,11 +30,12 @@ import java.util.stream.Collectors;
 public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
-    DefaultConsumer rpcConsumer;
-    AMQP.BasicProperties rpcProperties;
-    Envelope rpcEnvelope;
+    private DefaultConsumer rpcConsumer;
+    private AMQP.BasicProperties rpcProperties;
+    private Envelope rpcEnvelope;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
+    private String resourcesPlatformId;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -48,13 +50,15 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
                                                  Envelope rpcEnvelope,
                                                  Channel channel,
                                                  RepositoryManager repositoryManager,
-                                                 RabbitManager rabbitManager) {
+                                                 RabbitManager rabbitManager,
+                                                 String resourcesPlatformId) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
         this.rpcConsumer = rpcConsumer;
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
+        this.resourcesPlatformId = resourcesPlatformId;
     }
 
     /**
@@ -74,7 +78,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        List<CoreResource> savedCoreResourcesList = new ArrayList<>();
+        List<CoreResource> savedCoreResourcesList;
 
         boolean bulkRequestSuccess = true;
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
@@ -130,8 +134,13 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
                     .map(CoreResourceSavingResult::getResource)
                     .collect(Collectors.toList());
 
+
+            CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+            payload.setResources(savedCoreResourcesList);
+            payload.setPlatformId(resourcesPlatformId);
+
             //wysłanie całej listy zapisanych resourców
-            rabbitManager.sendResourcesCreatedMessage(savedCoreResourcesList);
+            rabbitManager.sendResourcesCreatedMessage(payload);
 
             registryResponse.setStatus(200);
             registryResponse.setMessage("Rdf registration successful!");
@@ -146,6 +155,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("BULK SAVE ERROR");
+            log.error("bulk registration save failed");
         }
 
         String response = mapper.writeValueAsString(registryResponse);

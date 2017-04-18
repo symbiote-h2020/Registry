@@ -3,8 +3,8 @@ package eu.h2020.symbiote.messaging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -247,12 +246,12 @@ public class RabbitManager {
         }
     }
 
-    public void sendResourcesCreatedMessage(List<CoreResource> resources) {
+    public void sendResourcesCreatedMessage(CoreResourceRegisteredOrModifiedEventPayload resources) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
-            log.info("- resource created message sent");
+            log.info("- resources created message sent");
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing Resource object JSON: " + resources, e);
         }
@@ -283,24 +282,28 @@ public class RabbitManager {
     public void sendResourceRdfValidationRpcMessage(DefaultConsumer rpcConsumer,
                                                     AMQP.BasicProperties rpcProperties,
                                                     Envelope rpcEnvelope,
-                                                    String message) {
+                                                    String message,
+                                                    String platformId) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.rdfResourceValidationRequestedRoutingKey,
                 RDF,
-                message);
+                message,
+                platformId);
         log.info("- rdf resource to validation message sent");
     }
 
     public void sendResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
                                                       AMQP.BasicProperties rpcProperties,
                                                       Envelope rpcEnvelope,
-                                                      String message) {
+                                                      String message,
+                                                      String platformId) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
                 BASIC,
-                message);
+                message,
+                platformId);
     }
 
     public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
@@ -552,7 +555,7 @@ public class RabbitManager {
 
     public void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                 Envelope rpcEnvelope, String exchangeName, String routingKey,
-                                                DescriptionType descriptionType, String message) {
+                                                DescriptionType descriptionType, String message, String platformId) {
         try {
             Channel channel = this.connection.createChannel();
             String replyQueueName = channel.queueDeclare().getQueue();
@@ -568,13 +571,17 @@ public class RabbitManager {
                 case BASIC:
                     ResourceJsonValidationResponseConsumer jsonConsumer =
                             new ResourceJsonValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this);
+                            channel, repositoryManager, this, platformId);
                     channel.basicConsume(replyQueueName, true, jsonConsumer);
+
+                    break;
                 case RDF:
                     ResourceRdfValidationResponseConsumer rdfConsumer =
                             new ResourceRdfValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this);
+                            channel, repositoryManager, this, platformId);
                     channel.basicConsume(replyQueueName, true, rdfConsumer);
+
+                    break;
             }
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
@@ -587,5 +594,4 @@ public class RabbitManager {
             e.printStackTrace();
         }
     }
-
 }
