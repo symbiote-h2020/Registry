@@ -194,37 +194,44 @@ public class RepositoryManager {
      */
     public CoreResourcePersistenceOperationResult saveResource(CoreResource resource) {
         CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
+        resourceSavingResult.setResource(resource);
 
-        if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
-                != "/".charAt(0)) {
-            resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
-        }
-
-        if (false){ //platformRepository.findByInterworkingServiceURL(resource.getInterworkingServiceURL()) == null) {
-            log.error("Given Interworking Service does not exist in any Platform in database");
-            resourceSavingResult.setMessage("Given Interworking Service does not exist in any Platform in database");
-            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resource.getId() != null) {
-            log.error("Resource has not null ID!");
-            resourceSavingResult.setMessage("Resource has not null ID!");
+        if (resource.getId() == null || resource.getId().isEmpty()) {
+            log.error("Resource has null or empty ID!");
+            resourceSavingResult.setMessage("Resource has null or empty ID!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            try {
-                log.info("Saving Resource: " + resource.toString());
-                //todo check if provided resource already exists - somehow (URL?)
+            if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
+                    != "/".charAt(0)) {
+                resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
+            }
+            if (false) { //platformRepository.findByInterworkingServiceURL(resource.getInterworkingServiceURL()) == null) {
+                log.error("Given Interworking Service does not exist in any Platform in database");
+                resourceSavingResult.setMessage("Given Interworking Service does not exist in any Platform in database");
+                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            } else if (resource.getId() != null) {
+                log.error("Resource has not null ID!");
+                resourceSavingResult.setMessage("Resource has not null ID!");
+                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            } else {
+                try {
+                    log.info("Saving Resource: " + resource.toString());
+                    //todo check if provided resource already exists - somehow (URL?)
 
-                CoreResource savedResource = resourceRepository.save(resource);
-                log.info("Resource with id: " + savedResource.getId() + " saved !");
+                    CoreResource savedResource = resourceRepository.save(resource);
+                    log.info("Resource with id: " + savedResource.getId() + " saved !");
 
-                resourceSavingResult.setStatus(HttpStatus.SC_OK);
-                resourceSavingResult.setMessage("OK");
-                resourceSavingResult.setResource(savedResource);
-            } catch (Exception e) {
-                log.error("Error occurred during Resource saving in db", e);
-                resourceSavingResult.setMessage("Error occurred during Resource saving in db");
-                resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
+                    resourceSavingResult.setMessage("OK");
+                    resourceSavingResult.setResource(savedResource);
+                } catch (Exception e) {
+                    log.error("Error occurred during Resource saving in db", e);
+                    resourceSavingResult.setMessage("Error occurred during Resource saving in db");
+                    resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                }
             }
         }
+
         return resourceSavingResult;
     }
 
@@ -283,7 +290,7 @@ public class RepositoryManager {
 
         //todo
 
-        if (resource.getId()==null || resource.getId().isEmpty()){
+        if (resource.getId() == null || resource.getId().isEmpty()) {
             log.error("Resource has null or empty ID!");
             resourceSavingResult.setMessage("Resource has null or empty ID!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -311,12 +318,12 @@ public class RepositoryManager {
                     if (resource.getComments() == null && foundResource.getComments() != null)
                         resource.setComments(foundResource.getComments());
 
-                    resourceRepository.save(resource);
+                    CoreResource savedResource = resourceRepository.save(resource);
                     log.info("Resource with id: " + resource.getId() + " modified !");
 
                     resourceSavingResult.setStatus(HttpStatus.SC_OK);
                     resourceSavingResult.setMessage("OK");
-                    resourceSavingResult.setResource(resource);
+                    resourceSavingResult.setResource(savedResource);
                 } catch (Exception e) {
                     log.error("Error occurred during Resource modifying in db", e);
                     resourceSavingResult.setMessage("Error occurred during Resource modifying in db");
@@ -327,7 +334,8 @@ public class RepositoryManager {
         return resourceSavingResult;
     }
 
-    /** todo
+    /**
+     * todo
      *
      * @param informationModel
      * @return

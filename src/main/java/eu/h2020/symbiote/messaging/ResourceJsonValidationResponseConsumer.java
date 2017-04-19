@@ -38,7 +38,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
     private RabbitManager rabbitManager;
     private String resourcesPlatformId;
     private ResourceOperationType operationType;
-
     private boolean bulkRequestSuccess = true;
     private List<CoreResource> savedCoreResourcesList;
     private List<CoreResourcePersistenceOperationResult> persistenceOperationResultsList;
@@ -68,7 +67,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         this.rpcProperties = rpcProperties;
         this.resourcesPlatformId = resourcesPlatformId;
         this.operationType = operationType;
-
         this.persistenceOperationResultsList = new ArrayList<>();
         this.mapper = new ObjectMapper();
     }
@@ -119,7 +117,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         }
 
         registryResponse = makePersistenceOperations(coreResources, registryResponse);
-
         prepareContentAndSendMessage(registryResponse);
     }
 
@@ -127,28 +124,20 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                                                                    CoreResourceRegistryResponse registryResponse) {
         switch (operationType) {
             case CREATION:
-
                 for (CoreResource resource : coreResources) {
                     //zapisuje kazdy z Core resourców
                     CoreResourcePersistenceOperationResult resourceSavingResult =
                             this.repositoryManager.saveResource(resource);
                     persistenceOperationResultsList.add(resourceSavingResult);
                 }
-
                 break;
             case MODIFICATION:
-
                 for (CoreResource resource : coreResources) {
-
-
-
-
                     //zapisuje kazdy z Core resourców
                     CoreResourcePersistenceOperationResult resourceModificationResult =
                             this.repositoryManager.modifyResource(resource);
                     persistenceOperationResultsList.add(resourceModificationResult);
                 }
-
                 break;
         }
 
@@ -215,16 +204,12 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
     private void sendMessage(CoreResourceRegisteredOrModifiedEventPayload payload) {
         switch (operationType) {
             case CREATION:
-
                 //wysłanie całej listy zapisanych resourców
                 rabbitManager.sendResourcesCreatedMessage(payload);
-
                 break;
             case MODIFICATION:
-
                 //wysłanie całej listy zmodyfikowanych resourców
                 rabbitManager.sendResourcesModifiedMessage(payload);
-
                 break;
         }
 
