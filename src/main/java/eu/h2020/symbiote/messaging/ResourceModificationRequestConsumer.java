@@ -1,25 +1,21 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.model.RegistryResponse;
-import eu.h2020.symbiote.model.CoreResourceSavingResult;
+import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Modification actions
@@ -62,81 +58,46 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
-        RegistryRequest request;
-        RegistryResponse registryResponse;
-        String response;
-        List<Resource> resources = new ArrayList<>();
-        CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
-        List<CoreResourceSavingResult> resourceSavingResultList = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
+        CoreResourceRegistryRequest request = null;
+        RegistryResponse registryResponse = new RegistryResponse();
         String message = new String(body, "UTF-8");
-        Type listType = new TypeToken<ArrayList<Resource>>() {
-        }.getType();
-        log.info(" [x] Received resources to modify: '" + message + "'");
+
+        log.info(" [x] Received resources to modify (CoreResourceRegistryRequest):'" + message + "'");
 
         try {
-            request = gson.fromJson(message, RegistryRequest.class);
+            //request from CCI received and deserialized
+            request = mapper.readValue(message, CoreResourceRegistryRequest.class);
+        } catch (JsonSyntaxException e) {
+            log.error("Unable to get CoreResourceRegistryRequest from Message body!", e);
+            registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            registryResponse.setMessage("Content invalid. Could not deserialize. Resources not modified!");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
+        }
+
+        if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-                switch (request.getType()) {
+                //contact with Semantic Manager accordingly to Type of object Description received
+                switch (request.getDescriptionType()) {
                     case RDF:
-                        try {
-                            registryResponse = RegistryUtils.getResourcesFromRdf(request.getBody());
-                            if (registryResponse.getStatus() == 200) {
-                                resources = gson.fromJson(registryResponse.getBody(), listType);
-                            } else {
-                                log.error("Error occured during rdf verification. Semantic Manager info: "
-                                        + registryResponse.getMessage());
-                                resourceSavingResult.setStatus(400);
-                                resourceSavingResult.setMessage("Error occured during rdf verification. Semantic Manager info: "
-                                        + registryResponse.getMessage());
-                                resourceSavingResultList.add(resourceSavingResult);
-                            }
-                        } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting Resources from Json received from Semantic Manager", e);
-                            resourceSavingResult.setStatus(400);
-                            resourceSavingResult.setMessage("Error occured during getting Resources from Json");
-                            resourceSavingResultList.add(resourceSavingResult);
-                        }
+                        log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
+                        //sending RDF content to Semantic Manager and passing responsibility to another consumer
+                        rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
+                                request.getBody(), request.getPlatformId(), ResourceOperationType.MODIFICATION);
+                        break;
                     case BASIC:
-                        try {
-                            resources = gson.fromJson(request.getBody(), listType);
-                        } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting Resources from Json", e);
-                            resourceSavingResult.setStatus(400);
-                            resourceSavingResult.setMessage("Error occured during getting Resources from Json");
-                            resourceSavingResultList.add(resourceSavingResult);
-                        }
+                        log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
+                        //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                        rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
+                                request.getBody(), request.getPlatformId(), ResourceOperationType.MODIFICATION);
+                        break;
                 }
             } else {
                 log.error("Token invalid");
-                resourceSavingResult.setStatus(400);
-                resourceSavingResult.setMessage("Token invalid");
-                resourceSavingResultList.add(resourceSavingResult);
+                registryResponse.setStatus(400);
+                registryResponse.setMessage("Token invalid");
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
             }
-        } catch (JsonSyntaxException e) {
-            log.error("Unable to get RegistryRequest from Message body!");
-            e.printStackTrace();
         }
-
-        /*
-        for (Resource resource : resources) {
-            if (RegistryUtils.validateFields(resource)) {
-                resource = RegistryUtils.getRdfBodyForObject(resource);
-                resourceSavingResult = this.repositoryManager.modifyResource(resource);
-                if (resourceSavingResult.getStatus() == 200) {
-                    rabbitManager.sendResourceModifiedMessage(resourceSavingResult.getResource());
-                }
-            } else {
-                log.error("Given Resource has some fields null or empty");
-                resourceSavingResult.setMessage("Given Resource has some fields null or empty");
-                resourceSavingResult.setStatus(400);
-            }
-            resourceSavingResultList.add(resourceSavingResult);
-        }
-*/
-
-        //if resources List is empty, resourceSavingResultList will still contain needed information
-        response = gson.toJson(resourceSavingResultList);
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

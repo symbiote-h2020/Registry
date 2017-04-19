@@ -8,18 +8,18 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
  *
  * Created by mateuszl
  */
-public class CoreResourceSavingResult {
+public class CoreResourcePersistenceOperationResult {
     private int status;
     private String message;
     private CoreResource resource;
 
-    public CoreResourceSavingResult(int status, String message, CoreResource resource) {
+    public CoreResourcePersistenceOperationResult(int status, String message, CoreResource resource) {
         this.status = status;
         this.message = message;
         this.resource = resource;
     }
 
-    public CoreResourceSavingResult() {
+    public CoreResourcePersistenceOperationResult() {
     }
 
     /**

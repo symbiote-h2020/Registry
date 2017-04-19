@@ -12,7 +12,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.CoreResourceSavingResult;
+import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -86,8 +86,8 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
 
         boolean bulkRequestSuccess = true;
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
-        CoreResourceSavingResult resourceSavingResult;
-        List<CoreResourceSavingResult> resourceSavingResultsList = new ArrayList<>();
+        CoreResourcePersistenceOperationResult resourceSavingResult;
+        List<CoreResourcePersistenceOperationResult> resourceSavingResultsList = new ArrayList<>();
 
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
@@ -119,7 +119,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
                 resourceSavingResultsList.add(resourceSavingResult);
             }
 
-            for (CoreResourceSavingResult resourceSavingResult1 : resourceSavingResultsList) {
+            for (CoreResourcePersistenceOperationResult resourceSavingResult1 : resourceSavingResultsList) {
                 if (resourceSavingResult1.getStatus() != 200) {
                     rollback(resourceSavingResult1.getResource());
                     bulkRequestSuccess = false;
@@ -132,7 +132,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
 
             if (bulkRequestSuccess) {
                 savedCoreResourcesList = resourceSavingResultsList.stream()
-                        .map(CoreResourceSavingResult::getResource)
+                        .map(CoreResourcePersistenceOperationResult::getResource)
                         .collect(Collectors.toList());
 
 

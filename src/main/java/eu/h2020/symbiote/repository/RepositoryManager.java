@@ -192,8 +192,8 @@ public class RepositoryManager {
      * @return ResourceSavingResult containing Http status code and Resource with added 'Id' (generated in MongoDB),
      * in JSON format
      */
-    public CoreResourceSavingResult saveResource(CoreResource resource) {
-        CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
+    public CoreResourcePersistenceOperationResult saveResource(CoreResource resource) {
+        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
 
         if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
                 != "/".charAt(0)) {
@@ -234,8 +234,8 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
      */
-    public CoreResourceSavingResult removeResource(CoreResource resource) {
-        CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
+    public CoreResourcePersistenceOperationResult removeResource(CoreResource resource) {
+        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
 
         if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
             log.error("Given resource has empty or null ID!");
@@ -276,8 +276,8 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Modified Resource, in JSON format
      */
-    public CoreResourceSavingResult modifyResource(CoreResource resource) {
-        CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
+    public CoreResourcePersistenceOperationResult modifyResource(CoreResource resource) {
+        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
         CoreResource foundResource = null;
 
         //todo

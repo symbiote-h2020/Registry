@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
@@ -12,7 +13,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.CoreResourceSavingResult;
+import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -38,6 +39,11 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
     private String resourcesPlatformId;
     private ResourceOperationType operationType;
 
+    private boolean bulkRequestSuccess = true;
+    private List<CoreResource> savedCoreResourcesList;
+    private List<CoreResourcePersistenceOperationResult> persistenceOperationResultsList;
+    private ObjectMapper mapper;
+
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
@@ -62,6 +68,9 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         this.rpcProperties = rpcProperties;
         this.resourcesPlatformId = resourcesPlatformId;
         this.operationType = operationType;
+
+        this.persistenceOperationResultsList = new ArrayList<>();
+        this.mapper = new ObjectMapper();
     }
 
     /**
@@ -79,15 +88,8 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
 
-        ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        List<CoreResource> savedCoreResourcesList;
-
-        boolean bulkRequestSuccess = true;
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
-        CoreResourceSavingResult resourceSavingResult;
-        List<CoreResourceSavingResult> resourceSavingResultsList = new ArrayList<>();
-
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
 
@@ -99,6 +101,8 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         } catch (JsonSyntaxException e) {
             log.error("Unable to get resource validation result from Message body!");
             e.printStackTrace();
+            registryResponse.setStatus(500);
+            registryResponse.setMessage("VALIDATION CONTENT CORRUPTED:\n" + message);
         }
 
         if (resourceInstanceValidationResult.isSuccess()) {
@@ -114,67 +118,113 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setMessage("VALIDATION ERROR");
         }
 
+        registryResponse = makePersistenceOperations(coreResources, registryResponse);
+
+        prepareContentAndSendMessage(registryResponse);
+    }
+
+    private CoreResourceRegistryResponse makePersistenceOperations(List<CoreResource> coreResources,
+                                                                   CoreResourceRegistryResponse registryResponse) {
         switch (operationType) {
             case CREATION:
 
                 for (CoreResource resource : coreResources) {
                     //zapisuje kazdy z Core resourców
-                    resourceSavingResult = this.repositoryManager.saveResource(resource);
-                    resourceSavingResultsList.add(resourceSavingResult);
+                    CoreResourcePersistenceOperationResult resourceSavingResult =
+                            this.repositoryManager.saveResource(resource);
+                    persistenceOperationResultsList.add(resourceSavingResult);
                 }
-
-                for (CoreResourceSavingResult resourceSavingResult1 : resourceSavingResultsList) {
-                    if (resourceSavingResult1.getStatus() != 200) {
-                        rollback(resourceSavingResult1.getResource());
-                        bulkRequestSuccess = false;
-                        registryResponse.setStatus(500);
-                        registryResponse.setMessage("One of objects could not be registered. Check list of response " +
-                                "objects for details.");
-                    }
-                }
-
-                if (bulkRequestSuccess) {
-                    savedCoreResourcesList = resourceSavingResultsList.stream()
-                            .map(CoreResourceSavingResult::getResource)
-                            .collect(Collectors.toList());
-
-                    CoreResourceRegisteredOrModifiedEventPayload payload =
-                            new CoreResourceRegisteredOrModifiedEventPayload();
-                    payload.setResources(savedCoreResourcesList);
-                    payload.setPlatformId(resourcesPlatformId);
-
-                    //wysłanie całej listy zapisanych resourców
-                    rabbitManager.sendResourcesCreatedMessage(payload);
-
-                    registryResponse.setStatus(200);
-                    registryResponse.setMessage("Bulk registration successful!");
-
-                    List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
-
-                    //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
-                    registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-                    }).writeValueAsString(resources));
-
-                } else {
-                    registryResponse.setStatus(500);
-                    registryResponse.setMessage("BULK SAVE ERROR");
-                }
-
-                String response = mapper.writeValueAsString(registryResponse);
-
-                //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
-                rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
 
                 break;
             case MODIFICATION:
 
+                for (CoreResource resource : coreResources) {
+                    //zapisuje kazdy z Core resourców
+                    CoreResourcePersistenceOperationResult resourceSavingResult =
+                            this.repositoryManager.modifyResource(resource);
+                    persistenceOperationResultsList.add(resourceSavingResult);
+                }
 
                 break;
         }
 
+        for (CoreResourcePersistenceOperationResult persistenceResult : persistenceOperationResultsList) {
+            if (persistenceResult.getStatus() != 200) {
+                rollback(persistenceResult.getResource());
+                this.bulkRequestSuccess = false;
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("One of objects could not be registered. Check list of response " +
+                        "objects for details.");
+            }
+        }
 
+        return registryResponse;
     }
 
+    private void prepareContentAndSendMessage(CoreResourceRegistryResponse registryResponse) {
+
+        if (bulkRequestSuccess) {
+            savedCoreResourcesList = persistenceOperationResultsList.stream()
+                    .map(CoreResourcePersistenceOperationResult::getResource)
+                    .collect(Collectors.toList());
+
+            CoreResourceRegisteredOrModifiedEventPayload payload =
+                    new CoreResourceRegisteredOrModifiedEventPayload();
+            payload.setResources(savedCoreResourcesList);
+            payload.setPlatformId(resourcesPlatformId);
+            sendMessage(payload);
+
+            registryResponse.setStatus(200);
+            registryResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
+
+            List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
+
+            //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
+            try {
+                registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
+                }).writeValueAsString(resources));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            registryResponse.setStatus(500);
+            registryResponse.setMessage("BULK SAVE ERROR");
+        }
+
+        String response = "";
+        try {
+            response = mapper.writeValueAsString(registryResponse);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
+        try {
+            rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void sendMessage(CoreResourceRegisteredOrModifiedEventPayload payload) {
+        switch (operationType) {
+            case CREATION:
+
+                //wysłanie całej listy zapisanych resourców
+                rabbitManager.sendResourcesCreatedMessage(payload);
+
+                break;
+            case MODIFICATION:
+
+                //wysłanie całej listy zmodyfikowanych resourców
+                rabbitManager.sendResourcesModifiedMessage(payload);
+
+                break;
+        }
+
+    }
 
     /**
      * Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when

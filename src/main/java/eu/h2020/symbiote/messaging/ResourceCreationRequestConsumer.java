@@ -69,9 +69,9 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             //request from CCI received and deserialized
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
-            log.error("Unable to get RegistryRequest from Message body!", e);
+            log.error("Unable to get CoreResourceRegistryRequest from Message body!", e);
             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-            registryResponse.setMessage("Content invalid. Could not deserialize.");
+            registryResponse.setMessage("Content invalid. Could not deserialize. Resources not created!");
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
         }
 

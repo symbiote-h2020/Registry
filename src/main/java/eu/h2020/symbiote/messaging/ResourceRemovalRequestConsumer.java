@@ -9,7 +9,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryRequest;
-import eu.h2020.symbiote.model.CoreResourceSavingResult;
+import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -64,9 +64,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         Gson gson = new Gson();
         RegistryRequest request = null;
         String response;
-        CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
+        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
         List<Resource> resources = new ArrayList<>();
-        List<CoreResourceSavingResult> resourceSavingResultList = new ArrayList<>();
+        List<CoreResourcePersistenceOperationResult> resourceSavingResultList = new ArrayList<>();
         String message = new String(body, "UTF-8");
         Type listType = new TypeToken<ArrayList<Resource>>() {
         }.getType();
