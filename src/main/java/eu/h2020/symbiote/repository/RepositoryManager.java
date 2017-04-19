@@ -279,42 +279,49 @@ public class RepositoryManager {
     public CoreResourcePersistenceOperationResult modifyResource(CoreResource resource) {
         CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
         CoreResource foundResource = null;
+        resourceSavingResult.setResource(resource);
 
         //todo
 
-        if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
-            log.error("Given resource has empty or null Interworking service URL!");
-            resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
+        if (resource.getId()==null || resource.getId().isEmpty()){
+            log.error("Resource has null or empty ID!");
+            resourceSavingResult.setMessage("Resource has null or empty ID!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
-                    != "/".charAt(0)) {
-                resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
+            if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
+                log.error("Given resource has empty or null Interworking service URL!");
+                resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
+                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            } else {
+                if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
+                        != "/".charAt(0)) {
+                    resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
+                }
+                foundResource = resourceRepository.findOne(resource.getId());
             }
-            foundResource = resourceRepository.findOne(resource.getId());
-        }
 
 
-        if (foundResource == null) {
-            log.error("Given resource does not exist in database!");
-            resourceSavingResult.setMessage("Given resource does not exist in database!");
-            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else {
-            try {
-                //fulfilment of empty Resource fields before saving
-                if (resource.getComments() == null && foundResource.getComments() != null)
-                    resource.setComments(foundResource.getComments());
+            if (foundResource == null) {
+                log.error("Given resource does not exist in database!");
+                resourceSavingResult.setMessage("Given resource does not exist in database!");
+                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            } else {
+                try {
+                    //fulfilment of empty Resource fields before saving
+                    if (resource.getComments() == null && foundResource.getComments() != null)
+                        resource.setComments(foundResource.getComments());
 
-                resourceRepository.save(resource);
-                log.info("Resource with id: " + resource.getId() + " modified !");
+                    resourceRepository.save(resource);
+                    log.info("Resource with id: " + resource.getId() + " modified !");
 
-                resourceSavingResult.setStatus(HttpStatus.SC_OK);
-                resourceSavingResult.setMessage("OK");
-                resourceSavingResult.setResource(resource);
-            } catch (Exception e) {
-                log.error("Error occurred during Resource modifying in db", e);
-                resourceSavingResult.setMessage("Error occurred during Resource modifying in db");
-                resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
+                    resourceSavingResult.setMessage("OK");
+                    resourceSavingResult.setResource(resource);
+                } catch (Exception e) {
+                    log.error("Error occurred during Resource modifying in db", e);
+                    resourceSavingResult.setMessage("Error occurred during Resource modifying in db");
+                    resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                }
             }
         }
         return resourceSavingResult;

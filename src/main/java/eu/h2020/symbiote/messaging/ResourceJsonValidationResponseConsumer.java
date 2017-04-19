@@ -139,10 +139,14 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             case MODIFICATION:
 
                 for (CoreResource resource : coreResources) {
+
+
+
+
                     //zapisuje kazdy z Core resourców
-                    CoreResourcePersistenceOperationResult resourceSavingResult =
+                    CoreResourcePersistenceOperationResult resourceModificationResult =
                             this.repositoryManager.modifyResource(resource);
-                    persistenceOperationResultsList.add(resourceSavingResult);
+                    persistenceOperationResultsList.add(resourceModificationResult);
                 }
 
                 break;
@@ -153,7 +157,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                 rollback(persistenceResult.getResource());
                 this.bulkRequestSuccess = false;
                 registryResponse.setStatus(500);
-                registryResponse.setMessage("One of objects could not be registered. Check list of response " +
+                registryResponse.setMessage("One of objects could not be processed. Check list of response " +
                         "objects for details.");
             }
         }
