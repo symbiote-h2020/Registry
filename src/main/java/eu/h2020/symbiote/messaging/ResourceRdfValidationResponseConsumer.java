@@ -94,7 +94,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
 
         List<Resource> resources = new ArrayList<>();
 
-        log.info(" [x] Received validation result: '" + message + "'");
+        log.info("[x] Received validation result: '" + message + "'");
 
         try {
             //otrzymuje i odpakowauje odpowiedz od semantic managera w której body to CoreResourcy

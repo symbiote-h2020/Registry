@@ -91,7 +91,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
 
-        log.info(" [x] Received validation result: '" + message + "'");
+        log.info("[x] Received validation result: '" + message + "'");
 
         try {
             //otrzymuje i odpakowauje odpowiedz od semantic managera
@@ -114,7 +114,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setMessage("VALIDATION ERROR");
         }
 
-        switch (operationType){
+        switch (operationType) {
             case CREATION:
 
                 for (CoreResource resource : coreResources) {
@@ -138,7 +138,8 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                             .map(CoreResourceSavingResult::getResource)
                             .collect(Collectors.toList());
 
-                    CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+                    CoreResourceRegisteredOrModifiedEventPayload payload =
+                            new CoreResourceRegisteredOrModifiedEventPayload();
                     payload.setResources(savedCoreResourcesList);
                     payload.setPlatformId(resourcesPlatformId);
 
@@ -168,12 +169,8 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             case MODIFICATION:
 
 
-
-
                 break;
         }
-
-
 
 
     }

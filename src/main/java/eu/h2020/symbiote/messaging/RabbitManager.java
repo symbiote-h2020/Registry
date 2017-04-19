@@ -252,7 +252,7 @@ public class RabbitManager {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
-            log.info("- resources created message sent. Contents:\n" + message);
+            log.info("- Resources created message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing message content to JSON: " + resources, e);
         }
@@ -546,7 +546,7 @@ public class RabbitManager {
                     .build();
 
             consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-            log.info("Message sent back"); //fixme show content of message also?
+            log.info("- RPC reply Message sent back!"); //fixme show content of message also?
         } else {
             log.warn("Received RPC message without ReplyTo or CorrelationId props.");
         }
