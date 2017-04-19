@@ -1,14 +1,16 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -16,9 +18,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Removal actions
@@ -61,26 +63,19 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
-        RegistryRequest request = null;
-        String response;
+        ObjectMapper mapper = new ObjectMapper();
+        CoreResourceRegistryRequest request = null;
+        CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
-        List<Resource> resources = new ArrayList<>();
+        List<CoreResource> resources = new ArrayList<>();
         List<CoreResourcePersistenceOperationResult> resourceSavingResultList = new ArrayList<>();
         String message = new String(body, "UTF-8");
-        Type listType = new TypeToken<ArrayList<Resource>>() {
-        }.getType();
+        List<CoreResource> removedResources = new ArrayList<>();
 
         log.info(" [x] Received resource to remove: '" + message + "'");
 
-
-
-        //todo wysyłam do Search'a liste Stringów (id) usunietych resourców
-
-
-
         try {
-            request = gson.fromJson(message, listType);
+            request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
             resourceSavingResult.setStatus(400);
@@ -91,7 +86,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
                 try {
-                    resources = gson.fromJson(request.getBody(), listType);
+                    resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
+                    });
                 } catch (JsonSyntaxException e) {
                     log.error("Error occured during getting Resources from Json", e);
                     resourceSavingResult.setStatus(400);
@@ -105,14 +101,11 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 resourceSavingResultList.add(resourceSavingResult);
             }
         }
-/*
-        for (Resource resource : resources) {
+
+        for (CoreResource resource : resources) {
             if (resource.getId() != null || !resource.getId().isEmpty()) {
-                resource = RegistryUtils.getRdfBodyForObject(resource); //fixme needed? or not completed object is fine?
                 resourceSavingResult = this.repositoryManager.removeResource(resource);
-                if (resourceSavingResult.getStatus() == 200) {
-                    rabbitManager.sendResourceRemovedMessage(resourceSavingResult.getResource());
-                }
+                resourceSavingResultList.add(resourceSavingResult);
             } else {
                 log.error("Given Resource has id null or empty");
                 resourceSavingResult.setMessage("Given Resource has ID null or empty");
@@ -120,9 +113,20 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             }
             resourceSavingResultList.add(resourceSavingResult);
         }
-        */
 
-        response = gson.toJson(resourceSavingResultList);
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
+        for (CoreResourcePersistenceOperationResult result : resourceSavingResultList) {
+            if (result.getStatus() == 200) {
+            }
+        }
+
+        rabbitManager.sendResourcesRemovedMessage(resourceSavingResultList.stream()
+                .map(coreResourcePersistenceOperationResult ->
+                        coreResourcePersistenceOperationResult.getResource().getId())
+                .collect(Collectors.toList()));
+        log.info("- List with removed resources id's sent (fanout).");
+
+        response.setBody(mapper.writeValueAsString(resourceSavingResultList));
+
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
 }

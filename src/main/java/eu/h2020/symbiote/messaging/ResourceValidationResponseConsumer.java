@@ -10,6 +10,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Created by mateuszl on 30.03.2017.
  */
-public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
+public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
     private DefaultConsumer rpcConsumer;
@@ -42,6 +43,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
     private List<CoreResource> savedCoreResourcesList;
     private List<CoreResourcePersistenceOperationResult> persistenceOperationResultsList;
     private ObjectMapper mapper;
+    private DescriptionType descriptionType;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -51,14 +53,15 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public ResourceJsonValidationResponseConsumer(DefaultConsumer rpcConsumer,
-                                                  AMQP.BasicProperties rpcProperties,
-                                                  Envelope rpcEnvelope,
-                                                  Channel channel,
-                                                  RepositoryManager repositoryManager,
-                                                  RabbitManager rabbitManager,
-                                                  String resourcesPlatformId,
-                                                  ResourceOperationType operationType) {
+    public ResourceValidationResponseConsumer(DefaultConsumer rpcConsumer,
+                                              AMQP.BasicProperties rpcProperties,
+                                              Envelope rpcEnvelope,
+                                              Channel channel,
+                                              RepositoryManager repositoryManager,
+                                              RabbitManager rabbitManager,
+                                              String resourcesPlatformId,
+                                              ResourceOperationType operationType,
+                                              DescriptionType descriptionType) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -67,6 +70,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         this.rpcProperties = rpcProperties;
         this.resourcesPlatformId = resourcesPlatformId;
         this.operationType = operationType;
+        this.descriptionType = descriptionType;
         this.persistenceOperationResultsList = new ArrayList<>();
         this.mapper = new ObjectMapper();
     }
@@ -91,7 +95,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
 
-        log.info("[x] Received validation result: '" + message + "'");
+        log.info("[x] Received '" + descriptionType + "' validation result: '" + message + "'");
 
         try {
             //otrzymuje i odpakowauje odpowiedz od semantic managera
@@ -143,7 +147,6 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
 
         for (CoreResourcePersistenceOperationResult persistenceResult : persistenceOperationResultsList) {
             if (persistenceResult.getStatus() != 200) {
-                rollback(persistenceResult.getResource());
                 this.bulkRequestSuccess = false;
                 registryResponse.setStatus(500);
                 registryResponse.setMessage("One of objects could not be processed. Check list of response " +
@@ -181,6 +184,13 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
             }
 
         } else {
+
+            for (CoreResourcePersistenceOperationResult persistenceResult : persistenceOperationResultsList) {
+                if (persistenceResult.getStatus() == 200) {
+                    rollback(persistenceResult.getResource());
+                }
+            }
+
             registryResponse.setStatus(500);
             registryResponse.setMessage("BULK SAVE ERROR");
         }
@@ -222,7 +232,16 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
      * @param resource
      */
     private void rollback(CoreResource resource) {
-        repositoryManager.removeResource(resource);
+        switch (operationType){
+            case CREATION:
+                repositoryManager.removeResource(resource);
+                break;
+            case MODIFICATION:
+
+                //todo ??
+
+                break;
+        }
     }
 
 

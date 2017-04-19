@@ -263,7 +263,7 @@ public class RabbitManager {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
-            log.info("- resources removed message sent. Contents:\n" + message);
+            log.info("- resources removed message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing message content to JSON: " + resources, e);
         }
@@ -274,7 +274,7 @@ public class RabbitManager {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
-            log.info("- resource modified message sent. Contents:\n" + message);
+            log.info("- resource modified message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing message content to JSON: " + resources, e);
         }
@@ -573,22 +573,13 @@ public class RabbitManager {
                     .replyTo(replyQueueName)
                     .build();
 
-            switch (descriptionType){
-                case BASIC:
-                    ResourceJsonValidationResponseConsumer jsonConsumer =
-                            new ResourceJsonValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this, platformId, operationType);
-                    channel.basicConsume(replyQueueName, true, jsonConsumer);
 
-                    break;
-                case RDF:
-                    ResourceRdfValidationResponseConsumer rdfConsumer =
-                            new ResourceRdfValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this, platformId, operationType);
-                    channel.basicConsume(replyQueueName, true, rdfConsumer);
+            ResourceValidationResponseConsumer responseConsumer =
+                    new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
+                            channel, repositoryManager, this, platformId, operationType, descriptionType);
 
-                    break;
-            }
+            channel.basicConsume(replyQueueName, true, responseConsumer);
+
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
                     + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
