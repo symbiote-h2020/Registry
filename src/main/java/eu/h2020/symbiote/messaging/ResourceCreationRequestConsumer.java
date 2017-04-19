@@ -8,6 +8,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.model.RegistryResponse;
+import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -82,13 +83,13 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                         log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
                         //sending RDF content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                                request.getBody(), request.getPlatformId());
+                                request.getBody(), request.getPlatformId(), ResourceOperationType.CREATION);
                         break;
                     case BASIC:
                         log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
                         //sending JSON content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                request.getBody(), request.getPlatformId());
+                                request.getBody(), request.getPlatformId(), ResourceOperationType.CREATION);
                         break;
                 }
             } else {

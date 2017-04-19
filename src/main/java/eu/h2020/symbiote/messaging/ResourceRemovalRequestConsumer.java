@@ -73,6 +73,12 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         log.info(" [x] Received resource to remove: '" + message + "'");
 
+
+
+        //todo wysyłam do Search'a liste Stringów (id) usunietych resourców
+
+
+
         try {
             request = gson.fromJson(message, listType);
         } catch (JsonSyntaxException e) {

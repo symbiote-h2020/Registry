@@ -280,19 +280,20 @@ public class RepositoryManager {
         CoreResourceSavingResult resourceSavingResult = new CoreResourceSavingResult();
         CoreResource foundResource = null;
 
-        /*
-        if (resource.getHasInterworkingServiceURL().isEmpty() || resource.getHasInterworkingServiceURL() == null) {
+        //todo
+
+        if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
             log.error("Given resource has empty or null Interworking service URL!");
             resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            if (resource.getHasInterworkingServiceURL().trim().charAt(resource.getHasInterworkingServiceURL().length() - 1)
+            if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
                     != "/".charAt(0)) {
-                resource.setHasInterworkingServiceURL(resource.getHasInterworkingServiceURL().trim() + "/");
+                resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
             }
             foundResource = resourceRepository.findOne(resource.getId());
         }
-*/
+
 
         if (foundResource == null) {
             log.error("Given resource does not exist in database!");

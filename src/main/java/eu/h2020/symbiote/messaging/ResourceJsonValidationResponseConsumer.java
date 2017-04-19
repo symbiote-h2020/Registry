@@ -13,6 +13,7 @@ import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.CoreResourceSavingResult;
+import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -35,6 +36,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private String resourcesPlatformId;
+    private ResourceOperationType operationType;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -50,7 +52,8 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                                                   Channel channel,
                                                   RepositoryManager repositoryManager,
                                                   RabbitManager rabbitManager,
-                                                  String resourcesPlatformId) {
+                                                  String resourcesPlatformId,
+                                                  ResourceOperationType operationType) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -58,6 +61,7 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
         this.resourcesPlatformId = resourcesPlatformId;
+        this.operationType = operationType;
     }
 
     /**
@@ -105,62 +109,72 @@ public class ResourceJsonValidationResponseConsumer extends DefaultConsumer {
                 log.error("Unable to get Resources List from semantic response body!");
                 e.printStackTrace();
             }
-
-            for (CoreResource resource : coreResources) {
-                //zapisuje kazdy z Core resourców
-                resourceSavingResult = this.repositoryManager.saveResource(resource);
-                resourceSavingResultsList.add(resourceSavingResult);
-            }
-
-            for (CoreResourceSavingResult resourceSavingResult1 : resourceSavingResultsList) {
-                if (resourceSavingResult1.getStatus() != 200) {
-                    rollback(resourceSavingResult1.getResource());
-                    bulkRequestSuccess = false;
-                    registryResponse.setStatus(500);
-                    registryResponse.setMessage("One of objects could not be registered. Check list of response " +
-                            "objects for details.");
-                }
-            }
         } else {
-            //todo ustawiam jakis błąd i messydż
             registryResponse.setStatus(500);
             registryResponse.setMessage("VALIDATION ERROR");
         }
 
+        switch (operationType){
+            case CREATION:
 
-        if (bulkRequestSuccess) {
-            savedCoreResourcesList = resourceSavingResultsList.stream()
-                    .map(CoreResourceSavingResult::getResource)
-                    .collect(Collectors.toList());
+                for (CoreResource resource : coreResources) {
+                    //zapisuje kazdy z Core resourców
+                    resourceSavingResult = this.repositoryManager.saveResource(resource);
+                    resourceSavingResultsList.add(resourceSavingResult);
+                }
 
-            CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
-            payload.setResources(savedCoreResourcesList);
-            payload.setPlatformId(resourcesPlatformId);
+                for (CoreResourceSavingResult resourceSavingResult1 : resourceSavingResultsList) {
+                    if (resourceSavingResult1.getStatus() != 200) {
+                        rollback(resourceSavingResult1.getResource());
+                        bulkRequestSuccess = false;
+                        registryResponse.setStatus(500);
+                        registryResponse.setMessage("One of objects could not be registered. Check list of response " +
+                                "objects for details.");
+                    }
+                }
 
-            //wysłanie całej listy zapisanych resourców
-            rabbitManager.sendResourcesCreatedMessage(payload);
+                if (bulkRequestSuccess) {
+                    savedCoreResourcesList = resourceSavingResultsList.stream()
+                            .map(CoreResourceSavingResult::getResource)
+                            .collect(Collectors.toList());
 
-            registryResponse.setStatus(200);
-            registryResponse.setMessage("Bulk registration successful!");
+                    CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+                    payload.setResources(savedCoreResourcesList);
+                    payload.setPlatformId(resourcesPlatformId);
 
-            List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
+                    //wysłanie całej listy zapisanych resourców
+                    rabbitManager.sendResourcesCreatedMessage(payload);
 
-            //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
-            registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-            }).writeValueAsString(resources));
+                    registryResponse.setStatus(200);
+                    registryResponse.setMessage("Bulk registration successful!");
+
+                    List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
+
+                    //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
+                    registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
+                    }).writeValueAsString(resources));
+
+                } else {
+                    registryResponse.setStatus(500);
+                    registryResponse.setMessage("BULK SAVE ERROR");
+                }
+
+                String response = mapper.writeValueAsString(registryResponse);
+
+                //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
+                rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
+
+                break;
+            case MODIFICATION:
 
 
-        } else {
-            //todo ustawiam jakis błąd i messydż
-            registryResponse.setStatus(500);
-            registryResponse.setMessage("BULK SAVE ERROR");
+
+
+                break;
         }
 
 
-        String response = mapper.writeValueAsString(registryResponse);
 
-        //odeslanie na RPC core response (z listą resourców z ID'kami jesl izapis sie powiódł)
-        rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
 
     }
 

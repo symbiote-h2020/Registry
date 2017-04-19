@@ -13,6 +13,7 @@ import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.CoreResourceSavingResult;
+import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -36,6 +37,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private String resourcesPlatformId;
+    private ResourceOperationType operationType;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -51,7 +53,8 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
                                                  Channel channel,
                                                  RepositoryManager repositoryManager,
                                                  RabbitManager rabbitManager,
-                                                 String resourcesPlatformId) {
+                                                 String resourcesPlatformId,
+                                                 ResourceOperationType operationType) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -59,6 +62,7 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
         this.resourcesPlatformId = resourcesPlatformId;
+        this.operationType = operationType;
     }
 
     /**
@@ -124,39 +128,43 @@ public class ResourceRdfValidationResponseConsumer extends DefaultConsumer {
                             "objects for details.");
                 }
             }
+
+
+            if (bulkRequestSuccess) {
+                savedCoreResourcesList = resourceSavingResultsList.stream()
+                        .map(CoreResourceSavingResult::getResource)
+                        .collect(Collectors.toList());
+
+
+                CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+                payload.setResources(savedCoreResourcesList);
+                payload.setPlatformId(resourcesPlatformId);
+
+                //wysłanie całej listy zapisanych resourców
+                rabbitManager.sendResourcesCreatedMessage(payload);
+
+                registryResponse.setStatus(200);
+                registryResponse.setMessage("Rdf registration successful!");
+
+                resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
+
+                //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
+                registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
+                }).writeValueAsString(resources));
+
+
+            } else {
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("BULK SAVE ERROR");
+                log.error("bulk registration save failed");
+            }
+
+
         } else {
             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
             registryResponse.setMessage("VALIDATION ERROR. Message from SM:" + resourceInstanceValidationResult.getMessage());
         }
 
-        if (bulkRequestSuccess) {
-            savedCoreResourcesList = resourceSavingResultsList.stream()
-                    .map(CoreResourceSavingResult::getResource)
-                    .collect(Collectors.toList());
-
-
-            CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
-            payload.setResources(savedCoreResourcesList);
-            payload.setPlatformId(resourcesPlatformId);
-
-            //wysłanie całej listy zapisanych resourców
-            rabbitManager.sendResourcesCreatedMessage(payload);
-
-            registryResponse.setStatus(200);
-            registryResponse.setMessage("Rdf registration successful!");
-
-            resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
-
-            //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
-            registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-            }).writeValueAsString(resources));
-
-
-        } else {
-            registryResponse.setStatus(500);
-            registryResponse.setMessage("BULK SAVE ERROR");
-            log.error("bulk registration save failed");
-        }
 
         String response = mapper.writeValueAsString(registryResponse);
 

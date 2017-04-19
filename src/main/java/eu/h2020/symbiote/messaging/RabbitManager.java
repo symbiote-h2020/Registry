@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
-import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -251,31 +252,31 @@ public class RabbitManager {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
-            log.info("- resources created message sent");
+            log.info("- resources created message sent. Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing Resource object JSON: " + resources, e);
+            log.error("Error occurred when parsing message content to JSON: " + resources, e);
         }
     }
 
-    public void sendResourceRemovedMessage(Resource resource) {
+    public void sendResourcesRemovedMessage(List<String> resources) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(resource);
+            String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
-            log.info("- resource removed message sent");
+            log.info("- resources removed message sent. Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing Resource object JSON: " + resource, e);
+            log.error("Error occurred when parsing message content to JSON: " + resources, e);
         }
     }
 
-    public void sendResourceModifiedMessage(Resource resource) {
+    public void sendResourcesModifiedMessage(CoreResourceRegisteredOrModifiedEventPayload resources) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(resource);
+            String message = mapper.writeValueAsString(resources);
             sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
-            log.info("- resource modified message sent");
+            log.info("- resource modified message sent. Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing Resource object JSON: " + resource, e);
+            log.error("Error occurred when parsing message content to JSON: " + resources, e);
         }
     }
 
@@ -283,11 +284,13 @@ public class RabbitManager {
                                                     AMQP.BasicProperties rpcProperties,
                                                     Envelope rpcEnvelope,
                                                     String message,
-                                                    String platformId) {
+                                                    String platformId,
+                                                    ResourceOperationType operationType) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.rdfResourceValidationRequestedRoutingKey,
                 RDF,
+                operationType,
                 message,
                 platformId);
         log.info("- rdf resource to validation message sent");
@@ -297,11 +300,13 @@ public class RabbitManager {
                                                       AMQP.BasicProperties rpcProperties,
                                                       Envelope rpcEnvelope,
                                                       String message,
-                                                      String platformId) {
+                                                      String platformId,
+                                                      ResourceOperationType operationType) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
                 BASIC,
+                operationType,
                 message,
                 platformId);
     }
@@ -555,7 +560,8 @@ public class RabbitManager {
 
     public void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                 Envelope rpcEnvelope, String exchangeName, String routingKey,
-                                                DescriptionType descriptionType, String message, String platformId) {
+                                                DescriptionType descriptionType, ResourceOperationType operationType,
+                                                String message, String platformId) {
         try {
             Channel channel = this.connection.createChannel();
             String replyQueueName = channel.queueDeclare().getQueue();
@@ -571,14 +577,14 @@ public class RabbitManager {
                 case BASIC:
                     ResourceJsonValidationResponseConsumer jsonConsumer =
                             new ResourceJsonValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this, platformId);
+                            channel, repositoryManager, this, platformId, operationType);
                     channel.basicConsume(replyQueueName, true, jsonConsumer);
 
                     break;
                 case RDF:
                     ResourceRdfValidationResponseConsumer rdfConsumer =
                             new ResourceRdfValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this, platformId);
+                            channel, repositoryManager, this, platformId, operationType);
                     channel.basicConsume(replyQueueName, true, rdfConsumer);
 
                     break;
