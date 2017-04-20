@@ -1,23 +1,19 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.*;
+import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Creation actions
@@ -60,10 +56,57 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String response;
+        String message = new String(body, "UTF-8");
+        log.info(" [x] Received platform to create: '" + message + "'");
+
+        Platform platform;
+        PlatformResponse platformResponse = new PlatformResponse();
+        try {
+            platform = mapper.readValue(message, Platform.class);
+            if (RegistryUtils.validateFields(platform)) {
+                platformResponse = this.repositoryManager.savePlatform(platform);
+                if (platformResponse.getStatus() == 200) {
+                    rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+                }
+            } else {
+                log.error("Given Platform has some fields null or empty");
+                platformResponse.setStatus(400);
+            }
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during Platform saving to db", e);
+            platformResponse.setStatus(400);
+        }
+        response = mapper.writeValueAsString(platformResponse);
+
+        if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
+
+            AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                    .Builder()
+                    .correlationId(properties.getCorrelationId())
+                    .build();
+
+            this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
+            log.info("Message with status: " + platformResponse.getStatus() + " sent back");
+        } else {
+            log.warn("Received RPC message without ReplyTo or CorrelationId props.");
+        }
+        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+    }
+
+
+    //FOR LATER RELEASE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*
+    @Override
+    public void handleDelivery(String consumerTag, Envelope envelope,
+                               AMQP.BasicProperties properties, byte[] body)
+            throws IOException {
         Gson gson = new Gson();
         RegistryRequest request = null;
         String response;
-        RegistryResponse registryResponse;
+        RegistryResponse registryResponse = new RegistryResponse();
         boolean bulkRequestSuccess = true;
         String responseBody;
         List<Platform> platforms = new ArrayList<>();
@@ -85,19 +128,18 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-                RegistryResponse RegistryResponse = new RegistryResponse();
-                RegistryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+                registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 switch (request.getType()) {
                     case RDF:
                         try {
-                            RegistryResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
+                            registryResponse = RegistryUtils.getPlatformsFromRdf(request.getBody());
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Platforms from Json received from Semantic Manager", e);
                             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                             platformResponse.setMessage("Error occured during getting Platforms from Json");
                             platformResponseList.add(platformResponse);
                         }
-                        if (RegistryResponse.getStatus() == 200) {
+                        if (registryResponse.getStatus() == 200) {
                             platforms = gson.fromJson(RegistryResponse.getBody(), listType);
                         } else {
                             log.error("Error occured during rdf verification. Semantic Manager info: "
@@ -169,13 +211,12 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 
-    /** Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when
-     * any of given objects in list did not save successfully in database.
-     *
-     * @param platform
-     */
+     //Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when
+     //any of given objects in list did not save successfully in database.
+
     private void rollback(Platform platform){
         repositoryManager.removePlatform(platform);
     }
+    */
 
 }

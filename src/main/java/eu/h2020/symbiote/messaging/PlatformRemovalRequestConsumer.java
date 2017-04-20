@@ -1,24 +1,18 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Removal actions
@@ -47,16 +41,51 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         this.rabbitManager = rabbitManager;
     }
 
+
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
-     *
      * @param consumerTag the <i>consumer tag</i> associated with the consumer
-     * @param envelope    packaging data for the message
-     * @param properties  content header data for the message
-     * @param body        the message body (opaque, client-specific byte array)
+     * @param envelope packaging data for the message
+     * @param properties content header data for the message
+     * @param body the message body (opaque, client-specific byte array)
      * @throws IOException if the consumer encounters an I/O error while processing the message
      * @see Envelope
      */
+    @Override
+    public void handleDelivery(String consumerTag, Envelope envelope,
+                               AMQP.BasicProperties properties, byte[] body)
+            throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String response;
+        String message = new String(body, "UTF-8");
+        log.info(" [x] Received platform to remove: '" + message + "'");
+
+        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                .Builder()
+                .correlationId(properties.getCorrelationId())
+                .build();
+
+        Platform platform;
+        PlatformResponse platformResponse = new PlatformResponse();
+        try {
+            platform = mapper.readValue(message, Platform.class);
+            platformResponse = this.repositoryManager.removePlatform(platform);
+            if (platformResponse.getStatus() == 200) {
+                rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
+            }
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during Platform deleting in db", e);
+            platformResponse.setStatus(400);
+        }
+
+        response = mapper.writeValueAsString(platformResponse);
+        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
+        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
+
+        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+    }
+
+    /*
     @Override
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
@@ -120,4 +149,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         response = gson.toJson(platformResponseList);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
+    */
+
 }
+

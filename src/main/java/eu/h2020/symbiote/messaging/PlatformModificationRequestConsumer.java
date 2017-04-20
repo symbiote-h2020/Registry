@@ -1,25 +1,18 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.RegistryRequest;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
-import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Platform Modification actions
@@ -48,6 +41,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         this.rabbitManager = rabbitManager;
     }
 
+
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
      *
@@ -58,6 +52,45 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
      * @throws IOException if the consumer encounters an I/O error while processing the message
      * @see Envelope
      */
+    @Override
+    public void handleDelivery(String consumerTag, Envelope envelope,
+                               AMQP.BasicProperties properties, byte[] body)
+            throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        String response;
+        Platform platform;
+        PlatformResponse platformResponse = new PlatformResponse();
+
+        String message = new String(body, "UTF-8");
+        log.info(" [x] Received platform to modify: '" + message + "'");
+
+        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                .Builder()
+                .correlationId(properties.getCorrelationId())
+                .build();
+
+        try {
+            platform = mapper.readValue(message, Platform.class);
+            platformResponse = this.repositoryManager.modifyPlatform(platform);
+            if (platformResponse.getStatus() == 200) {
+                rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
+            }
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during Platform saving to db", e);
+            platformResponse.setStatus(400);
+        }
+
+        response = mapper.writeValueAsString(platformResponse);
+        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
+        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
+
+        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+    }
+
+
+    //FOR LATER RELEASE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*
     @Override
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
@@ -139,4 +172,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         response = gson.toJson(platformResponseList);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
+    */
+
+
 }
