@@ -44,22 +44,28 @@ public class RepositoryManager {
     public PlatformResponse savePlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
         Platform savedPlatform = null;
-        platformResponse.setPlatform(platform);
+        platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
         platformResponse.setMessage("Unknown error"); //// FIXME: 27.03.2017
-        platformResponse.setStatus(400);
+        platformResponse.setStatus(0);
+
+        log.info("Received platform to save: " + platform);
 
         if (platform.getId() != null) {
             log.error("Given platform has not null id!");
             platformResponse.setMessage("Given platform has not null id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
+            /* todo
             for (InterworkingService interworkingService : platform.getInterworkingServices()) {
                 if (modelRepository.findOne(interworkingService.getInformationModelUri()) == null) {
                     platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                     platformResponse.setMessage("There is wrong informationModelUri in one of interworkingServices" +
                             "in given Platform");
+                    log.info("There is wrong informationModelUri in one of interworkingServices" +
+                            "in given Platform");
                 }
             }
+            */
             if (platformResponse.getStatus() != HttpStatus.SC_BAD_REQUEST) {
                 try {
                     log.info("Saving platform: " + platform.getId());
@@ -69,7 +75,7 @@ public class RepositoryManager {
                     log.info("Platform \"" + savedPlatform + "\" saved !");
                     platformResponse.setStatus(HttpStatus.SC_OK);
                     platformResponse.setMessage("OK");
-                    platformResponse.setPlatform(savedPlatform);
+                    platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(savedPlatform));
                 } catch (Exception e) {
                     log.error("Error occurred during Platform saving to db", e);
                     platformResponse.setMessage("Error occurred during Platform saving to db");
@@ -109,7 +115,7 @@ public class RepositoryManager {
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setMessage("OK");
-                platformResponse.setPlatform(platform);
+                platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
             } catch (Exception e) {
                 log.error("Error occurred during Platform removing from db", e);
                 platformResponse.setMessage("Error occurred during Platform removing from db");
@@ -134,7 +140,7 @@ public class RepositoryManager {
      */
     public PlatformResponse modifyPlatform(Platform platform) {
         PlatformResponse platformResponse = new PlatformResponse();
-        platformResponse.setPlatform(platform);
+        platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
 
         if (platform.getBody().trim().charAt(platform.getBody().length() - 1) != "/".charAt(0)) {
             platform.setBody(platform.getBody().trim() + "/");
@@ -158,8 +164,8 @@ public class RepositoryManager {
                 //fulfilment of empty Platform fields before saving
                 if (platform.getComments() == null && foundPlatform.getComments() != null)
                     platform.setComments(foundPlatform.getComments());
-                if (platform.getFormat() == null && foundPlatform.getFormat() != null)
-                    platform.setFormat(foundPlatform.getFormat());
+                if (platform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
+                    platform.setRdfFormat(foundPlatform.getRdfFormat());
                 if (platform.getLabels() == null && foundPlatform.getLabels() != null)
                     platform.setLabels(foundPlatform.getLabels());
                 if (platform.getBody() == null && foundPlatform.getBody() != null)
@@ -170,7 +176,7 @@ public class RepositoryManager {
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setMessage("OK");
-                platformResponse.setPlatform(platform);
+                platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error("Error occurred during Platform modifying in db", e);

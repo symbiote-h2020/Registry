@@ -6,7 +6,6 @@ import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.model.InformationModel;
-import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import org.apache.commons.logging.Log;
@@ -215,7 +214,7 @@ public class RabbitManager {
         }
     }
 
-    public void sendPlatformCreatedMessage(Platform platform) {
+    public void sendPlatformCreatedMessage(eu.h2020.symbiote.core.model.Platform platform) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
@@ -227,7 +226,7 @@ public class RabbitManager {
 
     }
 
-    public void sendPlatformRemovedMessage(Platform platform) {
+    public void sendPlatformRemovedMessage(eu.h2020.symbiote.core.model.Platform platform) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
@@ -238,7 +237,7 @@ public class RabbitManager {
         }
     }
 
-    public void sendPlatformModifiedMessage(Platform platform) {
+    public void sendPlatformModifiedMessage(eu.h2020.symbiote.core.model.Platform platform) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);

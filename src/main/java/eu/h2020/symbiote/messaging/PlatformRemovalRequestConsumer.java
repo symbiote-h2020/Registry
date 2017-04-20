@@ -9,6 +9,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,10 +45,11 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
+     *
      * @param consumerTag the <i>consumer tag</i> associated with the consumer
-     * @param envelope packaging data for the message
-     * @param properties content header data for the message
-     * @param body the message body (opaque, client-specific byte array)
+     * @param envelope    packaging data for the message
+     * @param properties  content header data for the message
+     * @param body        the message body (opaque, client-specific byte array)
      * @throws IOException if the consumer encounters an I/O error while processing the message
      * @see Envelope
      */
@@ -58,18 +60,23 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         ObjectMapper mapper = new ObjectMapper();
         String response;
         String message = new String(body, "UTF-8");
+        PlatformResponse platformResponse = new PlatformResponse();
         log.info(" [x] Received platform to remove: '" + message + "'");
+
+        eu.h2020.symbiote.core.model.Platform requestPlatform;
+        Platform registryPlatform;
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()
                 .correlationId(properties.getCorrelationId())
                 .build();
 
-        Platform platform;
-        PlatformResponse platformResponse = new PlatformResponse();
         try {
-            platform = mapper.readValue(message, Platform.class);
-            platformResponse = this.repositoryManager.removePlatform(platform);
+            requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
+
+            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+
+            platformResponse = this.repositoryManager.removePlatform(registryPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());
             }

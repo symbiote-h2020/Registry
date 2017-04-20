@@ -9,6 +9,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -58,11 +59,12 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String response;
-        Platform platform;
         PlatformResponse platformResponse = new PlatformResponse();
-
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to modify: '" + message + "'");
+
+        eu.h2020.symbiote.core.model.Platform requestPlatform;
+        Platform registryPlatform;
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()
@@ -70,8 +72,11 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                 .build();
 
         try {
-            platform = mapper.readValue(message, Platform.class);
-            platformResponse = this.repositoryManager.modifyPlatform(platform);
+            requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
+
+            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+
+            platformResponse = this.repositoryManager.modifyPlatform(registryPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
             }

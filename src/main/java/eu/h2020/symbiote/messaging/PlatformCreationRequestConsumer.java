@@ -59,14 +59,21 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         ObjectMapper mapper = new ObjectMapper();
         String response;
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received platform to create: '" + message + "'");
+        log.info(" [x] Received requestPlatform to create: '" + message + "'");
 
-        Platform platform;
+        eu.h2020.symbiote.core.model.Platform requestPlatform;
+        Platform registryPlatform;
+
         PlatformResponse platformResponse = new PlatformResponse();
         try {
-            platform = mapper.readValue(message, Platform.class);
-            if (RegistryUtils.validateFields(platform)) {
-                platformResponse = this.repositoryManager.savePlatform(platform);
+            requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
+
+            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+
+            log.info("Platform converted to RegistryPlatform: " + registryPlatform);
+
+            if (RegistryUtils.validateFields(registryPlatform)) {
+                platformResponse = this.repositoryManager.savePlatform(registryPlatform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
                 }
@@ -88,7 +95,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                     .build();
 
             this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-            log.info("Message with status: " + platformResponse.getStatus() + " sent back");
+            log.info("- Message with content: '" + platformResponse + "' sent back");
         } else {
             log.warn("Received RPC message without ReplyTo or CorrelationId props.");
         }

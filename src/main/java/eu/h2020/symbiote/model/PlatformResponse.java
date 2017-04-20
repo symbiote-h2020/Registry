@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.model;
 
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import eu.h2020.symbiote.core.model.Platform;
 
 /**
  * Class used as a response to RPC call requesting platform actions

@@ -19,7 +19,7 @@ public class Platform {
     private List<String> labels;
     private List<String> comments;
     private String body;
-    private String format;
+    private String rdfFormat;
     private List<InterworkingService> interworkingServices;
 
     public Platform() {
@@ -88,15 +88,15 @@ public class Platform {
     /**
      * @return
      */
-    public String getFormat() {
-        return format;
+    public String getRdfFormat() {
+        return rdfFormat;
     }
 
     /**
-     * @param format
+     * @param rdfFormat
      */
-    public void setFormat(String format) {
-        this.format = format;
+    public void setRdfFormat(String rdfFormat) {
+        this.rdfFormat = rdfFormat;
     }
 
     /**
@@ -117,7 +117,7 @@ public class Platform {
     public String toString() {
         /*
         StringBuilder sb = new StringBuilder();
-        sb.append("Platform with id: " + this.getId() + ", body: " + body + ", format: " + format + ", labels: [");
+        sb.append("Platform with id: " + this.getId() + ", body: " + body + ", rdfFormat: " + rdfFormat + ", labels: [");
         this.getLabels().forEach(s->sb.append(s + ", "));
         sb.append("], comments: [");
         this.getComments().forEach(s->sb.append(s + ", "));

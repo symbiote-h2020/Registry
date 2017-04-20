@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.utils;
 
 import com.google.gson.Gson;
+import eu.h2020.symbiote.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
@@ -11,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -30,11 +32,11 @@ public class RegistryUtils {
      */
     public static boolean validateFields(Platform platform) { //todo extend validation to all fields
         boolean b;
-        if (platform.getBody() == null || platform.getLabels() == null || platform.getFormat() == null) {
+        if (platform.getBody() == null || platform.getLabels() == null || platform.getRdfFormat() == null) {
             log.info("Given platform has some null fields");
             b = false;
         } else if (platform.getBody().isEmpty() || platform.getLabels().isEmpty()
-                || platform.getFormat().isEmpty()) {
+                || platform.getRdfFormat().isEmpty()) {
             log.info("Given platform has some empty fields");
             b = false;
         } else {
@@ -111,12 +113,44 @@ public class RegistryUtils {
         return coreResource;
     }
 
+    public static Platform convertRequestPlatformToRegistryPlatform(eu.h2020.symbiote.core.model.Platform requestPlatform){
+        Platform platform = new Platform();
+
+        platform.setLabels(Arrays.asList(requestPlatform.getName()));
+
+        platform.setComments(Arrays.asList(requestPlatform.getDescription()));
+
+        InterworkingService interworkingService = new InterworkingService();
+        interworkingService.setInformationModelUri(requestPlatform.getUrl());
+        interworkingService.setUrl("http://url.com/");
+        platform.setInterworkingServices(Arrays.asList(interworkingService));
+
+        platform.setBody("not null body");
+        platform.setRdfFormat("not null rdf");
+
+        return platform;
+    }
+
+    public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform(Platform registryPlatform){
+        eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
+
+        platform.setPlatformId(registryPlatform.getId());
+        platform.setName(registryPlatform.getLabels().get(0));
+        platform.setDescription(registryPlatform.getComments().get(0));
+        platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelUri());
+        platform.setUrl(registryPlatform.getInterworkingServices().get(0).getUrl());
+
+        return platform;
+    }
+
+
+
     //todo MOCKED!! waiting for cooperation with SemanticManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Platform getRdfBodyForObject(Platform platform) {
         if (platform.getBody() == null) platform.setBody("mocked body");
-        if (platform.getFormat() == null) platform.setFormat("mocked format"); //todo get properties from Sem. Man.
+        if (platform.getRdfFormat() == null) platform.setRdfFormat("mocked format"); //todo get properties from Sem. Man.
         return platform;
     }
 
