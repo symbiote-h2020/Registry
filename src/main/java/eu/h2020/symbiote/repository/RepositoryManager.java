@@ -1,7 +1,9 @@
 package eu.h2020.symbiote.repository;
 
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.*;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -199,30 +201,20 @@ public class RepositoryManager {
             resourceSavingResult.setMessage("Resource has null or empty ID!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
-                    != "/".charAt(0)) {
-                resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
-            }
-            if (false) { //platformRepository.findByInterworkingServiceURL(resource.getInterworkingServiceURL()) == null) {
-                log.error("Given Interworking Service does not exist in any Platform in database");
-                resourceSavingResult.setMessage("Given Interworking Service does not exist in any Platform in database");
-                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            } else {
-                try {
-                    log.info("Saving Resource: " + resource.toString());
-                    //todo check if provided resource already exists - somehow (URL?)
+            try {
+                log.info("Saving Resource: " + resource.toString());
+                //todo check if provided resource already exists - somehow (URL?)
 
-                    CoreResource savedResource = resourceRepository.save(resource);
-                    log.info("Resource with id: " + savedResource.getId() + " saved !");
+                CoreResource savedResource = resourceRepository.save(resource);
+                log.info("Resource with id: " + savedResource.getId() + " saved !");
 
-                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
-                    resourceSavingResult.setMessage("OK");
-                    resourceSavingResult.setResource(savedResource);
-                } catch (Exception e) {
-                    log.error("Error occurred during Resource saving in db", e);
-                    resourceSavingResult.setMessage("Error occurred during Resource saving in db");
-                    resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-                }
+                resourceSavingResult.setStatus(HttpStatus.SC_OK);
+                resourceSavingResult.setMessage("OK");
+                resourceSavingResult.setResource(savedResource);
+            } catch (Exception e) {
+                log.error("Error occurred during Resource saving in db", e);
+                resourceSavingResult.setMessage("Error occurred during Resource saving in db");
+                resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
         return resourceSavingResult;
@@ -234,13 +226,13 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
      */
-    public CoreResourcePersistenceOperationResult removeResource(CoreResource resource) {
-        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
+    public CoreResourcePersistenceOperationResult removeResource(Resource resource) {
+        CoreResourcePersistenceOperationResult resourceRemovalResult = new CoreResourcePersistenceOperationResult();
 
         if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
             log.error("Given resource has empty or null ID!");
-            resourceSavingResult.setMessage("Given resource has empty or null ID!");
-            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            resourceRemovalResult.setMessage("Given resource has empty or null ID!");
+            resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 CoreResource foundResource = resourceRepository.findOne(resource.getId());
@@ -251,22 +243,22 @@ public class RepositoryManager {
 //                        log.info("Location with id: " + loc.getId() + " removed !");
 //                    }
                     resourceRepository.delete(resource.getId());
-                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
-                    resourceSavingResult.setMessage("OK");
-                    resourceSavingResult.setResource(resource);
+                    resourceRemovalResult.setStatus(HttpStatus.SC_OK);
+                    resourceRemovalResult.setMessage("OK");
+                    resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
                     log.info("Resource with id: " + resource.getId() + " removed !");
                 } else {
                     log.error("Given resource does not exist in database");
-                    resourceSavingResult.setMessage("Given resource does not exist in database");
-                    resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                    resourceRemovalResult.setMessage("Given resource does not exist in database");
+                    resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
                 }
             } catch (Exception e) {
                 log.error("Error occurred during Resource deleting from db", e);
-                resourceSavingResult.setMessage("Error occurred during Resource deleting from db");
-                resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                resourceRemovalResult.setMessage("Error occurred during Resource deleting from db");
+                resourceRemovalResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-        return resourceSavingResult;
+        return resourceRemovalResult;
     }
 
     /**
@@ -357,4 +349,16 @@ public class RepositoryManager {
 
         return response;
     }
+
+    public boolean checkIfPlatformHasInterworkingServiceUrl(String platformId, String interworkingServiceUrl) {
+        Platform platform = platformRepository.findOne(platformId);
+        //todo throw exception if there is no such platform
+        for (InterworkingService service : platform.getInterworkingServices()) {
+            if (service.getUrl().equals(interworkingServiceUrl)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

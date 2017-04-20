@@ -102,6 +102,14 @@ public class RegistryUtils {
         return resources;
     }
 
+    public static CoreResource convertResourceToCoreResource(Resource resource) {
+        CoreResource coreResource = new CoreResource();
+        coreResource.setId(resource.getId());
+        coreResource.setComments(resource.getComments());
+        coreResource.setLabels(resource.getLabels());
+        coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
+        return coreResource;
+    }
 
     //todo MOCKED!! waiting for cooperation with SemanticManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +159,6 @@ public class RegistryUtils {
         return RegistryResponse;
     }
 
-
     public static RegistryResponse getInformationModelFromRdf(String body) {
         Gson gson = new Gson();
         RegistryResponse RegistryResponse = new RegistryResponse();
@@ -182,5 +189,6 @@ public class RegistryUtils {
 */
         return true;
     }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

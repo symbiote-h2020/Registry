@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
+    CoreResourceRegistryResponse registryResponse;
     private DefaultConsumer rpcConsumer;
     private AMQP.BasicProperties rpcProperties;
     private Envelope rpcEnvelope;
@@ -73,6 +74,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.descriptionType = descriptionType;
         this.persistenceOperationResultsList = new ArrayList<>();
         this.mapper = new ObjectMapper();
+        this.registryResponse = new CoreResourceRegistryResponse();
     }
 
     /**
@@ -91,7 +93,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             throws IOException {
 
         String message = new String(body, "UTF-8");
-        CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
 
@@ -120,12 +121,32 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setMessage("VALIDATION ERROR");
         }
 
-        registryResponse = makePersistenceOperations(coreResources, registryResponse);
-        prepareContentAndSendMessage(registryResponse);
+        if (checkPlatformAndInterworkingServices(coreResources)){
+            makePersistenceOperations(coreResources);
+            prepareContentAndSendMessage();
+        } else {
+            registryResponse.setStatus(500);
+            registryResponse.setMessage("There is no such platform or it has no Interworking Service with given URL");
+        }
     }
 
-    private CoreResourceRegistryResponse makePersistenceOperations(List<CoreResource> coreResources,
-                                                                   CoreResourceRegistryResponse registryResponse) {
+    private boolean checkPlatformAndInterworkingServices(List<CoreResource> coreResources) {
+        for (CoreResource resource : coreResources) {
+            //normalization of Interworking Services Urls
+            if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
+                    != "/".charAt(0)) {
+                resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
+            }
+            //performing check of given platform ID and IS URL
+            if (!repositoryManager.checkIfPlatformHasInterworkingServiceUrl
+                    (resourcesPlatformId, resource.getInterworkingServiceURL())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void makePersistenceOperations(List<CoreResource> coreResources) {
         switch (operationType) {
             case CREATION:
                 for (CoreResource resource : coreResources) {
@@ -153,11 +174,9 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         "objects for details.");
             }
         }
-
-        return registryResponse;
     }
 
-    private void prepareContentAndSendMessage(CoreResourceRegistryResponse registryResponse) {
+    private void prepareContentAndSendMessage() {
 
         if (bulkRequestSuccess) {
             savedCoreResourcesList = persistenceOperationResultsList.stream()
@@ -232,7 +251,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      * @param resource
      */
     private void rollback(CoreResource resource) {
-        switch (operationType){
+        switch (operationType) {
             case CREATION:
                 repositoryManager.removeResource(resource);
                 break;

@@ -77,6 +77,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
+
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:

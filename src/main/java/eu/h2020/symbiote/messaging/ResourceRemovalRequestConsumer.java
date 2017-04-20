@@ -9,7 +9,6 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -66,11 +65,11 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
-        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
-        List<CoreResource> resources = new ArrayList<>();
-        List<CoreResourcePersistenceOperationResult> resourceSavingResultList = new ArrayList<>();
+        CoreResourcePersistenceOperationResult resourceRemovalResult = new CoreResourcePersistenceOperationResult();
+        List<Resource> resources = new ArrayList<>();
+        List<CoreResourcePersistenceOperationResult> resourceRemovalResultList = new ArrayList<>();
         String message = new String(body, "UTF-8");
-        List<CoreResource> removedResources = new ArrayList<>();
+        List<Resource> resourcesRemoved = new ArrayList<>();
 
         log.info(" [x] Received resource to remove: '" + message + "'");
 
@@ -78,9 +77,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
-            resourceSavingResult.setStatus(400);
-            resourceSavingResult.setMessage("Error occured during getting Operation Request from Json");
-            resourceSavingResultList.add(resourceSavingResult);
+            resourceRemovalResult.setStatus(400);
+            resourceRemovalResult.setMessage("Error occured during getting Operation Request from Json");
+            resourceRemovalResultList.add(resourceRemovalResult);
         }
 
         if (request != null) {
@@ -90,42 +89,44 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                     });
                 } catch (JsonSyntaxException e) {
                     log.error("Error occured during getting Resources from Json", e);
-                    resourceSavingResult.setStatus(400);
-                    resourceSavingResult.setMessage("Error occured during getting Resources from Json");
-                    resourceSavingResultList.add(resourceSavingResult);
+                    resourceRemovalResult.setStatus(400);
+                    resourceRemovalResult.setMessage("Error occured during getting Resources from Json");
+                    resourceRemovalResultList.add(resourceRemovalResult);
                 }
             } else {
                 log.error("Token invalid");
-                resourceSavingResult.setStatus(400);
-                resourceSavingResult.setMessage("Token invalid");
-                resourceSavingResultList.add(resourceSavingResult);
+                resourceRemovalResult.setStatus(400);
+                resourceRemovalResult.setMessage("Token invalid");
+                resourceRemovalResultList.add(resourceRemovalResult);
             }
         }
 
-        for (CoreResource resource : resources) {
+        for (Resource resource : resources) {
             if (resource.getId() != null || !resource.getId().isEmpty()) {
-                resourceSavingResult = this.repositoryManager.removeResource(resource);
-                resourceSavingResultList.add(resourceSavingResult);
+                resourceRemovalResult = this.repositoryManager.removeResource(resource);
+                resourceRemovalResultList.add(resourceRemovalResult);
             } else {
                 log.error("Given Resource has id null or empty");
-                resourceSavingResult.setMessage("Given Resource has ID null or empty");
-                resourceSavingResult.setStatus(400);
+                resourceRemovalResult.setMessage("Given Resource has ID null or empty");
+                resourceRemovalResult.setStatus(400);
             }
-            resourceSavingResultList.add(resourceSavingResult);
+            resourceRemovalResultList.add(resourceRemovalResult);
         }
 
-        for (CoreResourcePersistenceOperationResult result : resourceSavingResultList) {
+        for (CoreResourcePersistenceOperationResult result : resourceRemovalResultList) {
             if (result.getStatus() == 200) {
+                resourcesRemoved.add(result.getResource());
+                //todo rollback
             }
         }
 
-        rabbitManager.sendResourcesRemovedMessage(resourceSavingResultList.stream()
+        rabbitManager.sendResourcesRemovedMessage(resourceRemovalResultList.stream()
                 .map(coreResourcePersistenceOperationResult ->
                         coreResourcePersistenceOperationResult.getResource().getId())
                 .collect(Collectors.toList()));
         log.info("- List with removed resources id's sent (fanout).");
 
-        response.setBody(mapper.writeValueAsString(resourceSavingResultList));
+        response.setBody(mapper.writeValueAsString(resourceRemovalResultList));
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
