@@ -17,7 +17,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -217,7 +219,7 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message);
+            sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message, platform.getClass().getCanonicalName());
             log.info("- platform created message sent");
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing Resource object JSON: " + platform, e);
@@ -229,7 +231,7 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message);
+            sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message, platform.getClass().getCanonicalName());
             log.info("- platform removed message sent");
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing Resource object JSON: " + platform, e);
@@ -240,7 +242,7 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message);
+            sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message, platform.getClass().getCanonicalName());
             log.info("- platform modified message sent");
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing Resource object JSON: " + platform, e);
@@ -251,7 +253,7 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message);
+            sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message, resources.getClass().getCanonicalName());
             log.info("- Resources created message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing message content to JSON: " + resources, e);
@@ -262,7 +264,7 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message);
+            sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message, resources.getClass().getCanonicalName());
             log.info("- resources removed message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing message content to JSON: " + resources, e);
@@ -273,7 +275,7 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message);
+            sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,resources.getClass().getCanonicalName());
             log.info("- resource modified message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error("Error occurred when parsing message content to JSON: " + resources, e);
@@ -311,10 +313,10 @@ public class RabbitManager {
                 platformId);
     }
 
-    public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
-        sendMessage(exchange, routingKey, objectInJson);
-        log.info("- Custom message sent");
-    }
+//    public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
+//        sendMessage(exchange, routingKey, objectInJson);
+//        log.info("- Custom message sent");
+//    }
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
@@ -493,14 +495,18 @@ public class RabbitManager {
      * @param exchange   name of the proper Rabbit exchange, adequate to topic of the communication
      * @param routingKey name of the proper Rabbit routing key, adequate to topic of the communication
      * @param message    message content in JSON String format
+     * @param classType    message content in JSON String format
      */
-    private void sendMessage(String exchange, String routingKey, String message) {
+    private void sendMessage(String exchange, String routingKey, String message, String classType) {
         Channel channel = null;
         try {
             channel = this.connection.createChannel();
+            Map<String, Object> headers = new HashMap<String,Object>();
+            headers.put("__TypeId__",classType);
             AMQP.BasicProperties props = new AMQP.BasicProperties()
                     .builder()
                     .contentType("application/json")
+                    .headers(headers)
                     .build();
 
             channel.basicPublish(exchange, routingKey, props, message.getBytes());
