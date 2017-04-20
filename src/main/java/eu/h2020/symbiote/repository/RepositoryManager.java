@@ -207,10 +207,6 @@ public class RepositoryManager {
                 log.error("Given Interworking Service does not exist in any Platform in database");
                 resourceSavingResult.setMessage("Given Interworking Service does not exist in any Platform in database");
                 resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            } else if (resource.getId() != null) {
-                log.error("Resource has not null ID!");
-                resourceSavingResult.setMessage("Resource has not null ID!");
-                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             } else {
                 try {
                     log.info("Saving Resource: " + resource.toString());
@@ -229,7 +225,6 @@ public class RepositoryManager {
                 }
             }
         }
-
         return resourceSavingResult;
     }
 
