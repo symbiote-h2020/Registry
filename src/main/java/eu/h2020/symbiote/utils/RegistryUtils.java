@@ -1,10 +1,10 @@
 package eu.h2020.symbiote.utils;
 
 import com.google.gson.Gson;
-import eu.h2020.symbiote.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
+import eu.h2020.symbiote.model.InterworkingService;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.RegistryResponse;
 import org.apache.commons.logging.Log;
@@ -32,6 +32,14 @@ public class RegistryUtils {
      */
     public static boolean validateFields(Platform platform) { //todo extend validation to all fields
         boolean b;
+
+        for (InterworkingService interworkingService : platform.getInterworkingServices()) {
+            if (interworkingService.getUrl().trim().charAt(interworkingService.getUrl().length() - 1)
+                    != "/".charAt(0)) {
+                interworkingService.setUrl(interworkingService.getUrl().trim() + "/");
+            }
+        }
+
         if (platform.getBody() == null || platform.getLabels() == null || platform.getRdfFormat() == null) {
             log.info("Given platform has some null fields");
             b = false;
@@ -100,7 +108,7 @@ public class RegistryUtils {
         return resources;
     }
 
-    public static Resource convertCoreResourceToResource(CoreResource coreResource){
+    public static Resource convertCoreResourceToResource(CoreResource coreResource) {
         Resource resource = new Resource();
         resource.setId(coreResource.getId());
         resource.setComments(coreResource.getComments());
@@ -118,7 +126,7 @@ public class RegistryUtils {
         return coreResource;
     }
 
-    public static Platform convertRequestPlatformToRegistryPlatform(eu.h2020.symbiote.core.model.Platform requestPlatform){
+    public static Platform convertRequestPlatformToRegistryPlatform(eu.h2020.symbiote.core.model.Platform requestPlatform) {
         Platform platform = new Platform();
 
         platform.setLabels(Arrays.asList(requestPlatform.getName()));
@@ -136,7 +144,7 @@ public class RegistryUtils {
         return platform;
     }
 
-    public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform(Platform registryPlatform){
+    public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform(Platform registryPlatform) {
         eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
 
         platform.setPlatformId(registryPlatform.getId());
@@ -149,13 +157,13 @@ public class RegistryUtils {
     }
 
 
-
     //todo MOCKED!! waiting for cooperation with SemanticManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static Platform getRdfBodyForObject(Platform platform) {
         if (platform.getBody() == null) platform.setBody("mocked body");
-        if (platform.getRdfFormat() == null) platform.setRdfFormat("mocked format"); //todo get properties from Sem. Man.
+        if (platform.getRdfFormat() == null)
+            platform.setRdfFormat("mocked format"); //todo get properties from Sem. Man.
         return platform;
     }
 

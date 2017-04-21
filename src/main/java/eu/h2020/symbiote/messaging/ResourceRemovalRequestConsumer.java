@@ -101,7 +101,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         for (Resource resource : resources) {
             if (resource.getId() != null || !resource.getId().isEmpty()) {
                 resourceRemovalResult = this.repositoryManager.removeResource(resource);
-                resourceRemovalResultList.add(resourceRemovalResult);
             } else {
                 log.error("Given Resource has id null or empty");
                 resourceRemovalResult.setMessage("Given Resource has ID null or empty");
