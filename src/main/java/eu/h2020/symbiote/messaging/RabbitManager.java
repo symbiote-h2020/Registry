@@ -502,6 +502,7 @@ public class RabbitManager {
             channel = this.connection.createChannel();
             Map<String, Object> headers = new HashMap<String,Object>();
             headers.put("__TypeId__",classType);
+            headers.put("__ContentTypeId__",Object.class.getCanonicalName());
             AMQP.BasicProperties props = new AMQP.BasicProperties()
                     .builder()
                     .contentType("application/json")

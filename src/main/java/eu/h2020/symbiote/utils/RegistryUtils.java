@@ -94,14 +94,19 @@ public class RegistryUtils {
     public static List<Resource> convertCoreResourcesToResources(List<CoreResource> coreResources) {
         List<Resource> resources = new ArrayList<>();
         for (CoreResource coreResource : coreResources) {
-            Resource resource = new Resource();
-            resource.setId(coreResource.getId());
-            resource.setComments(coreResource.getComments());
-            resource.setLabels(coreResource.getLabels());
-            resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
+            Resource resource = convertCoreResourceToResource(coreResource);
             resources.add(resource);
         }
         return resources;
+    }
+
+    public static Resource convertCoreResourceToResource(CoreResource coreResource){
+        Resource resource = new Resource();
+        resource.setId(coreResource.getId());
+        resource.setComments(coreResource.getComments());
+        resource.setLabels(coreResource.getLabels());
+        resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
+        return resource;
     }
 
     public static CoreResource convertResourceToCoreResource(Resource resource) {

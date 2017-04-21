@@ -77,9 +77,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
-            resourceRemovalResult.setStatus(400);
-            resourceRemovalResult.setMessage("Error occured during getting Operation Request from Json");
-            resourceRemovalResultList.add(resourceRemovalResult);
+            response.setStatus(400);
+            response.setMessage("Error occured during getting Operation Request from Json");
         }
 
         if (request != null) {
@@ -89,15 +88,13 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                     });
                 } catch (JsonSyntaxException e) {
                     log.error("Error occured during getting Resources from Json", e);
-                    resourceRemovalResult.setStatus(400);
-                    resourceRemovalResult.setMessage("Error occured during getting Resources from Json");
-                    resourceRemovalResultList.add(resourceRemovalResult);
+                    response.setStatus(400);
+                    response.setMessage("Error occured during getting Resources from Json");
                 }
             } else {
                 log.error("Token invalid");
-                resourceRemovalResult.setStatus(400);
-                resourceRemovalResult.setMessage("Token invalid");
-                resourceRemovalResultList.add(resourceRemovalResult);
+                response.setStatus(400);
+                response.setMessage("Token invalid");
             }
         }
 
@@ -123,11 +120,19 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendResourcesRemovedMessage(resourceRemovalResultList.stream()
                 .map(coreResourcePersistenceOperationResult ->
                         coreResourcePersistenceOperationResult.getResource().getId())
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList())
+        );
         log.info("- List with removed resources id's sent (fanout).");
 
-        response.setBody(mapper.writeValueAsString(resourceRemovalResultList));
+        response.setBody(mapper.writeValueAsString(resourceRemovalResultList.stream()
+                        .map(coreResourcePersistenceOperationResult ->
+                                RegistryUtils.convertCoreResourceToResource
+                                        (coreResourcePersistenceOperationResult.getResource()))
+                        .collect(Collectors.toList())
+                )
+        );
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+        log.info("- rpc response message sent. Content: " + response);
     }
 }
