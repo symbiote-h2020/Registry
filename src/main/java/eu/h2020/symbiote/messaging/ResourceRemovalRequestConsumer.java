@@ -9,6 +9,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -101,6 +102,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         for (Resource resource : resources) {
             if (resource.getId() != null || !resource.getId().isEmpty()) {
                 resourceRemovalResult = this.repositoryManager.removeResource(resource);
+                response.setMessage("Success");
+                response.setStatus(200);
+                response.setDescriptionType(DescriptionType.BASIC);
             } else {
                 log.error("Given Resource has id null or empty");
                 resourceRemovalResult.setMessage("Given Resource has ID null or empty");
@@ -123,7 +127,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         );
         log.info("- List with removed resources id's sent (fanout).");
 
-        response.setBody(mapper.writeValueAsString(resourceRemovalResultList.stream()
+        response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
+                }).writeValueAsString(resourceRemovalResultList.stream()
                         .map(coreResourcePersistenceOperationResult ->
                                 RegistryUtils.convertCoreResourceToResource
                                         (coreResourcePersistenceOperationResult.getResource()))

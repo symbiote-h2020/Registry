@@ -358,19 +358,23 @@ public class RepositoryManager {
     }
 
     public boolean checkIfPlatformHasInterworkingServiceUrl(String platformId, String interworkingServiceUrl) {
-        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaa");
         Platform platform = platformRepository.findOne(platformId);
+        log.debug("Checking Platform: " + platform);
 
-        System.out.println("Checking Platform: " + platform);
-
-        //todo throw exception if there is no such platform
-        for (InterworkingService service : platform.getInterworkingServices()) {
-            System.out.println("service url: " + service.getUrl());
-            System.out.println("interworking service url" + interworkingServiceUrl);
-            if (service.getUrl().equals(interworkingServiceUrl)) {
-                System.out.println("ggggggggggggggggggggggggggggggg");
-                return true;
+        if (platform != null) {
+            for (InterworkingService service : platform.getInterworkingServices()) {
+                System.out.println("service url: " + service.getUrl());
+                System.out.println("interworking service url" + interworkingServiceUrl);
+                if (service.getUrl().equals(interworkingServiceUrl)) {
+                    System.out.println("ggggggggggggggggggggggggggggggg");
+                    return true;
+                } else {
+                    log.error("There is a mismatch of interworking service urls. Platform Int. Service url: " + service.getUrl() +
+                            ". Interworking Service url " + interworkingServiceUrl);
+                }
             }
+        } else {
+            log.error("Given platform does not exist in database!");
         }
         return false;
     }

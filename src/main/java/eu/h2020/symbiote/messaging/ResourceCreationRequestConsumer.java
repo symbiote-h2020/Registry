@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -7,6 +8,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -16,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
@@ -27,6 +30,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
+    ObjectMapper mapper;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -42,6 +46,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        this.mapper = new ObjectMapper();
     }
 
     /**
@@ -58,7 +63,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
         RegistryResponse registryResponse = new RegistryResponse();
         String message = new String(body, "UTF-8");
@@ -75,9 +79,9 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
         }
 
+
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:
@@ -87,10 +91,17 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                 message, request.getPlatformId(), ResourceOperationType.CREATION);
                         break;
                     case BASIC:
-                        log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
-                        //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                message, request.getPlatformId(), ResourceOperationType.CREATION);
+
+                        if (checkIfResourcesHaveNullId(request)) {
+
+                            log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
+                            //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                            rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
+                                    message, request.getPlatformId(), ResourceOperationType.CREATION);
+                        } else {
+                            //todo status błąd
+                        }
+
                         break;
                 }
             } else {
@@ -100,5 +111,14 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
             }
         }
+    }
+
+    private boolean checkIfResourcesHaveNullId(CoreResourceRegistryRequest request) throws IOException {
+
+        mapper.readValue(request.getBody(), new TypeReference<List< Resource>>(){});
+
+        //// TODO: 21.04.2017 dokonczyc
+
+        return true;
     }
 }

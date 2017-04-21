@@ -77,6 +77,9 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.registryResponse = new CoreResourceRegistryResponse();
     }
 
+    //todo when creating resources, reply could include original list of resources with added IDs instead of
+    //list with new resources
+
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
      *
@@ -136,17 +139,15 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private boolean checkPlatformAndInterworkingServices(List<CoreResource> coreResources) {
         log.info("Checking Platform And Interworking Services...");
         for (CoreResource resource : coreResources) {
-            System.out.println("111111111111");
             //normalization of Interworking Services Urls
             if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
                     != "/".charAt(0)) {
                 resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
             }
-            System.out.println("222222222222222222222222222");
             //performing check of given platform ID and IS URL
             if (!repositoryManager.checkIfPlatformHasInterworkingServiceUrl
                     (resourcesPlatformId, resource.getInterworkingServiceURL())) {
-                System.out.println("33333333333333333333333333333");
+
                 return false;
             }
         }
