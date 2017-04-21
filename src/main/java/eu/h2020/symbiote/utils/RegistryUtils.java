@@ -121,8 +121,8 @@ public class RegistryUtils {
         platform.setComments(Arrays.asList(requestPlatform.getDescription()));
 
         InterworkingService interworkingService = new InterworkingService();
-        interworkingService.setInformationModelUri(requestPlatform.getUrl());
-        interworkingService.setUrl("http://url.com/");
+        interworkingService.setInformationModelUri(requestPlatform.getInformationModelId());
+        interworkingService.setUrl(requestPlatform.getUrl());
         platform.setInterworkingServices(Arrays.asList(interworkingService));
 
         platform.setBody("not null body");

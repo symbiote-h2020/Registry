@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  */
 public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
+    private static Log log = LogFactory.getLog(ResourceValidationResponseConsumer.class);
     CoreResourceRegistryResponse registryResponse;
     private DefaultConsumer rpcConsumer;
     private AMQP.BasicProperties rpcProperties;
@@ -112,6 +112,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             try {
                 //wyciagam z niej CoreResourcy
                 coreResources = resourceInstanceValidationResult.getObjectDescription();
+                log.info("CoreResources received from SM!");
             } catch (JsonSyntaxException e) {
                 log.error("Unable to get Resources List from semantic response body!");
                 e.printStackTrace();
@@ -122,24 +123,30 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         }
 
         if (checkPlatformAndInterworkingServices(coreResources)){
+            log.info("Checking OK...");
             makePersistenceOperations(coreResources);
             prepareContentAndSendMessage();
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("There is no such platform or it has no Interworking Service with given URL");
+            //fixme send response
         }
     }
 
     private boolean checkPlatformAndInterworkingServices(List<CoreResource> coreResources) {
+        log.info("Checking Platform And Interworking Services...");
         for (CoreResource resource : coreResources) {
+            System.out.println("111111111111");
             //normalization of Interworking Services Urls
             if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
                     != "/".charAt(0)) {
                 resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
             }
+            System.out.println("222222222222222222222222222");
             //performing check of given platform ID and IS URL
             if (!repositoryManager.checkIfPlatformHasInterworkingServiceUrl
                     (resourcesPlatformId, resource.getInterworkingServiceURL())) {
+                System.out.println("33333333333333333333333333333");
                 return false;
             }
         }
@@ -263,5 +270,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         }
     }
 
+
+    //// TODO: 20.04.2017 normalizator bździongli "/" w URLach zawsze i wszedzie!!
 
 }

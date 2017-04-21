@@ -551,7 +551,7 @@ public class RabbitManager {
                     .build();
 
             consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-            log.info("- RPC reply Message sent back!"); //fixme show content of message also?
+            log.info("- RPC reply Message sent back! Content: " + response);
         } else {
             log.warn("Received RPC message without ReplyTo or CorrelationId props.");
         }

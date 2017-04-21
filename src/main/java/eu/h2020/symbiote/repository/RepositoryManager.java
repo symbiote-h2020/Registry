@@ -108,6 +108,7 @@ public class RepositoryManager {
             log.error("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
+            //todo do something with resources of that platform
         } else {
             try {
                 platformRepository.delete(platform.getId());
@@ -357,10 +358,17 @@ public class RepositoryManager {
     }
 
     public boolean checkIfPlatformHasInterworkingServiceUrl(String platformId, String interworkingServiceUrl) {
+        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaa");
         Platform platform = platformRepository.findOne(platformId);
+
+        System.out.println("Checking Platform: " + platform);
+
         //todo throw exception if there is no such platform
         for (InterworkingService service : platform.getInterworkingServices()) {
+            System.out.println("service url: " + service.getUrl());
+            System.out.println("interworking service url" + interworkingServiceUrl);
             if (service.getUrl().equals(interworkingServiceUrl)) {
+                System.out.println("ggggggggggggggggggggggggggggggg");
                 return true;
             }
         }
