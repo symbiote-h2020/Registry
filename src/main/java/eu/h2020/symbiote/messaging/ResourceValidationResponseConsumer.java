@@ -45,6 +45,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private List<CoreResourcePersistenceOperationResult> persistenceOperationResultsList;
     private ObjectMapper mapper;
     private DescriptionType descriptionType;
+    private String response;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -75,6 +76,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.persistenceOperationResultsList = new ArrayList<>();
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreResourceRegistryResponse();
+        response = "";
     }
 
     //todo when creating resources, reply could include original list of resources with added IDs instead of
@@ -125,15 +127,17 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setMessage("VALIDATION ERROR");
         }
 
-        if (checkPlatformAndInterworkingServices(coreResources)){
+        if (checkPlatformAndInterworkingServices(coreResources)) {
             log.info("Checking OK...");
             makePersistenceOperations(coreResources);
-            prepareContentAndSendMessage();
+            prepareContentOfMessage();
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("There is no such platform or it has no Interworking Service with given URL");
             //fixme send response
         }
+
+        sendRpcResponse();
     }
 
     private boolean checkPlatformAndInterworkingServices(List<CoreResource> coreResources) {
@@ -184,18 +188,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         }
     }
 
-    private void prepareContentAndSendMessage() {
+    private void prepareContentOfMessage() {
 
         if (bulkRequestSuccess) {
             savedCoreResourcesList = persistenceOperationResultsList.stream()
                     .map(CoreResourcePersistenceOperationResult::getResource)
                     .collect(Collectors.toList());
 
-            CoreResourceRegisteredOrModifiedEventPayload payload =
-                    new CoreResourceRegisteredOrModifiedEventPayload();
-            payload.setResources(savedCoreResourcesList);
-            payload.setPlatformId(resourcesPlatformId);
-            sendMessage(payload);
+            sendFanoutMessage();
 
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
@@ -222,10 +222,20 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setMessage("BULK SAVE ERROR");
         }
 
-        String response = "";
+    }
+
+    private void sendFanoutMessage() {
+        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+        payload.setResources(savedCoreResourcesList);
+        payload.setPlatformId(resourcesPlatformId);
+        sendMessage(payload);
+    }
+
+    private void sendRpcResponse() {
         try {
             response = mapper.writeValueAsString(registryResponse);
         } catch (JsonProcessingException e) {
+            log.error(e);
             e.printStackTrace();
         }
 
@@ -233,6 +243,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
         } catch (IOException e) {
+            log.error(e);
             e.printStackTrace();
         }
     }
