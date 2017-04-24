@@ -14,7 +14,7 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
+import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -42,7 +42,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private ResourceOperationType operationType;
     private boolean bulkRequestSuccess = true;
     private List<CoreResource> savedCoreResourcesList;
-    private List<CoreResourcePersistenceOperationResult> persistenceOperationResultsList;
+    private List<RegistryPersistenceResult> persistenceOperationResultsList;
     private ObjectMapper mapper;
     private DescriptionType descriptionType;
     private String response;
@@ -163,7 +163,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             case CREATION:
                 for (CoreResource resource : coreResources) {
                     //zapisuje kazdy z Core resourców
-                    CoreResourcePersistenceOperationResult resourceSavingResult =
+                    RegistryPersistenceResult resourceSavingResult =
                             this.repositoryManager.saveResource(resource);
                     persistenceOperationResultsList.add(resourceSavingResult);
                 }
@@ -171,14 +171,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             case MODIFICATION:
                 for (CoreResource resource : coreResources) {
                     //zapisuje kazdy z Core resourców
-                    CoreResourcePersistenceOperationResult resourceModificationResult =
+                    RegistryPersistenceResult resourceModificationResult =
                             this.repositoryManager.modifyResource(resource);
                     persistenceOperationResultsList.add(resourceModificationResult);
                 }
                 break;
         }
 
-        for (CoreResourcePersistenceOperationResult persistenceResult : persistenceOperationResultsList) {
+        for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
             if (persistenceResult.getStatus() != 200) {
                 this.bulkRequestSuccess = false;
                 registryResponse.setStatus(500);
@@ -192,7 +192,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         if (bulkRequestSuccess) {
             savedCoreResourcesList = persistenceOperationResultsList.stream()
-                    .map(CoreResourcePersistenceOperationResult::getResource)
+                    .map(RegistryPersistenceResult::getResource)
                     .collect(Collectors.toList());
 
             sendFanoutMessage();
@@ -212,7 +212,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         } else {
 
-            for (CoreResourcePersistenceOperationResult persistenceResult : persistenceOperationResultsList) {
+            for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
                 if (persistenceResult.getStatus() == 200) {
                     rollback(persistenceResult.getResource());
                 }

@@ -11,7 +11,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.CoreResourcePersistenceOperationResult;
+import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -32,7 +32,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     private static Log log = LogFactory.getLog(ResourceRemovalRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
-    private List<CoreResourcePersistenceOperationResult> resourceRemovalResultList;
+    private List<RegistryPersistenceResult> resourceRemovalResultList;
     private List<Resource> resourcesRemoved;
     private List<Resource> resources;
 
@@ -72,7 +72,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
-        CoreResourcePersistenceOperationResult resourceRemovalResult = new CoreResourcePersistenceOperationResult();
+        RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
 
         String message = new String(body, "UTF-8");
         log.info(" [x] Received resource to remove: '" + message + "'");
@@ -120,9 +120,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
                 }).writeValueAsString(resourceRemovalResultList.stream()
-                        .map(coreResourcePersistenceOperationResult ->
+                        .map(registryPersistenceResult ->
                                 RegistryUtils.convertCoreResourceToResource
-                                        (coreResourcePersistenceOperationResult.getResource()))
+                                        (registryPersistenceResult.getResource()))
                         .collect(Collectors.toList())
                 )
         );
@@ -133,15 +133,15 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
     private void sendFanoutMessage() {
         List<String> removedResourcesIds = resourceRemovalResultList.stream()
-                .map(coreResourcePersistenceOperationResult ->
-                        coreResourcePersistenceOperationResult.getResource().getId())
+                .map(registryPersistenceResult ->
+                        registryPersistenceResult.getResource().getId())
                 .collect(Collectors.toList());
         rabbitManager.sendResourcesRemovedMessage(removedResourcesIds);
         log.info("- List with removed resources id's sent (fanout). Content: " + removedResourcesIds);
     }
 
     private boolean checkIfRemovalWasSuccessful() {
-        for (CoreResourcePersistenceOperationResult result : resourceRemovalResultList) {
+        for (RegistryPersistenceResult result : resourceRemovalResultList) {
             if (result.getStatus() == 200) {
                 resourcesRemoved.add(result.getResource());
             }

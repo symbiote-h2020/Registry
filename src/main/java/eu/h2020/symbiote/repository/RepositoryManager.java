@@ -199,8 +199,8 @@ public class RepositoryManager {
      * @return ResourceSavingResult containing Http status code and Resource with added 'Id' (generated in MongoDB),
      * in JSON format
      */
-    public CoreResourcePersistenceOperationResult saveResource(CoreResource resource) {
-        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
+    public RegistryPersistenceResult saveResource(CoreResource resource) {
+        RegistryPersistenceResult resourceSavingResult = new RegistryPersistenceResult();
         resourceSavingResult.setResource(resource);
 
         if (resource.getId() == null || resource.getId().isEmpty()) {
@@ -233,8 +233,8 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
      */
-    public CoreResourcePersistenceOperationResult removeResource(Resource resource) {
-        CoreResourcePersistenceOperationResult resourceRemovalResult = new CoreResourcePersistenceOperationResult();
+    public RegistryPersistenceResult removeResource(Resource resource) {
+        RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
 
         if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
             log.error("Given resource has empty or null ID!");
@@ -275,8 +275,8 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Modified Resource, in JSON format
      */
-    public CoreResourcePersistenceOperationResult modifyResource(CoreResource resource) {
-        CoreResourcePersistenceOperationResult resourceSavingResult = new CoreResourcePersistenceOperationResult();
+    public RegistryPersistenceResult modifyResource(CoreResource resource) {
+        RegistryPersistenceResult resourceSavingResult = new RegistryPersistenceResult();
         CoreResource foundResource = null;
         resourceSavingResult.setResource(resource);
 
@@ -298,7 +298,6 @@ public class RepositoryManager {
                 }
                 foundResource = resourceRepository.findOne(resource.getId());
             }
-
 
             if (foundResource == null) {
                 log.error("Given resource does not exist in database!");
@@ -335,8 +334,6 @@ public class RepositoryManager {
     public InformationModelResponse saveInformationModel(InformationModel informationModel) {
         InformationModelResponse response = new InformationModelResponse();
         response.setInformationModel(informationModel);
-        response.setMessage("Unknown error"); //// FIXME: 27.03.2017
-        response.setStatus(400);
 
         if (informationModel.getUri().trim().charAt(informationModel.getUri().length() - 1) != "/".charAt(0)) {
             informationModel.setUri(informationModel.getUri().trim() + "/");
@@ -363,14 +360,11 @@ public class RepositoryManager {
 
         if (platform != null) {
             for (InterworkingService service : platform.getInterworkingServices()) {
-                System.out.println("service url: " + service.getUrl());
-                System.out.println("interworking service url" + interworkingServiceUrl);
                 if (service.getUrl().equals(interworkingServiceUrl)) {
-                    System.out.println("ggggggggggggggggggggggggggggggg");
                     return true;
                 } else {
-                    log.error("There is a mismatch of interworking service urls. Platform Int. Service url: " + service.getUrl() +
-                            ". Interworking Service url " + interworkingServiceUrl);
+                    log.error("There is a mismatch of interworking service urls. Platform Int. Service url: "
+                            + service.getUrl() + ". Interworking Service url " + interworkingServiceUrl);
                 }
             }
         } else {
