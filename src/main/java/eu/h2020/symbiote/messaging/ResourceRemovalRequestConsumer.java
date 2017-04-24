@@ -32,6 +32,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     private static Log log = LogFactory.getLog(ResourceRemovalRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
+    private List<CoreResourcePersistenceOperationResult> resourceRemovalResultList;
+    private List<Resource> resourcesRemoved;
+    private List<Resource> resources;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -47,6 +50,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        resourceRemovalResultList = new ArrayList<>();
+        resourcesRemoved = new ArrayList<>();
+        resources = new ArrayList<>();
     }
 
     /**
@@ -67,11 +73,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         CoreResourcePersistenceOperationResult resourceRemovalResult = new CoreResourcePersistenceOperationResult();
-        List<Resource> resources = new ArrayList<>();
-        List<CoreResourcePersistenceOperationResult> resourceRemovalResultList = new ArrayList<>();
-        String message = new String(body, "UTF-8");
-        List<Resource> resourcesRemoved = new ArrayList<>();
 
+        String message = new String(body, "UTF-8");
         log.info(" [x] Received resource to remove: '" + message + "'");
 
         try {
@@ -113,19 +116,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             resourceRemovalResultList.add(resourceRemovalResult);
         }
 
-        for (CoreResourcePersistenceOperationResult result : resourceRemovalResultList) {
-            if (result.getStatus() == 200) {
-                resourcesRemoved.add(result.getResource());
-                //todo rollback
-            }
-        }
-
-        rabbitManager.sendResourcesRemovedMessage(resourceRemovalResultList.stream()
-                .map(coreResourcePersistenceOperationResult ->
-                        coreResourcePersistenceOperationResult.getResource().getId())
-                .collect(Collectors.toList())
-        );
-        log.info("- List with removed resources id's sent (fanout).");
+        if (checkIfRemovalWasSuccessful()) sendFanoutMessage();
 
         response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
                 }).writeValueAsString(resourceRemovalResultList.stream()
@@ -138,5 +129,34 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         log.info("- rpc response message sent. Content: " + response);
+    }
+
+    private void sendFanoutMessage() {
+        List<String> removedResourcesIds = resourceRemovalResultList.stream()
+                .map(coreResourcePersistenceOperationResult ->
+                        coreResourcePersistenceOperationResult.getResource().getId())
+                .collect(Collectors.toList());
+        rabbitManager.sendResourcesRemovedMessage(removedResourcesIds);
+        log.info("- List with removed resources id's sent (fanout). Content: " + removedResourcesIds);
+    }
+
+    private boolean checkIfRemovalWasSuccessful() {
+        for (CoreResourcePersistenceOperationResult result : resourceRemovalResultList) {
+            if (result.getStatus() == 200) {
+                resourcesRemoved.add(result.getResource());
+            }
+        }
+        if (resourcesRemoved.size() != resources.size()) {
+            rollback();
+            return false;
+        }
+        return true;
+    }
+
+    private void rollback() {
+        for (Resource resource : resourcesRemoved) {
+            this.repositoryManager.saveResource(RegistryUtils.convertResourceToCoreResource(resource));
+            log.info("Removed resources rollback.");
+        }
     }
 }

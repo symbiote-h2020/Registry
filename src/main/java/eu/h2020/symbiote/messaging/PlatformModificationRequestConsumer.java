@@ -93,7 +93,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
     }
 
 
-    //FOR LATER RELEASE
+    //todo FOR NEXT RELEASE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*
     @Override
@@ -157,7 +157,6 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             e.printStackTrace();
         }
 
-        //todo platforms list can be empty
         for (Platform platform : platforms) {
             if (RegistryUtils.validateFields(platform)) {
                 platform = RegistryUtils.getRdfBodyForObject(platform);

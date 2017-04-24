@@ -19,6 +19,8 @@ import org.apache.http.HttpStatus;
 import java.io.IOException;
 
 /**
+ * For next release...
+ *
  * Created by mateuszl on 27.03.2017.
  */
 public class InformationModelCreationRequestConsumer extends DefaultConsumer {
@@ -81,7 +83,6 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-
                 switch (request.getType()) {
                     case RDF:
                         try {

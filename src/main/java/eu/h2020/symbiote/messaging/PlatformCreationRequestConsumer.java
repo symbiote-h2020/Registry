@@ -103,7 +103,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
     }
 
 
-    //FOR LATER RELEASE
+    //todo FOR NEXT RELEASE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*
     @Override

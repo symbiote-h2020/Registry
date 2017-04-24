@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,9 +29,9 @@ import java.util.List;
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);
+    private ObjectMapper mapper;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
-    ObjectMapper mapper;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -66,7 +67,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryRequest request = null;
         RegistryResponse registryResponse = new RegistryResponse();
         String message = new String(body, "UTF-8");
-
         log.info(" [x] Received resources to create (CoreResourceRegistryRequest): '" + message + "'");
 
         try {
@@ -79,46 +79,58 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
         }
 
-
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:
-                        log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
+                        log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                         //sending RDF content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
                                 message, request.getPlatformId(), ResourceOperationType.CREATION);
                         break;
                     case BASIC:
-
-                        if (checkIfResourcesHaveNullId(request)) {
-
-                            log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
+                        if (checkIfResourcesHaveNullOrEmptyId(request)) {
+                            log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                             //sending JSON content to Semantic Manager and passing responsibility to another consumer
                             rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
                                     message, request.getPlatformId(), ResourceOperationType.CREATION);
                         } else {
-                            //todo status błąd
+                            registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+                            registryResponse.setMessage("One of the resources has ID. Resources not created!");
+                            rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                                    mapper.writeValueAsString(registryResponse));
                         }
-
                         break;
                 }
             } else {
                 log.error("Token invalid");
                 registryResponse.setStatus(400);
                 registryResponse.setMessage("Token invalid");
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                        mapper.writeValueAsString(registryResponse));
             }
         }
     }
 
-    private boolean checkIfResourcesHaveNullId(CoreResourceRegistryRequest request) throws IOException {
+    /**
+     * Checks if given request consists of resources, which does not have any content in ID field.
+     *
+     * @param request
+     * @return
+     */
+    private boolean checkIfResourcesHaveNullOrEmptyId(CoreResourceRegistryRequest request) {
+        List<Resource> resources = new ArrayList<>();
+        try {
+            resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
+            });
+        } catch (IOException e) {
+            log.error("Could not deserialize content of request!" + e);
+        }
 
-        mapper.readValue(request.getBody(), new TypeReference<List< Resource>>(){});
-
-        //// TODO: 21.04.2017 dokonczyc
-
+        for (Resource resource : resources) {
+            if (resource.getId() != null && !resource.getId().isEmpty()) return false;
+        }
         return true;
     }
 }

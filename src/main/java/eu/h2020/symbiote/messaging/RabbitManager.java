@@ -34,7 +34,7 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
 @Component
 public class RabbitManager {
 
-    //// TODO: 27.03.2017 prepare and start Information Model queues and Consumers
+    //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
     RepositoryManager repositoryManager;
@@ -560,7 +560,7 @@ public class RabbitManager {
     }
 
     public void sendInformationModelCreatedMessage(InformationModel informationModel) {
-        //// TODO: 27.03.2017
+        //// TODO for next release: 27.03.2017
     }
 
 

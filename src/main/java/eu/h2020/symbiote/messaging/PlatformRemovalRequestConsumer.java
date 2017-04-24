@@ -92,6 +92,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         this.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
 
+    //todo FOR NEXT RELEASE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*
     @Override
     public void handleDelivery(String consumerTag, Envelope envelope,
