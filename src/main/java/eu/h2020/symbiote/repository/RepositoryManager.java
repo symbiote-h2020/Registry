@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.repository;
 
+import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.*;

@@ -6,10 +6,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.InformationModelResponse;
-import eu.h2020.symbiote.model.RegistryRequest;
-import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -61,8 +61,8 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        RegistryRequest request = null;
-        RegistryResponse semanticResponse = new RegistryResponse();
+        CoreResourceRegistryRequest request = null;
+        CoreResourceRegistryResponse semanticResponse = new CoreResourceRegistryResponse();
         semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         String response;
         String message = new String(body, "UTF-8");
@@ -72,7 +72,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received information model to create: '" + message + "'");
 
         try {
-            request = mapper.readValue(message, RegistryRequest.class);
+            request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -83,7 +83,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             if (RegistryUtils.checkToken(request.getToken())) {
-                switch (request.getType()) {
+                switch (request.getDescriptionType()) {
                     case RDF:
                         try {
                             semanticResponse = RegistryUtils.getInformationModelFromRdf(request.getBody());

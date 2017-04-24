@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.model;
 
+import eu.h2020.symbiote.core.model.InterworkingService;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;

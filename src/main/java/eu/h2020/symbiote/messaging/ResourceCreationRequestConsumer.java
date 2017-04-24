@@ -8,8 +8,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -60,7 +60,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         CoreResourceRegistryRequest request = null;
-        RegistryResponse registryResponse = new RegistryResponse();
+        CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
         log.info(" [x] Received resources to create (CoreResourceRegistryRequest): '" + message + "'");
 

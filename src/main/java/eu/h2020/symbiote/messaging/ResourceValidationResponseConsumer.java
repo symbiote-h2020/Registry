@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * RPC Consumer waiting for messages from Semantic Manager. Acts accordingly to received validation/translation results.
+ * Created when creation/modification of Resource action is triggered.
+ *
  * Created by mateuszl on 30.03.2017.
  */
 public class ResourceValidationResponseConsumer extends DefaultConsumer {
@@ -79,8 +82,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         response = "";
     }
 
-    //todo when creating resources, reply could include original list of resources with added IDs instead of
-    //list with new resources
+    //fixme when creating resources, reply could include original list of resources with added IDs instead of list with new resources
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
@@ -100,11 +102,12 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
         List<CoreResource> coreResources = new ArrayList<>();
+        registryResponse.setDescriptionType(descriptionType);
 
         log.info("[x] Received '" + descriptionType + "' validation result: '" + message + "'");
 
         try {
-            //otrzymuje i odpakowauje odpowiedz od semantic managera
+            //receive and read message from Semantic Manager
             resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get resource validation result from Message body!");
@@ -115,9 +118,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         if (resourceInstanceValidationResult.isSuccess()) {
             try {
-                //wyciagam z niej CoreResourcy
                 coreResources = resourceInstanceValidationResult.getObjectDescription();
-                log.info("CoreResources received from SM!");
+                log.info("CoreResources received from SM! Content: " + coreResources);
             } catch (JsonSyntaxException e) {
                 log.error("Unable to get Resources List from semantic response body!");
                 e.printStackTrace();
@@ -134,7 +136,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("There is no such platform or it has no Interworking Service with given URL");
-            //fixme send response
         }
 
         sendRpcResponse();
@@ -158,11 +159,15 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         return true;
     }
 
+    /**
+     * Performing persistence operations accordingly - saving or modyfying resources in Mongo DB.
+     *
+     * @param coreResources
+     */
     private void makePersistenceOperations(List<CoreResource> coreResources) {
         switch (operationType) {
             case CREATION:
                 for (CoreResource resource : coreResources) {
-                    //zapisuje kazdy z Core resourców
                     RegistryPersistenceResult resourceSavingResult =
                             this.repositoryManager.saveResource(resource);
                     persistenceOperationResultsList.add(resourceSavingResult);
@@ -170,7 +175,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 break;
             case MODIFICATION:
                 for (CoreResource resource : coreResources) {
-                    //zapisuje kazdy z Core resourców
                     RegistryPersistenceResult resourceModificationResult =
                             this.repositoryManager.modifyResource(resource);
                     persistenceOperationResultsList.add(resourceModificationResult);
@@ -182,14 +186,16 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             if (persistenceResult.getStatus() != 200) {
                 this.bulkRequestSuccess = false;
                 registryResponse.setStatus(500);
-                registryResponse.setMessage("One of objects could not be processed. Check list of response " +
-                        "objects for details.");
+                registryResponse.setMessage("One (or more) of resources could not be processed. " +
+                        "Check list of response objects for details.");
             }
         }
     }
 
+    /**
+     * prepares content of message with bulk save result
+     */
     private void prepareContentOfMessage() {
-
         if (bulkRequestSuccess) {
             savedCoreResourcesList = persistenceOperationResultsList.stream()
                     .map(RegistryPersistenceResult::getResource)
@@ -202,7 +208,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
             List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
 
-            //usatwienie zawartosci body odpowiedzi na liste resourców uzupelniona o ID'ki
             try {
                 registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
                 }).writeValueAsString(resources));
@@ -211,26 +216,20 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             }
 
         } else {
-
             for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
                 if (persistenceResult.getStatus() == 200) {
                     rollback(persistenceResult.getResource());
                 }
             }
-
             registryResponse.setStatus(500);
             registryResponse.setMessage("BULK SAVE ERROR");
         }
-
     }
 
-    private void sendFanoutMessage() {
-        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
-        payload.setResources(savedCoreResourcesList);
-        payload.setPlatformId(resourcesPlatformId);
-        sendMessage(payload);
-    }
-
+    /**
+     * Sending RPC response message with list of Resources (with IDs added if process succeed) and status code
+     //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
+     */
     private void sendRpcResponse() {
         try {
             response = mapper.writeValueAsString(registryResponse);
@@ -239,7 +238,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             e.printStackTrace();
         }
 
-        //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
         } catch (IOException e) {
@@ -248,23 +246,33 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         }
     }
 
+    /**
+     * Sends a Fanout message with payload constisting of modified resources list and its Platform Id.
+     */
+    private void sendFanoutMessage() {
+        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+        payload.setResources(savedCoreResourcesList);
+        payload.setPlatformId(resourcesPlatformId);
+        sendMessage(payload);
+    }
 
+    /** Sends Fanout message accordingly to event performed.
+     *
+     * @param payload
+     */
     private void sendMessage(CoreResourceRegisteredOrModifiedEventPayload payload) {
         switch (operationType) {
             case CREATION:
-                //wysłanie całej listy zapisanych resourców
                 rabbitManager.sendResourcesCreatedMessage(payload);
                 break;
             case MODIFICATION:
-                //wysłanie całej listy zmodyfikowanych resourców
                 rabbitManager.sendResourcesModifiedMessage(payload);
                 break;
         }
-
     }
 
     /**
-     * Form of transaction rollback used for bulk registration, triggered for all succesfully saved objects when
+     * Type of transaction rollback used for bulk registration, triggered for all successfully saved objects when
      * any of given objects in list did not save successfully in database.
      *
      * @param resource
@@ -275,14 +283,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 repositoryManager.removeResource(resource);
                 break;
             case MODIFICATION:
-
                 //todo ??
-
                 break;
         }
     }
-
-
-    //// TODO: 20.04.2017 normalizator bździongli "/" w URLach zawsze i wszedzie!!
-
 }

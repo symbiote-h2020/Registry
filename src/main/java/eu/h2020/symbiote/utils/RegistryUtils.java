@@ -2,12 +2,12 @@ package eu.h2020.symbiote.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
-import eu.h2020.symbiote.model.InterworkingService;
 import eu.h2020.symbiote.model.Platform;
-import eu.h2020.symbiote.model.RegistryResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Utils for manipulating POJOs in Registry project.
+ * Utils for Registry project.
  * <p>
  * Created by mateuszl on 14.02.2017.
  */
@@ -30,7 +30,8 @@ public class RegistryUtils {
      * @param platform platform to check
      * @return true if it has all the fields and neither is empty
      */
-    public static boolean validateFields(Platform platform) { //todo extend validation to all fields
+    public static boolean validateFields(Platform platform) {
+        //todo for next release extend validation to all fields
         boolean b;
 
         for (InterworkingService interworkingService : platform.getInterworkingServices()) {
@@ -83,7 +84,8 @@ public class RegistryUtils {
      * @param informationModel informationModel to check
      * @return true if it has all the fields and neither is empty.
      */
-    public static boolean validateFields(InformationModel informationModel) { //todo extend validation to all fields
+    public static boolean validateFields(InformationModel informationModel) {
+        //todo for next release extend validation to all fields
         boolean b;
         if (informationModel.getBody() == null || informationModel.getFormat() == null ||
                 informationModel.getUri() == null) {
@@ -99,6 +101,12 @@ public class RegistryUtils {
         return b;
     }
 
+    /**
+     * Converts given list of Core Resources to Resources
+     *
+     * @param coreResources
+     * @return
+     */
     public static List<Resource> convertCoreResourcesToResources(List<CoreResource> coreResources) {
         List<Resource> resources = new ArrayList<>();
         for (CoreResource coreResource : coreResources) {
@@ -108,6 +116,12 @@ public class RegistryUtils {
         return resources;
     }
 
+    /**
+     * Converts given Core Resource to Resource
+     *
+     * @param coreResource
+     * @return
+     */
     public static Resource convertCoreResourceToResource(CoreResource coreResource) {
         Resource resource = new Resource();
         resource.setId(coreResource.getId());
@@ -117,6 +131,12 @@ public class RegistryUtils {
         return resource;
     }
 
+    /**
+     * Converts given Resource to Core Resource
+     *
+     * @param resource
+     * @return
+     */
     public static CoreResource convertResourceToCoreResource(Resource resource) {
         CoreResource coreResource = new CoreResource();
         coreResource.setId(resource.getId());
@@ -126,7 +146,14 @@ public class RegistryUtils {
         return coreResource;
     }
 
-    public static Platform convertRequestPlatformToRegistryPlatform(eu.h2020.symbiote.core.model.Platform requestPlatform) {
+    /**
+     * Converts Platform (from Symbiote Libraries) to Platform (used in Registry Service)
+     *
+     * @param requestPlatform
+     * @return
+     */
+    public static Platform convertRequestPlatformToRegistryPlatform
+            (eu.h2020.symbiote.core.model.Platform requestPlatform) {
         Platform platform = new Platform();
 
         platform.setLabels(Arrays.asList(requestPlatform.getName()));
@@ -134,7 +161,7 @@ public class RegistryUtils {
         platform.setComments(Arrays.asList(requestPlatform.getDescription()));
 
         InterworkingService interworkingService = new InterworkingService();
-        interworkingService.setInformationModelUri(requestPlatform.getInformationModelId());
+        interworkingService.setInformationModelId(requestPlatform.getInformationModelId());
         interworkingService.setUrl(requestPlatform.getUrl());
         platform.setInterworkingServices(Arrays.asList(interworkingService));
 
@@ -144,13 +171,20 @@ public class RegistryUtils {
         return platform;
     }
 
-    public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform(Platform registryPlatform) {
+    /**
+     * Converts Platform (used in Registry Service) to Platform (from Symbiote Libraries)
+     *
+     * @param registryPlatform
+     * @return
+     */
+    public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform
+            (Platform registryPlatform) {
         eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
 
         platform.setPlatformId(registryPlatform.getId());
         platform.setName(registryPlatform.getLabels().get(0));
         platform.setDescription(registryPlatform.getComments().get(0));
-        platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelUri());
+        platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelId());
         platform.setUrl(registryPlatform.getInterworkingServices().get(0).getUrl());
 
         return platform;
@@ -160,13 +194,6 @@ public class RegistryUtils {
     //todo MOCKED!! waiting for cooperation with SemanticManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static Platform getRdfBodyForObject(Platform platform) {
-        if (platform.getBody() == null) platform.setBody("mocked body");
-        if (platform.getRdfFormat() == null)
-            platform.setRdfFormat("mocked format"); //todo get properties from Sem. Man.
-        return platform;
-    }
-
     public static InformationModel getRdfBodyForObject(InformationModel informationModel) {
         if (informationModel.getBody() == null) informationModel.setBody("mocked body");
         if (informationModel.getFormat() == null)
@@ -174,23 +201,29 @@ public class RegistryUtils {
         return informationModel;
     }
 
-    public static RegistryResponse getInformationModelFromRdf(String body) throws JsonProcessingException {
+    public static CoreResourceRegistryResponse getInformationModelFromRdf(String body) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        RegistryResponse RegistryResponse = new RegistryResponse();
+        CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         InformationModel im = new InformationModel();
         im.setUri("http://test_uri.com/");
         im.setBody("Test body");
         im.setFormat("Test format");
-        RegistryResponse.setBody(mapper.writeValueAsString(im));
-        RegistryResponse.setStatus(200);
-        RegistryResponse.setMessage("OK");
-        return RegistryResponse;
+        registryResponse.setBody(mapper.writeValueAsString(im));
+        registryResponse.setStatus(200);
+        registryResponse.setMessage("OK");
+        return registryResponse;
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////// TODO: MOCKED waiting for Security implementation
+/////////////// TODO: MOCKED - waiting for Security implementation
 
 
+    /**
+     * Checks if given token have rights to access Core resources.
+     *
+     * @param tokenString
+     * @return
+     */
     public static boolean checkToken(String tokenString) {
 /*
         try {
