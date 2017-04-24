@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.utils;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
@@ -9,7 +10,6 @@ import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.RegistryResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,46 +174,14 @@ public class RegistryUtils {
         return informationModel;
     }
 
-    public static RegistryResponse getPlatformsFromRdf(String rdf) {
-        Gson gson = new Gson();
-        RegistryResponse RegistryResponse = new RegistryResponse();
-        Platform p1 = new Platform();
-        p1.getLabels().add("p1");
-        Platform p2 = new Platform();
-        p1.getLabels().add("p2");
-        List<Platform> platforms = new ArrayList<>();
-        platforms.add(p1);
-        platforms.add(p2);
-        RegistryResponse.setStatus(HttpStatus.SC_OK);
-        RegistryResponse.setMessage("OK");
-        RegistryResponse.setBody(gson.toJson(platforms));
-        return RegistryResponse;
-    }
-
-    public static RegistryResponse getResourcesFromRdf(String rdf) {
-        Gson gson = new Gson();
-        RegistryResponse RegistryResponse = new RegistryResponse();
-        Resource r1 = new Resource();
-        r1.getLabels().add("r1");
-        Resource r2 = new Resource();
-        r2.getLabels().add("r2");
-        List<Resource> resources = new ArrayList<>();
-        resources.add(r1);
-        resources.add(r2);
-        RegistryResponse.setStatus(HttpStatus.SC_OK);
-        RegistryResponse.setMessage("OK");
-        RegistryResponse.setBody(gson.toJson(resources));
-        return RegistryResponse;
-    }
-
-    public static RegistryResponse getInformationModelFromRdf(String body) {
-        Gson gson = new Gson();
+    public static RegistryResponse getInformationModelFromRdf(String body) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
         RegistryResponse RegistryResponse = new RegistryResponse();
         InformationModel im = new InformationModel();
         im.setUri("http://test_uri.com/");
         im.setBody("Test body");
         im.setFormat("Test format");
-        RegistryResponse.setBody(gson.toJson(im));
+        RegistryResponse.setBody(mapper.writeValueAsString(im));
         RegistryResponse.setStatus(200);
         RegistryResponse.setMessage("OK");
         return RegistryResponse;

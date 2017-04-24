@@ -102,7 +102,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
         //only REGISTRATION_BASIC type of objects accepted for remove !!
 
-        Gson gson = new Gson();
+        ObjectMapper mapper = new ObjectMapper();
         RegistryRequest request = null;
         String response;
         List<Platform> platforms = new ArrayList<>();

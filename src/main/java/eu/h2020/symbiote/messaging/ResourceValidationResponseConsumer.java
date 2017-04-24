@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceValidationResponseConsumer.class);
-    CoreResourceRegistryResponse registryResponse;
+    private CoreResourceRegistryResponse registryResponse;
     private DefaultConsumer rpcConsumer;
     private AMQP.BasicProperties rpcProperties;
     private Envelope rpcEnvelope;

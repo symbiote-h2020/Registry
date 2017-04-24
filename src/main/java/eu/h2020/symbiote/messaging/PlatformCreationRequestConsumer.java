@@ -110,7 +110,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
+        ObjectMapper mapper = new ObjectMapper();
         RegistryRequest request = null;
         String response;
         RegistryResponse registryResponse = new RegistryResponse();

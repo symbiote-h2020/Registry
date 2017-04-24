@@ -100,7 +100,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
+        ObjectMapper mapper = new ObjectMapper();
         RegistryRequest request;
         RegistryResponse semanticResponse;
         String response;

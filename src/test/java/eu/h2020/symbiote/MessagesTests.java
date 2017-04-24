@@ -79,7 +79,7 @@ public class MessagesTests {
 //        platform.setBody("http://www.symbIoTe.com");
 //        platform.setFormat("platform_info_model");
 //
-//        Gson gson = new Gson();
+//        ObjectMapper mapper = new ObjectMapper();
 //        String message = gson.toJson(platform);
 //
 //        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATED, message);

@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -60,7 +60,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Gson gson = new Gson();
+        ObjectMapper mapper = new ObjectMapper();
         RegistryRequest request = null;
         RegistryResponse semanticResponse = new RegistryResponse();
         semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -72,7 +72,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received information model to create: '" + message + "'");
 
         try {
-            request = gson.fromJson(message, RegistryRequest.class);
+            request = mapper.readValue(message, RegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Error occured during getting Operation Request from Json", e);
             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -95,7 +95,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
                         }
                     case BASIC:
                         try {
-                            informationModel = gson.fromJson(request.getBody(), InformationModel.class);
+                            informationModel = mapper.readValue(request.getBody(), InformationModel.class);
                         } catch (JsonSyntaxException e) {
                             log.error("Error occured during getting Information Model from Json", e);
                             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -130,7 +130,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             informationModelResponse.setInformationModel(informationModel);
         }
 
-        response = gson.toJson(informationModelResponse);
+        response = mapper.writeValueAsString(informationModelResponse);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

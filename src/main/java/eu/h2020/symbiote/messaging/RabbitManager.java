@@ -37,7 +37,7 @@ public class RabbitManager {
     //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
-    RepositoryManager repositoryManager;
+    private RepositoryManager repositoryManager;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
@@ -157,6 +157,8 @@ public class RabbitManager {
             } finally {
                 closeChannel(channel);
             }
+        } else {
+            log.error("Rabbit connection is null!");
         }
     }
 
@@ -182,12 +184,18 @@ public class RabbitManager {
                         this.resourceCreationRequestedRoutingKey);
                 channel.queueUnbind("resourceRemovalRequestedQueue", this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
+                channel.queueUnbind("rdfResourceValidationRequestedQueue", this.resourceExchangeName,
+                        this.rdfResourceValidationRequestedRoutingKey);
+                channel.queueUnbind("jsonResourceTranslationRequestedQueue", this.resourceExchangeName,
+                        this.jsonResourceTranslationRequestedRoutingKey);
                 channel.queueDelete("platformCreationRequestedQueue");
                 channel.queueDelete("platformModificationRequestedQueue");
                 channel.queueDelete("platformRemovalRequestedQueue");
                 channel.queueDelete("resourceCreationRequestedQueue");
                 channel.queueDelete("resourceModificationRequestedQueue");
                 channel.queueDelete("resourceRemovalRequestedQueue");
+                channel.queueDelete("rdfResourceValidationRequestedQueue");
+                channel.queueDelete("jsonResourceTranslationRequestedQueue");
                 closeChannel(channel);
                 this.connection.close();
             }
@@ -199,7 +207,7 @@ public class RabbitManager {
     /**
      * Method gathers all of the rabbit consumer starter methods
      */
-    public void startConsumers() {
+    private void startConsumers() {
         try {
             startConsumerOfPlatformCreationMessages();
             startConsumerOfResourceCreationMessages();
@@ -312,11 +320,6 @@ public class RabbitManager {
                 platformId);
     }
 
-//    public void sendCustomMessage(String exchange, String routingKey, String objectInJson) {
-//        sendMessage(exchange, routingKey, objectInJson);
-//        log.info("- Custom message sent");
-//    }
-
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
@@ -410,7 +413,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Creation messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -460,32 +463,12 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Modification messages....");
 
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, this);
             channel.basicConsume(queueName, false, consumer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    /*
-    private void startConsumerOfResourceValidationMessages() throws InterruptedException, IOException {
-        String queueName = "resourceValidationRequestedQueue";
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.platformExchangeName, this.rdfResourceValidationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Semantic Manager messages....");
-
-            Consumer consumer = new ResourceJsonValidationResponseConsumer(channel, repositoryManager, this);
-            channel.basicConsume(queueName, false, consumer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-*/
 
     /**
      * Method publishes given message to the given exchange and routing key.
@@ -500,7 +483,7 @@ public class RabbitManager {
         Channel channel = null;
         try {
             channel = this.connection.createChannel();
-            Map<String, Object> headers = new HashMap<String,Object>();
+            Map<String, Object> headers = new HashMap<>();
             headers.put("__TypeId__",classType);
             headers.put("__ContentTypeId__",Object.class.getCanonicalName());
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -579,13 +562,11 @@ public class RabbitManager {
                     .replyTo(replyQueueName)
                     .build();
 
-
             ResourceValidationResponseConsumer responseConsumer =
                     new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             channel, repositoryManager, this, platformId, operationType, descriptionType);
 
             channel.basicConsume(replyQueueName, true, responseConsumer);
-
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
                     + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
@@ -594,7 +575,7 @@ public class RabbitManager {
             channel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 }

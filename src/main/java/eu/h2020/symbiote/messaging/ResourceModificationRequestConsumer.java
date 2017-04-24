@@ -9,7 +9,6 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.model.RegistryResponse;
 import eu.h2020.symbiote.model.ResourceOperationType;
-import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +24,6 @@ import java.io.IOException;
 public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceModificationRequestConsumer.class);
-    private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
     /**
@@ -34,13 +32,10 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
      *
      * @param channel           the channel to which this consumer is attached
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
-     * @param repositoryManager repository manager bean passed for persistence actions
      */
     public ResourceModificationRequestConsumer(Channel channel,
-                                               RepositoryManager repositoryManager,
                                                RabbitManager rabbitManager) {
         super(channel);
-        this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
     }
 
