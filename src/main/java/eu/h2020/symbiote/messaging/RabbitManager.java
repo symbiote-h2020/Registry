@@ -33,6 +33,13 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
  */
 @Component
 public class RabbitManager {
+    private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "platformRemovalRequestedQueue";
+    private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "resourceCreationRequestedQueue";
+    private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "resourceModificationRequestedQueue";
+    private static final String PLATFORM_CREATION_REQUESTED_QUEUE = "PLATFORM_CREATION_REQUESTED_QUEUE";
+    private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "PLATFORM_MODIFICATION_REQUESTED_QUEUE";
+    private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "resourceRemovalRequestedQueue";
+    public static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
 
     //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
 
@@ -106,7 +113,7 @@ public class RabbitManager {
      * @throws IOException
      * @throws TimeoutException
      */
-    public Connection getConnection() throws IOException, TimeoutException {
+    private Connection getConnection() throws IOException, TimeoutException {
         if (connection == null) {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(this.rabbitHost);
@@ -126,10 +133,8 @@ public class RabbitManager {
 
         try {
             getConnection();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
+        } catch (IOException | TimeoutException e) {
+            log.error(e);
         }
 
         if (connection != null) {
@@ -153,7 +158,7 @@ public class RabbitManager {
                 startConsumers();
 
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(e);
             } finally {
                 closeChannel(channel);
             }
@@ -172,25 +177,25 @@ public class RabbitManager {
             Channel channel;
             if (this.connection != null && this.connection.isOpen()) {
                 channel = connection.createChannel();
-                channel.queueUnbind("platformCreationRequestedQueue", this.platformExchangeName,
+                channel.queueUnbind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                channel.queueUnbind("platformModificationRequestedQueue", this.platformExchangeName,
+                channel.queueUnbind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                channel.queueUnbind("platformRemovalRequestedQueue", this.platformExchangeName,
+                channel.queueUnbind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                channel.queueUnbind("resourceCreationRequestedQueue", this.resourceExchangeName,
+                channel.queueUnbind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
-                channel.queueUnbind("resourceModificationRequestedQueue", this.resourceExchangeName,
+                channel.queueUnbind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
-                channel.queueUnbind("resourceRemovalRequestedQueue", this.resourceExchangeName,
+                channel.queueUnbind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
                 channel.queueUnbind("rdfResourceValidationRequestedQueue", this.resourceExchangeName,
                         this.rdfResourceValidationRequestedRoutingKey);
                 channel.queueUnbind("jsonResourceTranslationRequestedQueue", this.resourceExchangeName,
                         this.jsonResourceTranslationRequestedRoutingKey);
-                channel.queueDelete("platformCreationRequestedQueue");
-                channel.queueDelete("platformModificationRequestedQueue");
-                channel.queueDelete("platformRemovalRequestedQueue");
+                channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
                 channel.queueDelete("resourceCreationRequestedQueue");
                 channel.queueDelete("resourceModificationRequestedQueue");
                 channel.queueDelete("resourceRemovalRequestedQueue");
@@ -200,7 +205,7 @@ public class RabbitManager {
                 this.connection.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -215,10 +220,8 @@ public class RabbitManager {
             startConsumerOfResourceRemovalMessages();
             startConsumerOfPlatformModificationMessages();
             startConsumerOfResourceModificationMessages();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (InterruptedException | IOException e) {
+            log.error(e);
         }
     }
 
@@ -226,10 +229,11 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message, platform.getClass().getCanonicalName());
+            sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
+                    platform.getClass().getCanonicalName());
             log.info("- platform created message sent");
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing Resource object JSON: " + platform, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + platform, e);
         }
 
     }
@@ -238,10 +242,11 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message, platform.getClass().getCanonicalName());
+            sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message,
+                    platform.getClass().getCanonicalName());
             log.info("- platform removed message sent");
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing Resource object JSON: " + platform, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + platform, e);
         }
     }
 
@@ -249,10 +254,11 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message, platform.getClass().getCanonicalName());
+            sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message,
+                    platform.getClass().getCanonicalName());
             log.info("- platform modified message sent");
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing Resource object JSON: " + platform, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + platform, e);
         }
     }
 
@@ -260,10 +266,11 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message, resources.getClass().getCanonicalName());
+            sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
+                    resources.getClass().getCanonicalName());
             log.info("- Resources created message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing message content to JSON: " + resources, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + resources, e);
         }
     }
 
@@ -271,10 +278,11 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message, resources.getClass().getCanonicalName());
+            sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
+                    resources.getClass().getCanonicalName());
             log.info("- resources removed message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing message content to JSON: " + resources, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + resources, e);
         }
     }
 
@@ -282,10 +290,11 @@ public class RabbitManager {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,resources.getClass().getCanonicalName());
+            sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,
+                    resources.getClass().getCanonicalName());
             log.info("- resource modified message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error("Error occurred when parsing message content to JSON: " + resources, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + resources, e);
         }
     }
 
@@ -328,20 +337,19 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
-        String queueName = "platformCreationRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
+            channel.queueDeclare(PLATFORM_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Creation messages....");
 
             Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(queueName, false, consumer);
+            channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -353,20 +361,19 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
-        String queueName = "platformRemovalRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
+            channel.queueDeclare(PLATFORM_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Removal messages....");
 
             Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(queueName, false, consumer);
+            channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -378,20 +385,19 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
-        String queueName = "platformModificationRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
+            channel.queueDeclare(PLATFORM_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Modification messages....");
 
             Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(queueName, false, consumer);
+            channel.basicConsume(PLATFORM_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -403,20 +409,19 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
-        String queueName = "resourceCreationRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
+            channel.queueDeclare(RESOURCE_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Creation messages....");
 
             Consumer consumer = new ResourceCreationRequestConsumer(channel, this);
-            channel.basicConsume(queueName, false, consumer);
+            channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -428,20 +433,19 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
-        String queueName = "resourceRemovalRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
+            channel.queueDeclare(RESOURCE_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Removal messages....");
 
             Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(queueName, false, consumer);
+            channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -453,20 +457,19 @@ public class RabbitManager {
      * @throws IOException
      */
     private void startConsumerOfResourceModificationMessages() throws InterruptedException, IOException {
-        String queueName = "resourceModificationRequestedQueue";
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
+            channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Modification messages....");
 
             Consumer consumer = new ResourceModificationRequestConsumer(channel, this);
-            channel.basicConsume(queueName, false, consumer);
+            channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         }
     }
 
@@ -494,7 +497,7 @@ public class RabbitManager {
 
             channel.basicPublish(exchange, routingKey, props, message.getBytes());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e);
         } finally {
             closeChannel(channel);
         }
@@ -509,10 +512,8 @@ public class RabbitManager {
         try {
             if (channel != null && channel.isOpen())
                 channel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
+        } catch (IOException | TimeoutException e) {
+            log.error(e);
         }
     }
 

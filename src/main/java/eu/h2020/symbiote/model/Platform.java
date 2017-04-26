@@ -24,6 +24,7 @@ public class Platform {
     private List<InterworkingService> interworkingServices;
 
     public Platform() {
+        //for persistence only
     }
 
     /**

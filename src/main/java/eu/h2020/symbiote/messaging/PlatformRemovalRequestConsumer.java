@@ -143,7 +143,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
         for (Platform platform : platforms) {
             if (platform.getId() != null || !platform.getId().isEmpty()) {
-                platform = RegistryUtils.getRdfBodyForObject(platform); //fixme needed? or not completed object is fine?
+                platform = RegistryUtils.getRdfBodyForObject(platform);
                 platformResponse = this.repositoryManager.removePlatform(platform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformRemovedMessage(platformResponse.getPlatform());

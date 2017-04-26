@@ -22,6 +22,10 @@ import java.util.List;
  */
 public class RegistryUtils {
 
+    private RegistryUtils() {
+        throw new IllegalAccessError("Utility class");
+    }
+
     private static Log log = LogFactory.getLog(RegistryUtils.class);
 
     /**
@@ -202,6 +206,7 @@ public class RegistryUtils {
     }
 
     public static CoreResourceRegistryResponse getInformationModelFromRdf(String body) throws JsonProcessingException {
+        log.error("not implemented method triggered!" + body);
         ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         InformationModel im = new InformationModel();
@@ -225,6 +230,7 @@ public class RegistryUtils {
      * @return
      */
     public static boolean checkToken(String tokenString) {
+        log.info("Token to verification: " + tokenString);
 /*
         try {
             SymbIoTeToken token = securityHandler.verifyCoreToken(tokenString);

@@ -20,12 +20,14 @@ import java.io.IOException;
 
 /**
  * For next release...
- *
+ * <p>
  * Created by mateuszl on 27.03.2017.
  */
 public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(InformationModelCreationRequestConsumer.class);
+    InformationModelResponse informationModelResponse;
+    ObjectMapper mapper;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -43,6 +45,8 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        informationModelResponse = new InformationModelResponse();
+        mapper = new ObjectMapper();
     }
 
 
@@ -60,14 +64,12 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse semanticResponse = new CoreResourceRegistryResponse();
         semanticResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         String response;
+        InformationModel informationModel = null;
         String message = new String(body, "UTF-8");
-        InformationModel informationModel = new InformationModel();
-        InformationModelResponse informationModelResponse = new InformationModelResponse();
 
         log.info(" [x] Received information model to create: '" + message + "'");
 
@@ -77,60 +79,83 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             log.error("Error occured during getting Operation Request from Json", e);
             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
             informationModelResponse.setMessage("Error occured during getting Operation Request from Json");
-            informationModelResponse.setInformationModel(informationModel);
         }
 
-
         if (request != null) {
-            if (RegistryUtils.checkToken(request.getToken())) {
-                switch (request.getDescriptionType()) {
-                    case RDF:
-                        try {
-                            semanticResponse = RegistryUtils.getInformationModelFromRdf(request.getBody());
-                        } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting model from Json received from Semantic Manager", e);
-                            informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                            informationModelResponse.setMessage("Error occured during getting Platforms from Json");
-                            informationModelResponse.setInformationModel(informationModel);
-                        }
-                    case BASIC:
-                        try {
-                            informationModel = mapper.readValue(request.getBody(), InformationModel.class);
-                        } catch (JsonSyntaxException e) {
-                            log.error("Error occured during getting Information Model from Json", e);
-                            informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                            informationModelResponse.setMessage("Error occured during getting Information Model from Json");
-                            informationModelResponse.setInformationModel(informationModel);
-                        }
-                }
-
-            } else {
-                log.error("Token invalid");
-                informationModelResponse.setStatus(HttpStatus.SC_UNAUTHORIZED);
-                informationModelResponse.setMessage("Token invalid");
-                informationModelResponse.setInformationModel(informationModel);
-            }
+            informationModel = getInformationModel(request);
         } else {
             log.error("Request is null");
             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
             informationModelResponse.setMessage("Request is null");
-            informationModelResponse.setInformationModel(informationModel);
         }
 
-        if (RegistryUtils.validateFields(informationModel)) {
-            if (informationModel.getBody()==null) informationModel = RegistryUtils.getRdfBodyForObject(informationModel);
-            informationModelResponse = this.repositoryManager.saveInformationModel(informationModel);
-            if (informationModelResponse.getStatus() == 200) {
-                rabbitManager.sendInformationModelCreatedMessage(informationModelResponse.getInformationModel());
+        if (informationModel != null) {
+            informationModelResponse.setInformationModel(informationModel);
+            if (RegistryUtils.validateFields(informationModel)) {
+                if (informationModel.getBody() == null)
+                    informationModel = RegistryUtils.getRdfBodyForObject(informationModel);
+                informationModelResponse = this.repositoryManager.saveInformationModel(informationModel);
+                if (informationModelResponse.getStatus() == 200) {
+                    rabbitManager.sendInformationModelCreatedMessage(informationModelResponse.getInformationModel());
+                }
+            } else {
+                log.error("Given Information Model has some fields null or empty");
+                informationModelResponse.setMessage("Given Information Model has some fields null or empty");
+                informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
             }
         } else {
-            log.error("Given Information Model has some fields null or empty");
-            informationModelResponse.setMessage("Given Information Model has some fields null or empty");
+            log.error("Information Model is null");
             informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-            informationModelResponse.setInformationModel(informationModel);
+            informationModelResponse.setMessage("Information Model is null");
         }
 
         response = mapper.writeValueAsString(informationModelResponse);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
+    }
+
+    private InformationModel getInformationModel(CoreResourceRegistryRequest request) throws IOException {
+        InformationModel informationModel = new InformationModel();
+
+        if (RegistryUtils.checkToken(request.getToken())) {
+            switch (request.getDescriptionType()) {
+                case RDF:
+                    informationModel = getInformationModelFromRdf(request);
+                    break;
+                case BASIC:
+                    informationModel = readInformationModelFromBasic(request.getBody());
+                    break;
+            }
+
+        } else {
+            log.error("Token invalid");
+            informationModelResponse.setStatus(HttpStatus.SC_UNAUTHORIZED);
+            informationModelResponse.setMessage("Token invalid");
+        }
+        return informationModel;
+    }
+
+    private InformationModel getInformationModelFromRdf(CoreResourceRegistryRequest request) throws IOException {
+        InformationModel informationModel1 = new InformationModel();
+        try {
+            CoreResourceRegistryResponse semanticResponse = RegistryUtils.getInformationModelFromRdf(request.getBody());
+            informationModel1 = readInformationModelFromBasic(semanticResponse.getBody());
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during getting model from Json received from Semantic Manager", e);
+            informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            informationModelResponse.setMessage("Error occured during getting Platforms from Json");
+        }
+        return informationModel1;
+    }
+
+    private InformationModel readInformationModelFromBasic(String body) throws IOException {
+        InformationModel informationModel = new InformationModel();
+        try {
+            informationModel = mapper.readValue(body, InformationModel.class);
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during getting Information Model from Json", e);
+            informationModelResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            informationModelResponse.setMessage("Error occured during getting Information Model from Json");
+        }
+        return informationModel;
     }
 }

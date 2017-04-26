@@ -110,8 +110,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             //receive and read message from Semantic Manager
             resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
         } catch (JsonSyntaxException e) {
-            log.error("Unable to get resource validation result from Message body!");
-            e.printStackTrace();
+            log.error("Unable to get resource validation result from Message body!", e);
             registryResponse.setStatus(500);
             registryResponse.setMessage("VALIDATION CONTENT CORRUPTED:\n" + message);
         }
@@ -121,8 +120,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 coreResources = resourceInstanceValidationResult.getObjectDescription();
                 log.info("CoreResources received from SM! Content: " + coreResources);
             } catch (JsonSyntaxException e) {
-                log.error("Unable to get Resources List from semantic response body!");
-                e.printStackTrace();
+                log.error("Unable to get Resources List from semantic response body!", e);
             }
         } else {
             registryResponse.setStatus(500);
@@ -212,7 +210,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
                 }).writeValueAsString(resources));
             } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                log.error("Could not map list of resource to JSON", e);
             }
 
         } else {
@@ -235,14 +233,12 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             response = mapper.writeValueAsString(registryResponse);
         } catch (JsonProcessingException e) {
             log.error(e);
-            e.printStackTrace();
         }
 
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
         } catch (IOException e) {
             log.error(e);
-            e.printStackTrace();
         }
     }
 
