@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class RepositoryManager {
 
+    private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID!";
+    private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
@@ -46,8 +48,6 @@ public class RepositoryManager {
         PlatformResponse platformResponse = new PlatformResponse();
         Platform savedPlatform = null;
         platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
-        platformResponse.setMessage("Unknown error"); //// FIXME: 27.03.2017
-        platformResponse.setStatus(0);
 
         log.info("Received platform to save: " + platform);
 
@@ -104,7 +104,7 @@ public class RepositoryManager {
             platformResponse.setMessage("Given platform is null or has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resourceRepository.findByInterworkingServiceURL(platform.getId()) != null
-                && resourceRepository.findByInterworkingServiceURL(platform.getId()).size() > 0) {
+                && !resourceRepository.findByInterworkingServiceURL(platform.getId()).isEmpty()) {
             //// TODO: 12.04.2017 fields checking fix
             log.error("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
@@ -158,20 +158,13 @@ public class RepositoryManager {
         }
 
         if (foundPlatform == null) {
-            log.error("Given platform does not exist in database!");
-            platformResponse.setMessage("Given platform does not exist in database!");
+            log.error(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
+            platformResponse.setMessage(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
-                if (platform.getComments() == null && foundPlatform.getComments() != null)
-                    platform.setComments(foundPlatform.getComments());
-                if (platform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
-                    platform.setRdfFormat(foundPlatform.getRdfFormat());
-                if (platform.getLabels() == null && foundPlatform.getLabels() != null)
-                    platform.setLabels(foundPlatform.getLabels());
-                if (platform.getBody() == null && foundPlatform.getBody() != null)
-                    platform.setBody(foundPlatform.getBody());
+                copyExistingPlatformData(platform, foundPlatform);
 
                 platformRepository.save(platform);
                 log.info("Platform with id: " + platform.getId() + " modified !");
@@ -180,13 +173,23 @@ public class RepositoryManager {
                 platformResponse.setMessage("OK");
                 platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
             } catch (Exception e) {
-                e.printStackTrace();
                 log.error("Error occurred during Platform modifying in db", e);
                 platformResponse.setMessage("Error occurred during Platform modifying in db");
                 platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
         return platformResponse;
+    }
+
+    private void copyExistingPlatformData(Platform platform, Platform foundPlatform) {
+        if (platform.getComments() == null && foundPlatform.getComments() != null)
+            platform.setComments(foundPlatform.getComments());
+        if (platform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
+            platform.setRdfFormat(foundPlatform.getRdfFormat());
+        if (platform.getLabels() == null && foundPlatform.getLabels() != null)
+            platform.setLabels(foundPlatform.getLabels());
+        if (platform.getBody() == null && foundPlatform.getBody() != null)
+            platform.setBody(foundPlatform.getBody());
     }
 
     /**
@@ -205,8 +208,8 @@ public class RepositoryManager {
         resourceSavingResult.setResource(resource);
 
         if (resource.getId() == null || resource.getId().isEmpty()) {
-            log.error("Resource has null or empty ID!");
-            resourceSavingResult.setMessage("Resource has null or empty ID!");
+            log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
+            resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
@@ -284,8 +287,8 @@ public class RepositoryManager {
         //todo
 
         if (resource.getId() == null || resource.getId().isEmpty()) {
-            log.error("Resource has null or empty ID!");
-            resourceSavingResult.setMessage("Resource has null or empty ID!");
+            log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
+            resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
@@ -306,9 +309,7 @@ public class RepositoryManager {
                 resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             } else {
                 try {
-                    //fulfilment of empty Resource fields before saving
-                    if (resource.getComments() == null && foundResource.getComments() != null)
-                        resource.setComments(foundResource.getComments());
+                    resource = completeDataForResource(resource, foundResource);
 
                     CoreResource savedResource = resourceRepository.save(resource);
                     log.info("Resource with id: " + resource.getId() + " modified !");
@@ -324,6 +325,13 @@ public class RepositoryManager {
             }
         }
         return resourceSavingResult;
+    }
+
+    private CoreResource completeDataForResource(CoreResource resource, CoreResource foundResource) {
+        //fulfilment of empty Resource fields before saving
+        if (resource.getComments() == null && foundResource.getComments() != null)
+            resource.setComments(foundResource.getComments());
+        return resource;
     }
 
     /**
@@ -369,7 +377,7 @@ public class RepositoryManager {
                 }
             }
         } else {
-            log.error("Given platform does not exist in database!");
+            log.error(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
         }
         return false;
     }
