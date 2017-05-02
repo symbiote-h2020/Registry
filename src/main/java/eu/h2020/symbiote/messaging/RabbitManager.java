@@ -33,12 +33,12 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
  */
 @Component
 public class RabbitManager {
-    private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "platformRemovalRequestedQueue";
-    private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "resourceCreationRequestedQueue";
-    private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "resourceModificationRequestedQueue";
-    private static final String PLATFORM_CREATION_REQUESTED_QUEUE = "PLATFORM_CREATION_REQUESTED_QUEUE";
-    private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "PLATFORM_MODIFICATION_REQUESTED_QUEUE";
-    private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "resourceRemovalRequestedQueue";
+    private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
+    private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
+    private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceModificationRequestedQueue";
+    private static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
+    private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
+    private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
     public static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
 
     //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
