@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.commons.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -28,6 +29,7 @@ import java.util.List;
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);
+    private final SecurityHandler securityHandler;
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
 
@@ -39,9 +41,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      */
     public ResourceCreationRequestConsumer(Channel channel,
-                                           RabbitManager rabbitManager) {
+                                           RabbitManager rabbitManager,
+                                           SecurityHandler securityHandler) {
         super(channel);
         this.rabbitManager = rabbitManager;
+        this.securityHandler = securityHandler;
         this.mapper = new ObjectMapper();
     }
 
@@ -75,7 +79,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (RegistryUtils.checkToken(request.getToken())) {
+            if (RegistryUtils.checkToken(request.getToken(), securityHandler)) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:

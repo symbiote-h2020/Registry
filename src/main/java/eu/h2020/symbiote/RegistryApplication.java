@@ -1,9 +1,11 @@
 package eu.h2020.symbiote;
 
+import eu.h2020.symbiote.commons.security.SecurityHandler;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,6 +21,15 @@ import org.springframework.stereotype.Component;
 @EnableDiscoveryClient
 @SpringBootApplication
 public class RegistryApplication {
+
+    @Value("${symbiote.coreaam.url}")
+    private String coreAAMUrl;
+
+    @Value("${security.enabled}")
+    private boolean securityEnabled;
+
+    @Value("${rabbit.host}")
+    private String rabbitHost;
 
     public static void main(String[] args) {
         SpringApplication.run(RegistryApplication.class, args);
@@ -48,5 +59,11 @@ public class RegistryApplication {
             this.rabbitManager.init();
             log.info("CLR run() and Rabbit Manager init()");
         }
+    }
+
+    @Bean
+    public SecurityHandler securityHandler() {
+        SecurityHandler securityHandler = new SecurityHandler(coreAAMUrl, rabbitHost, securityEnabled);
+        return securityHandler;
     }
 }

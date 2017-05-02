@@ -2,6 +2,10 @@ package eu.h2020.symbiote.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.commons.security.SecurityHandler;
+import eu.h2020.symbiote.commons.security.exception.DisabledException;
+import eu.h2020.symbiote.commons.security.token.SymbIoTeToken;
+import eu.h2020.symbiote.commons.security.token.TokenVerificationException;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
@@ -22,11 +26,11 @@ import java.util.List;
  */
 public class RegistryUtils {
 
+    private static Log log = LogFactory.getLog(RegistryUtils.class);
+
     private RegistryUtils() {
         throw new IllegalAccessError("Utility class");
     }
-
-    private static Log log = LogFactory.getLog(RegistryUtils.class);
 
     /**
      * Checks if given platform has all of the needed fields (besides the id field) and that neither is empty.
@@ -157,7 +161,7 @@ public class RegistryUtils {
      * @return
      */
     public static Platform convertRequestPlatformToRegistryPlatform
-            (eu.h2020.symbiote.core.model.Platform requestPlatform) {
+    (eu.h2020.symbiote.core.model.Platform requestPlatform) {
         Platform platform = new Platform();
 
         platform.setLabels(Arrays.asList(requestPlatform.getName()));
@@ -182,7 +186,7 @@ public class RegistryUtils {
      * @return
      */
     public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform
-            (Platform registryPlatform) {
+    (Platform registryPlatform) {
         eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
 
         platform.setPlatformId(registryPlatform.getId());
@@ -229,20 +233,21 @@ public class RegistryUtils {
      * @param tokenString
      * @return
      */
-    public static boolean checkToken(String tokenString) {
+    public static boolean checkToken(String tokenString, SecurityHandler securityHandler) {
         log.info("Token to verification: " + tokenString);
-/*
+
         try {
             SymbIoTeToken token = securityHandler.verifyCoreToken(tokenString);
             log.info("Token " + token + " was verified");
-        }
-        catch (TokenVerificationException e) {
-            log.error("Token could not be verified");
+        } catch (TokenVerificationException e) {
+            log.error("Token could not be verified", e);
             return false;
+        } catch (DisabledException e) {
+            log.error(e);
+            return true;
         }
-*/
+
         return true;
     }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

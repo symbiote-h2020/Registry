@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.commons.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceRemovalRequestConsumer.class);
+    private final SecurityHandler securityHandler;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private List<RegistryPersistenceResult> resourceRemovalResultList;
@@ -46,10 +48,12 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
      */
     public ResourceRemovalRequestConsumer(Channel channel,
                                           RepositoryManager repositoryManager,
-                                          RabbitManager rabbitManager) {
+                                          RabbitManager rabbitManager,
+                                          SecurityHandler securityHandler) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        this.securityHandler = securityHandler;
         resourceRemovalResultList = new ArrayList<>();
         resourcesRemoved = new ArrayList<>();
         resources = new ArrayList<>();
@@ -86,7 +90,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (RegistryUtils.checkToken(request.getToken())) {
+            if (RegistryUtils.checkToken(request.getToken(), securityHandler)) {
                 try {
                     resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
                     });

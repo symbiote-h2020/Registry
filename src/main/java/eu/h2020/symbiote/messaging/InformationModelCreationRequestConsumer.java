@@ -6,6 +6,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.commons.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.model.InformationModel;
@@ -26,8 +27,9 @@ import java.io.IOException;
 public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(InformationModelCreationRequestConsumer.class);
-    InformationModelResponse informationModelResponse;
-    ObjectMapper mapper;
+    private final SecurityHandler securityHandler;
+    private InformationModelResponse informationModelResponse;
+    private ObjectMapper mapper;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -41,12 +43,14 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
      */
     public InformationModelCreationRequestConsumer(Channel channel,
                                                    RepositoryManager repositoryManager,
-                                                   RabbitManager rabbitManager) {
+                                                   RabbitManager rabbitManager,
+                                                   SecurityHandler securityHandler) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
-        informationModelResponse = new InformationModelResponse();
-        mapper = new ObjectMapper();
+        this.securityHandler = securityHandler;
+        this.informationModelResponse = new InformationModelResponse();
+        this.mapper = new ObjectMapper();
     }
 
 
@@ -116,7 +120,7 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
     private InformationModel getInformationModel(CoreResourceRegistryRequest request) throws IOException {
         InformationModel informationModel = new InformationModel();
 
-        if (RegistryUtils.checkToken(request.getToken())) {
+        if (RegistryUtils.checkToken(request.getToken(), securityHandler)) {
             switch (request.getDescriptionType()) {
                 case RDF:
                     informationModel = getInformationModelFromRdf(request);

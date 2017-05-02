@@ -3,6 +3,7 @@ package eu.h2020.symbiote.messaging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.commons.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.model.InformationModel;
@@ -33,17 +34,19 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
  */
 @Component
 public class RabbitManager {
+
+    //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
+
     private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
     private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
     private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceModificationRequestedQueue";
     private static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
     private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
-    public static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
-
-    //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
+    private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
+    private SecurityHandler securityHandler;
     private RepositoryManager repositoryManager;
     @Value("${rabbit.host}")
     private String rabbitHost;
@@ -103,8 +106,9 @@ public class RabbitManager {
 
 
     @Autowired
-    public RabbitManager(RepositoryManager repositoryManager) {
+    public RabbitManager(RepositoryManager repositoryManager, SecurityHandler securityHandler) {
         this.repositoryManager = repositoryManager;
+        this.securityHandler = securityHandler;
     }
 
     /**
@@ -418,7 +422,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Creation messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, this);
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, securityHandler);
             channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -442,7 +446,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Removal messages....");
 
-            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, securityHandler);
             channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -466,7 +470,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Modification messages....");
 
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, this);
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, securityHandler);
             channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
