@@ -3,7 +3,7 @@ package eu.h2020.symbiote.messaging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import eu.h2020.symbiote.commons.security.SecurityHandler;
+import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.model.InformationModel;

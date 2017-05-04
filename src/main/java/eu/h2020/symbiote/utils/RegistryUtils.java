@@ -2,10 +2,10 @@ package eu.h2020.symbiote.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.commons.security.SecurityHandler;
-import eu.h2020.symbiote.commons.security.exception.DisabledException;
-import eu.h2020.symbiote.commons.security.token.SymbIoTeToken;
-import eu.h2020.symbiote.commons.security.token.TokenVerificationException;
+import eu.h2020.symbiote.security.SecurityHandler;
+import eu.h2020.symbiote.security.exceptions.aam.TokenValidationException;
+import eu.h2020.symbiote.security.exceptions.sh.SecurityHandlerDisabledException;
+import eu.h2020.symbiote.security.token.SymbIoTeToken;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
@@ -239,14 +239,13 @@ public class RegistryUtils {
         try {
             SymbIoTeToken token = securityHandler.verifyCoreToken(tokenString);
             log.info("Token " + token + " was verified");
-        } catch (TokenVerificationException e) {
+        } catch (TokenValidationException e) {
             log.error("Token could not be verified", e);
             return false;
-        } catch (DisabledException e) {
-            log.error(e);
+        } catch (SecurityHandlerDisabledException e) {
+            log.error("Security Handler is disabled", e);
             return true;
         }
-
         return true;
     }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

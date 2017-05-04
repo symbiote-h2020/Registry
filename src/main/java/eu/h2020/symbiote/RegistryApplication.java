@@ -1,6 +1,6 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.commons.security.SecurityHandler;
+import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
