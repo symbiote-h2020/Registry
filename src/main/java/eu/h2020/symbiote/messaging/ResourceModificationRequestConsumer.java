@@ -6,11 +6,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.model.ResourceOperationType;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -25,7 +24,7 @@ import java.io.IOException;
 public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceModificationRequestConsumer.class);
-    private final SecurityHandler securityHandler;
+    private AuthorizationManager authorizationManager;
     private RabbitManager rabbitManager;
 
     /**
@@ -37,10 +36,10 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
      */
     public ResourceModificationRequestConsumer(Channel channel,
                                                RabbitManager rabbitManager,
-                                               SecurityHandler securityHandler) {
+                                               AuthorizationManager authorizationManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
-        this.securityHandler = securityHandler;
+        this.authorizationManager = authorizationManager;
     }
 
     /**
@@ -75,7 +74,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (RegistryUtils.checkToken(request.getToken(), securityHandler)) {
+            if (authorizationManager.checkAccess(request.getToken(), request.getPlatformId())) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:

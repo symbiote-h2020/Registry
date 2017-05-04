@@ -290,48 +290,48 @@ public class RepositoryManager {
             log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else {
-            if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
-                log.error("Given resource has empty or null Interworking service URL!");
-                resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
-                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            } else {
-                if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
-                        != "/".charAt(0)) {
-                    resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
-                }
-                foundResource = resourceRepository.findOne(resource.getId());
-            }
+            return resourceSavingResult;
+        }
 
-            if (foundResource == null) {
-                log.error("Given resource does not exist in database!");
-                resourceSavingResult.setMessage("Given resource does not exist in database!");
-                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            } else {
-                try {
-                    resource = completeDataForResource(resource, foundResource);
+        if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
+            log.error("Given resource has empty or null Interworking service URL!");
+            resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
+            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            return resourceSavingResult;
+        }
 
-                    CoreResource savedResource = resourceRepository.save(resource);
-                    log.info("Resource with id: " + resource.getId() + " modified !");
+        normalizeUrl(resource);
 
-                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
-                    resourceSavingResult.setMessage("OK");
-                    resourceSavingResult.setResource(savedResource);
-                } catch (Exception e) {
-                    log.error("Error occurred during Resource modifying in db", e);
-                    resourceSavingResult.setMessage("Error occurred during Resource modifying in db");
-                    resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-                }
-            }
+        foundResource = resourceRepository.findOne(resource.getId());
+
+
+        if (foundResource == null) {
+            log.error("Given resource does not exist in database!");
+            resourceSavingResult.setMessage("Given resource does not exist in database!");
+            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            return resourceSavingResult;
+        }
+
+        try {
+            CoreResource savedResource = resourceRepository.save(resource);
+            log.info("Resource with id: " + resource.getId() + " modified !");
+
+            resourceSavingResult.setStatus(HttpStatus.SC_OK);
+            resourceSavingResult.setMessage("OK");
+            resourceSavingResult.setResource(savedResource);
+        } catch (Exception e) {
+            log.error("Error occurred during Resource modifying in db", e);
+            resourceSavingResult.setMessage("Error occurred during Resource modifying in db");
+            resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         }
         return resourceSavingResult;
     }
 
-    private CoreResource completeDataForResource(CoreResource resource, CoreResource foundResource) {
-        //fulfilment of empty Resource fields before saving
-        if (resource.getComments() == null && foundResource.getComments() != null)
-            resource.setComments(foundResource.getComments());
-        return resource;
+    private void normalizeUrl(CoreResource resource) {
+        if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
+                != "/".charAt(0)) {
+            resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
+        }
     }
 
     /**

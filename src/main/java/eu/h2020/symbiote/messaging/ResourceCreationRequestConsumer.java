@@ -7,12 +7,11 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.ResourceOperationType;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -29,9 +28,9 @@ import java.util.List;
 public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);
-    private final SecurityHandler securityHandler;
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
+    private AuthorizationManager authorizationManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -42,10 +41,10 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      */
     public ResourceCreationRequestConsumer(Channel channel,
                                            RabbitManager rabbitManager,
-                                           SecurityHandler securityHandler) {
+                                           AuthorizationManager authorizationManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
-        this.securityHandler = securityHandler;
+        this.authorizationManager = authorizationManager;
         this.mapper = new ObjectMapper();
     }
 
@@ -79,7 +78,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (RegistryUtils.checkToken(request.getToken(), securityHandler)) {
+            if (authorizationManager.checkAccess(request.getToken(), request.getPlatformId())) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:

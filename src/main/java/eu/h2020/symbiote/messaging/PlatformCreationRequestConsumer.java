@@ -134,7 +134,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (RegistryUtils.checkToken(request.getToken())) {
+            if (authorizationManager.checkAccess(request.getToken())) {
                 registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
                 switch (request.getType()) {
                     case RDF:
