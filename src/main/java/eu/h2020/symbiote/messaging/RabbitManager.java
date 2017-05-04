@@ -3,12 +3,12 @@ package eu.h2020.symbiote.messaging;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.ResourceOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class RabbitManager {
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
-    private SecurityHandler securityHandler;
+    private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     @Value("${rabbit.host}")
     private String rabbitHost;
@@ -106,9 +106,9 @@ public class RabbitManager {
 
 
     @Autowired
-    public RabbitManager(RepositoryManager repositoryManager, SecurityHandler securityHandler) {
+    public RabbitManager(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) {
         this.repositoryManager = repositoryManager;
-        this.securityHandler = securityHandler;
+        this.authorizationManager = authorizationManager;
     }
 
     /**
@@ -422,7 +422,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Creation messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, securityHandler);
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager);
             channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -446,7 +446,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Removal messages....");
 
-            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, securityHandler);
+            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
             channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -470,7 +470,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Modification messages....");
 
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, securityHandler);
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager);
             channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
