@@ -1,8 +1,5 @@
 package eu.h2020.symbiote.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -35,7 +32,7 @@ public class RegistryUtils {
      * @return true if it has all the fields and neither is empty
      */
     public static boolean validateFields(Platform platform) {
-        //todo for next release extend validation to all fields
+        //todo extend validation to all fields
         boolean b;
 
         for (InterworkingService interworkingService : platform.getInterworkingServices()) {
@@ -64,7 +61,8 @@ public class RegistryUtils {
      * @param resource resource to check
      * @return true if it has all the fields and neither is empty.
      */
-    public static boolean validateFields(Resource resource) { //todo extend validation to all fields
+    public static boolean validateFields(Resource resource) {
+        //todo extend validation to all fields
         boolean b;
         if (resource.getInterworkingServiceURL() == null
                 || resource.getComments() == null
@@ -193,32 +191,4 @@ public class RegistryUtils {
 
         return platform;
     }
-
-
-    //todo MOCKED!! waiting for cooperation with SemanticManager
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public static InformationModel getRdfBodyForObject(InformationModel informationModel) {
-        if (informationModel.getBody() == null) informationModel.setBody("mocked body");
-        if (informationModel.getFormat() == null)
-            informationModel.setFormat("mocked format"); //todo get properties from Sem. Man.
-        return informationModel;
-    }
-
-    public static CoreResourceRegistryResponse getInformationModelFromRdf(String body) throws JsonProcessingException {
-        log.error("not implemented method triggered!" + body);
-        ObjectMapper mapper = new ObjectMapper();
-        CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
-        InformationModel im = new InformationModel();
-        im.setUri("http://test_uri.com/");
-        im.setBody("Test body");
-        im.setFormat("Test format");
-        registryResponse.setBody(mapper.writeValueAsString(im));
-        registryResponse.setStatus(200);
-        registryResponse.setMessage("OK");
-        return registryResponse;
-    }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 }

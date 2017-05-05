@@ -51,26 +51,14 @@ public class RepositoryManager {
 
         log.info("Received platform to save: " + platform);
 
-        if (platform.getId() != null) {
-            log.error("Given platform has not null id!");
-            platformResponse.setMessage("Given platform has not null id!");
+        if (platform.getId() != null && !platform.getId().isEmpty()) {
+            log.error("Given platform has not null or empty id!");
+            platformResponse.setMessage("Given platform has not null or empty id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            /* todo
-            for (InterworkingService interworkingService : platform.getInterworkingServices()) {
-                if (modelRepository.findOne(interworkingService.getInformationModelUri()) == null) {
-                    platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                    platformResponse.setMessage("There is wrong informationModelUri in one of interworkingServices" +
-                            "in given Platform");
-                    log.info("There is wrong informationModelUri in one of interworkingServices" +
-                            "in given Platform");
-                }
-            }
-            */
             if (platformResponse.getStatus() != HttpStatus.SC_BAD_REQUEST) {
                 try {
                     log.info("Saving platform: " + platform.getId());
-                    //todo check if provided platform already exists - somehow
 
                     savedPlatform = platformRepository.save(platform);
                     log.info("Platform \"" + savedPlatform + "\" saved !");
@@ -105,11 +93,9 @@ public class RepositoryManager {
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resourceRepository.findByInterworkingServiceURL(platform.getId()) != null
                 && !resourceRepository.findByInterworkingServiceURL(platform.getId()).isEmpty()) {
-            //// TODO: 12.04.2017 fields checking fix
             log.error("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
-            //todo do something with resources of that platform
         } else {
             try {
                 platformRepository.delete(platform.getId());
@@ -214,7 +200,6 @@ public class RepositoryManager {
         } else {
             try {
                 log.info("Saving Resource: " + resource.toString());
-                //todo check if provided resource already exists - somehow (URL?)
 
                 CoreResource savedResource = resourceRepository.save(resource);
                 log.info("Resource with id: " + savedResource.getId() + " saved !");
@@ -281,7 +266,7 @@ public class RepositoryManager {
      */
     public RegistryPersistenceResult modifyResource(CoreResource resource) {
         RegistryPersistenceResult resourceSavingResult = new RegistryPersistenceResult();
-        CoreResource foundResource = null;
+        CoreResource foundResource;
         resourceSavingResult.setResource(resource);
 
         //todo
@@ -335,7 +320,7 @@ public class RepositoryManager {
     }
 
     /**
-     * todo
+     * todo for future release
      *
      * @param informationModel
      * @return

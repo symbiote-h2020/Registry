@@ -8,7 +8,7 @@ import eu.h2020.symbiote.security.enums.UserRole;
 import eu.h2020.symbiote.security.exceptions.aam.MalformedJWTException;
 import eu.h2020.symbiote.security.exceptions.aam.TokenValidationException;
 import eu.h2020.symbiote.security.exceptions.sh.SecurityHandlerDisabledException;
-import eu.h2020.symbiote.security.token.SymbIoTeToken;
+import eu.h2020.symbiote.security.token.Token;
 import eu.h2020.symbiote.security.token.jwt.JWTClaims;
 import eu.h2020.symbiote.security.token.jwt.JWTEngine;
 import org.apache.commons.logging.Log;
@@ -58,7 +58,7 @@ public class AuthorizationManager {
         if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) return false;
 
         try {
-            SymbIoTeToken token = securityHandler.verifyCoreToken(tokenString);
+            Token token = securityHandler.verifyCoreToken(tokenString);
             log.info("Token " + token + " was verified");
         } catch (TokenValidationException e) {
             log.error("Token could not be verified", e);
