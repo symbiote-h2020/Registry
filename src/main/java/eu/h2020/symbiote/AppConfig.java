@@ -11,8 +11,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 @Configuration
 @EnableMongoRepositories
-class AppConfig extends AbstractMongoConfiguration {
-
+class AppConfig /*extends AbstractMongoConfiguration*/ {
+/*
     @Value("${symbiote.registry.mongo.dbname}")
     private String databaseName;
 
@@ -34,4 +34,5 @@ class AppConfig extends AbstractMongoConfiguration {
     public MongoTemplate mongoTemplate() throws Exception {
         return new MongoTemplate(new MongoClient(mongoHost), getDatabaseName());
     }
+*/
 }
