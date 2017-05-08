@@ -18,8 +18,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-
 /**
+ * Component responsible for dealing with Symbiote Tokens and checking access right for requests.
+ * <p>
  * Created by mateuszl on 04.05.2017.
  */
 @Component
@@ -42,22 +43,6 @@ public class AuthorizationManager {
         if (platformRepository.findOne(platformId) == null) return false;
 
         try {
-            claims = JWTEngine.getClaimsFromToken(tokenString);
-        } catch (MalformedJWTException e) {
-            log.error(e);
-            return false;
-        }
-
-        if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) return false;
-
-        // verify that this JWT contains attributes relevant for platform owner
-        Map<String, String> attributes = claims.getAtt();
-        // PO role
-        if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) return false;
-        // owned platform identifier
-        if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) return false;
-
-        try {
             Token token = securityHandler.verifyCoreToken(tokenString);
             log.info("Token " + token + " was verified");
         } catch (TokenValidationException e) {
@@ -67,6 +52,26 @@ public class AuthorizationManager {
             log.error("Security Handler is disabled", e);
             return true;
         }
+
+        try {
+            claims = JWTEngine.getClaimsFromToken(tokenString);
+        } catch (MalformedJWTException e) {
+            log.error(e);
+            return false;
+        }
+
+        // verify if there is a right token issuer in claims
+        if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) return false;
+
+        // verify that this JWT contains attributes relevant for platform owner
+        Map<String, String> attributes = claims.getAtt();
+
+        // PO role
+        if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) return false;
+
+        // owned platform identifier
+        if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) return false;
+
         return true;
     }
 }
