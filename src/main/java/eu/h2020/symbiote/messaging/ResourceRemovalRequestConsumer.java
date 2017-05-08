@@ -107,20 +107,34 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         for (Resource resource : resources) {
-            if (resource.getId() != null || !resource.getId().isEmpty()) {
-                resourceRemovalResult = this.repositoryManager.removeResource(resource);
-                response.setMessage("Success");
-                response.setStatus(200);
-                response.setDescriptionType(DescriptionType.BASIC);
+
+            if (resource == null) {
+                log.error("Resources list contains a NULL resource!");
+                response.setMessage("Resources list contains a NULL resource!");
+                response.setStatus(410);
             } else {
-                log.error("Given Resource has id null or empty");
-                resourceRemovalResult.setMessage("Given Resource has ID null or empty");
-                resourceRemovalResult.setStatus(400);
+                if (resource.getId() != null || !resource.getId().isEmpty()) {
+                    resourceRemovalResult = this.repositoryManager.removeResource(resource);
+                } else {
+                    log.error("Given Resource has id null or empty");
+                    resourceRemovalResult.setMessage("Given Resource has ID null or empty");
+                    resourceRemovalResult.setStatus(400);
+                }
+                resourceRemovalResultList.add(resourceRemovalResult);
             }
-            resourceRemovalResultList.add(resourceRemovalResult);
         }
 
-        if (checkIfRemovalWasSuccessful()) sendFanoutMessage();
+        if (checkIfRemovalWasSuccessful()) {
+            sendFanoutMessage();
+
+            response.setMessage("Success");
+            response.setStatus(200);
+            response.setDescriptionType(DescriptionType.BASIC);
+        } else {
+            response.setMessage("Operation not performed");
+            response.setStatus(410);
+            response.setDescriptionType(DescriptionType.BASIC);
+        }
 
         response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
                 }).writeValueAsString(resourceRemovalResultList.stream()
@@ -133,6 +147,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         log.info("- rpc response message sent. Content: " + response);
+        resourceRemovalResultList.clear();
+        resourcesRemoved.clear();
     }
 
     private void sendFanoutMessage() {
@@ -150,6 +166,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 resourcesRemoved.add(result.getResource());
             }
         }
+        System.out.println("Resources removed: " + resourcesRemoved);
         if (resourcesRemoved.size() != resources.size()) {
             rollback();
             return false;
@@ -160,7 +177,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     private void rollback() {
         for (Resource resource : resourcesRemoved) {
             this.repositoryManager.saveResource(RegistryUtils.convertResourceToCoreResource(resource));
-            log.info("Removed resources rollback.");
+            log.info("Removed resources rollback performed.");
         }
     }
 }

@@ -230,6 +230,7 @@ public class RepositoryManager {
             resourceRemovalResult.setMessage("Given resource has empty or null ID!");
             resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
+            resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
             try {
                 CoreResource foundResource = resourceRepository.findOne(resource.getId());
                 if (foundResource != null) {
@@ -241,7 +242,6 @@ public class RepositoryManager {
                     resourceRepository.delete(resource.getId());
                     resourceRemovalResult.setStatus(HttpStatus.SC_OK);
                     resourceRemovalResult.setMessage("OK");
-                    resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
                     log.info("Resource with id: " + resource.getId() + " removed !");
                 } else {
                     log.error("Given resource does not exist in database");
@@ -348,7 +348,7 @@ public class RepositoryManager {
         return response;
     }
 
-    public boolean checkIfPlatformHasInterworkingServiceUrl(String platformId, String interworkingServiceUrl) {
+    public boolean checkIfPlatformExistsAndHasInterworkingServiceUrl(String platformId, String interworkingServiceUrl) {
         Platform platform = platformRepository.findOne(platformId);
         log.debug("Checking Platform: " + platform);
 

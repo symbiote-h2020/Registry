@@ -38,9 +38,15 @@ public class AuthorizationManager {
 
     public boolean checkAccess(String tokenString, String platformId) {
         log.info("Received Token to verification: " + tokenString);
+
         JWTClaims claims;
 
-        if (platformRepository.findOne(platformId) == null) return false;
+        /* FIXME Platform verification disabled for now..
+        if (platformRepository.findOne(platformId) == null) {
+            log.error("Given platform does not exist");
+            return false;
+        }
+        */
 
         try {
             Token token = securityHandler.verifyCoreToken(tokenString);
@@ -49,8 +55,10 @@ public class AuthorizationManager {
             log.error("Token could not be verified", e);
             return false;
         } catch (SecurityHandlerDisabledException e) {
-            log.error("Security Handler is disabled", e);
+            log.info("Security Handler is disabled", e);
             return true;
+        } catch (Exception e) {
+            log.error(e);
         }
 
         try {

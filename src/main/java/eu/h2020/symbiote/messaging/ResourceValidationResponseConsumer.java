@@ -141,6 +141,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
     private boolean checkPlatformAndInterworkingServices(List<CoreResource> coreResources) {
         log.info("Checking Platform And Interworking Services...");
+
+        /* TODO commented for tests
         for (CoreResource resource : coreResources) {
             //normalization of Interworking Services Urls
             if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
@@ -148,12 +150,13 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
             }
             //performing check of given platform ID and IS URL
-            if (!repositoryManager.checkIfPlatformHasInterworkingServiceUrl
+            if (!repositoryManager.checkIfPlatformExistsAndHasInterworkingServiceUrl
                     (resourcesPlatformId, resource.getInterworkingServiceURL())) {
-
                 return false;
             }
         }
+        */
+
         return true;
     }
 

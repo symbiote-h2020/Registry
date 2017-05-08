@@ -125,8 +125,9 @@ public class RegistryUtils {
      * @return
      */
     public static Resource convertCoreResourceToResource(CoreResource coreResource) {
+        System.out.println("Core resource to convert: " + coreResource);
         Resource resource = new Resource();
-        resource.setId(coreResource.getId());
+        if (coreResource.getId() != null) resource.setId(coreResource.getId());
         resource.setComments(coreResource.getComments());
         resource.setLabels(coreResource.getLabels());
         resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
@@ -141,7 +142,7 @@ public class RegistryUtils {
      */
     public static CoreResource convertResourceToCoreResource(Resource resource) {
         CoreResource coreResource = new CoreResource();
-        coreResource.setId(resource.getId());
+        if (resource.getId() != null) coreResource.setId(resource.getId());
         coreResource.setComments(resource.getComments());
         coreResource.setLabels(resource.getLabels());
         coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
