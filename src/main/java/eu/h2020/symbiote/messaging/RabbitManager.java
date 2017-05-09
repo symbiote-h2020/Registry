@@ -6,7 +6,7 @@ import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.model.InformationModel;
-import eu.h2020.symbiote.model.ResourceOperationType;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
@@ -35,6 +35,8 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
 @Component
 public class RabbitManager {
 
+    //// TODO: 09.05.2017 REFACTOR
+
     //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
 
     private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
@@ -44,6 +46,8 @@ public class RabbitManager {
     private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
+    public static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
+    public static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
     private AuthorizationManager authorizationManager;
@@ -193,18 +197,18 @@ public class RabbitManager {
                         this.resourceCreationRequestedRoutingKey);
                 channel.queueUnbind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
-                channel.queueUnbind("rdfResourceValidationRequestedQueue", this.resourceExchangeName,
+                channel.queueUnbind(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.rdfResourceValidationRequestedRoutingKey);
-                channel.queueUnbind("jsonResourceTranslationRequestedQueue", this.resourceExchangeName,
+                channel.queueUnbind(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.jsonResourceTranslationRequestedRoutingKey);
                 channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
-                channel.queueDelete("resourceCreationRequestedQueue");
-                channel.queueDelete("resourceModificationRequestedQueue");
-                channel.queueDelete("resourceRemovalRequestedQueue");
-                channel.queueDelete("rdfResourceValidationRequestedQueue");
-                channel.queueDelete("jsonResourceTranslationRequestedQueue");
+                channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
+                channel.queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
+                channel.queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
                 closeChannel(channel);
                 this.connection.close();
             }
@@ -307,7 +311,7 @@ public class RabbitManager {
                                                     Envelope rpcEnvelope,
                                                     String message,
                                                     String platformId,
-                                                    ResourceOperationType operationType) {
+                                                    RegistryOperationType operationType) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.rdfResourceValidationRequestedRoutingKey,
@@ -323,7 +327,7 @@ public class RabbitManager {
                                                       Envelope rpcEnvelope,
                                                       String message,
                                                       String platformId,
-                                                      ResourceOperationType operationType) {
+                                                      RegistryOperationType operationType) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
@@ -554,7 +558,7 @@ public class RabbitManager {
 
     public void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                 Envelope rpcEnvelope, String exchangeName, String routingKey,
-                                                DescriptionType descriptionType, ResourceOperationType operationType,
+                                                DescriptionType descriptionType, RegistryOperationType operationType,
                                                 String message, String platformId) {
         try {
             Channel channel = this.connection.createChannel();

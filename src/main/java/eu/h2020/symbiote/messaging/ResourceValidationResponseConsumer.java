@@ -15,7 +15,7 @@ import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
-import eu.h2020.symbiote.model.ResourceOperationType;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -42,7 +42,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private String resourcesPlatformId;
-    private ResourceOperationType operationType;
+    private RegistryOperationType operationType;
     private boolean bulkRequestSuccess = true;
     private List<CoreResource> savedCoreResourcesList;
     private List<RegistryPersistenceResult> persistenceOperationResultsList;
@@ -65,7 +65,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                                               RepositoryManager repositoryManager,
                                               RabbitManager rabbitManager,
                                               String resourcesPlatformId,
-                                              ResourceOperationType operationType,
+                                              RegistryOperationType operationType,
                                               DescriptionType descriptionType) {
         super(channel);
         this.repositoryManager = repositoryManager;
@@ -112,7 +112,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         } catch (JsonSyntaxException e) {
             log.error("Unable to get resource validation result from Message body!", e);
             registryResponse.setStatus(500);
-            registryResponse.setMessage("VALIDATION CONTENT CORRUPTED:\n" + message);
+            registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
         }
 
         if (resourceInstanceValidationResult.isSuccess()) {
@@ -124,7 +124,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             }
         } else {
             registryResponse.setStatus(500);
-            registryResponse.setMessage("VALIDATION ERROR");
+            registryResponse.setMessage("Validation Error. Semantic Manager message: "
+                    + resourceInstanceValidationResult.getMessage());
         }
 
         if (checkPlatformAndInterworkingServices(coreResources)) {
