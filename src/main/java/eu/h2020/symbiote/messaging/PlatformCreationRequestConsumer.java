@@ -8,6 +8,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -75,7 +76,8 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             if (RegistryUtils.validateFields(registryPlatform)) {
                 platformResponse = this.repositoryManager.savePlatform(registryPlatform);
                 if (platformResponse.getStatus() == 200) {
-                    rabbitManager.sendPlatformCreatedMessage(platformResponse.getPlatform());
+                    rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
+                            RegistryOperationType.CREATION);
                 }
             } else {
                 log.error("Given Platform has some fields null or empty");

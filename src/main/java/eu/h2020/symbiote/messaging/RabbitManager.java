@@ -1,10 +1,13 @@
 package eu.h2020.symbiote.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
+import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -39,6 +42,8 @@ public class RabbitManager {
 
     //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
 
+    public static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
+    public static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
     private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
     private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
     private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceModificationRequestedQueue";
@@ -46,9 +51,6 @@ public class RabbitManager {
     private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
-    public static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
-    public static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
-
     private static Log log = LogFactory.getLog(RabbitManager.class);
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
@@ -220,89 +222,133 @@ public class RabbitManager {
     /**
      * Method gathers all of the rabbit consumer starter methods
      */
-    private void startConsumers() {
+    private void startConsumers() throws IOException {
+        Channel channel1 = this.connection.createChannel();
+        Channel channel2 = this.connection.createChannel();
+        Channel channel3 = this.connection.createChannel();
+        Channel channel4 = this.connection.createChannel();
+        Channel channel5 = this.connection.createChannel();
+        Channel channel6 = this.connection.createChannel();
+
+        startConsumer(PLATFORM_CREATION_REQUESTED_QUEUE, platformExchangeName, platformCreationRequestedRoutingKey,
+                new PlatformCreationRequestConsumer(channel1, repositoryManager, this), channel1);
+        startConsumer(PLATFORM_REMOVAL_REQUESTED_QUEUE, platformExchangeName, platformRemovalRequestedRoutingKey,
+                new PlatformCreationRequestConsumer(channel2, repositoryManager, this), channel2);
+        startConsumer(PLATFORM_MODIFICATION_REQUESTED_QUEUE, platformExchangeName, platformModificationRequestedRoutingKey,
+                new PlatformCreationRequestConsumer(channel3, repositoryManager, this), channel3);
+        startConsumer(RESOURCE_CREATION_REQUESTED_QUEUE, platformExchangeName, resourceCreationRequestedRoutingKey,
+                new PlatformCreationRequestConsumer(channel4, repositoryManager, this), channel4);
+        startConsumer(RESOURCE_REMOVAL_REQUESTED_QUEUE, platformExchangeName, resourceRemovalRequestedRoutingKey,
+                new PlatformCreationRequestConsumer(channel5, repositoryManager, this), channel5);
+        startConsumer(RESOURCE_MODIFICATION_REQUESTED_QUEUE, platformExchangeName, resourceModificationRequestedRoutingKey,
+                new PlatformCreationRequestConsumer(channel6, repositoryManager, this), channel6);
+    }
+
+    private void startConsumer(String queueName, String exchangeName, String routingKey, Consumer consumer, Channel channel) {
         try {
-            startConsumerOfPlatformCreationMessages();
-            startConsumerOfResourceCreationMessages();
-            startConsumerOfPlatformRemovalMessages();
-            startConsumerOfResourceRemovalMessages();
-            startConsumerOfPlatformModificationMessages();
-            startConsumerOfResourceModificationMessages();
-        } catch (InterruptedException | IOException e) {
+            channel.queueDeclare(queueName, true, false, false, null);
+            channel.queueBind(queueName, exchangeName, routingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for messages on queue \"" + queueName + "\"...");
+
+            channel.basicConsume(queueName, false, consumer);
+        } catch (IOException e) {
             log.error(e);
         }
     }
 
-    public void sendPlatformCreatedMessage(eu.h2020.symbiote.core.model.Platform platform) {
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(PLATFORM_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Platform Creation messages....");
+
+            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
+
+            channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Triggers sending message containing Platform accordingly to Operation Type.
+     *
+     * @param platform
+     * @param operationType
+     */
+    public void sendPlatformOperationMessage(Platform platform, RegistryOperationType operationType) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
-                    platform.getClass().getCanonicalName());
-            log.info("- platform created message sent");
-        } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + platform, e);
-        }
 
-    }
+            switch (operationType) {
+                case CREATION:
+                    sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
+                            platform.getClass().getCanonicalName());
+                    log.info("- platform created message sent");
+                    break;
+                case MODIFICATION:
+                    sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message,
+                            platform.getClass().getCanonicalName());
+                    log.info("- platform modified message sent");
+                    break;
+                case REMOVAL:
+                    sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message,
+                            platform.getClass().getCanonicalName());
+                    log.info("- platform removed message sent");
 
-    public void sendPlatformRemovedMessage(eu.h2020.symbiote.core.model.Platform platform) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message,
-                    platform.getClass().getCanonicalName());
-            log.info("- platform removed message sent");
-        } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + platform, e);
-        }
-    }
+                    break;
+            }
 
-    public void sendPlatformModifiedMessage(eu.h2020.symbiote.core.model.Platform platform) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(platform);
-            sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message,
-                    platform.getClass().getCanonicalName());
-            log.info("- platform modified message sent");
         } catch (JsonProcessingException e) {
             log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + platform, e);
         }
     }
 
-    public void sendResourcesCreatedMessage(CoreResourceRegisteredOrModifiedEventPayload resources) {
+    public void sendResourceOperationMessage(CoreResourceRegisteredOrModifiedEventPayload payload,
+                                             RegistryOperationType operationType) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
-                    resources.getClass().getCanonicalName());
-            log.info("- Resources created message sent (fanout). Contents:\n" + message);
-        } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + resources, e);
-        }
-    }
+            String message = "";
 
-    public void sendResourcesRemovedMessage(List<String> resources) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
-                    resources.getClass().getCanonicalName());
-            log.info("- resources removed message sent (fanout). Contents:\n" + message);
+            switch (operationType) {
+                case CREATION:
+                    message = mapper.writeValueAsString(payload);
+                    sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    log.info("- Resources created message sent (fanout). Contents:\n" + message);
+                    break;
+                case MODIFICATION:
+                    message = mapper.writeValueAsString(payload);
+                    sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    log.info("- resource modified message sent (fanout). Contents:\n" + message);
+                    break;
+                case REMOVAL:
+                    message = mapper.writerFor(new TypeReference<List<Resource>>() {
+                    }).writeValueAsString(
+                            (payload.getResources()));
+                    sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    log.info("- resources removed message sent (fanout). Contents:\n" + message);
+                    break;
+            }
+            log.info("- resources operation (" + operationType + ") message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + resources, e);
-        }
-    }
-
-    public void sendResourcesModifiedMessage(CoreResourceRegisteredOrModifiedEventPayload resources) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(resources);
-            sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,
-                    resources.getClass().getCanonicalName());
-            log.info("- resource modified message sent (fanout). Contents:\n" + message);
-        } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + resources, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
         }
     }
 
@@ -335,194 +381,6 @@ public class RabbitManager {
                 operationType,
                 message,
                 platformId);
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Platform Creation messages....");
-
-            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Platform Removal messages....");
-
-            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Platform Modification messages....");
-
-            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_MODIFICATION_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Resource Creation messages....");
-
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager);
-            channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Resource Removal messages....");
-
-            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
-            channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfResourceModificationMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Resource Modification messages....");
-
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager);
-            channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method publishes given message to the given exchange and routing key.
-     * Props are set for correct message handle on the receiver side.
-     *
-     * @param exchange   name of the proper Rabbit exchange, adequate to topic of the communication
-     * @param routingKey name of the proper Rabbit routing key, adequate to topic of the communication
-     * @param message    message content in JSON String format
-     * @param classType    message content in JSON String format
-     */
-    private void sendMessage(String exchange, String routingKey, String message, String classType) {
-        Channel channel = null;
-        try {
-            channel = this.connection.createChannel();
-            Map<String, Object> headers = new HashMap<>();
-            headers.put("__TypeId__",classType);
-            headers.put("__ContentTypeId__",Object.class.getCanonicalName());
-            AMQP.BasicProperties props = new AMQP.BasicProperties()
-                    .builder()
-                    .contentType("application/json")
-                    .headers(headers)
-                    .build();
-
-            channel.basicPublish(exchange, routingKey, props, message.getBytes());
-        } catch (IOException e) {
-            log.error(e);
-        } finally {
-            closeChannel(channel);
-        }
-    }
-
-    /**
-     * Closes given channel if it exists and is open.
-     *
-     * @param channel rabbit channel to close
-     */
-    private void closeChannel(Channel channel) {
-        try {
-            if (channel != null && channel.isOpen())
-                channel.close();
-        } catch (IOException | TimeoutException e) {
-            log.error(e);
-        }
     }
 
     /**
@@ -584,6 +442,50 @@ public class RabbitManager {
             channel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
         } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method publishes given message to the given exchange and routing key.
+     * Props are set for correct message handle on the receiver side.
+     *
+     * @param exchange   name of the proper Rabbit exchange, adequate to topic of the communication
+     * @param routingKey name of the proper Rabbit routing key, adequate to topic of the communication
+     * @param message    message content in JSON String format
+     * @param classType  message content in JSON String format
+     */
+    private void sendMessage(String exchange, String routingKey, String message, String classType) {
+        Channel channel = null;
+        try {
+            channel = this.connection.createChannel();
+            Map<String, Object> headers = new HashMap<>();
+            headers.put("__TypeId__", classType);
+            headers.put("__ContentTypeId__", Object.class.getCanonicalName());
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
+                    .builder()
+                    .contentType("application/json")
+                    .headers(headers)
+                    .build();
+
+            channel.basicPublish(exchange, routingKey, props, message.getBytes());
+        } catch (IOException e) {
+            log.error(e);
+        } finally {
+            closeChannel(channel);
+        }
+    }
+
+    /**
+     * Closes given channel if it exists and is open.
+     *
+     * @param channel rabbit channel to close
+     */
+    private void closeChannel(Channel channel) {
+        try {
+            if (channel != null && channel.isOpen())
+                channel.close();
+        } catch (IOException | TimeoutException e) {
             log.error(e);
         }
     }

@@ -7,10 +7,12 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
@@ -107,7 +109,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         for (Resource resource : resources) {
-
             if (resource == null) {
                 log.error("Resources list contains a NULL resource!");
                 response.setMessage("Resources list contains a NULL resource!");
@@ -125,7 +126,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (checkIfRemovalWasSuccessful()) {
-            sendFanoutMessage();
+            sendFanoutMessage(request.getPlatformId());
 
             response.setMessage("Success");
             response.setStatus(200);
@@ -151,13 +152,14 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         resourcesRemoved.clear();
     }
 
-    private void sendFanoutMessage() {
-        List<String> removedResourcesIds = resourceRemovalResultList.stream()
-                .map(registryPersistenceResult ->
-                        registryPersistenceResult.getResource().getId())
-                .collect(Collectors.toList());
-        rabbitManager.sendResourcesRemovedMessage(removedResourcesIds);
-        log.info("- List with removed resources id's sent (fanout). Content: " + removedResourcesIds);
+    private void sendFanoutMessage(String platformId) {
+        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+        payload.setResources(resourceRemovalResultList.stream()
+                .map(RegistryPersistenceResult::getResource)
+                .collect(Collectors.toList()));
+        payload.setPlatformId(platformId);
+
+        rabbitManager.sendResourceOperationMessage(payload, RegistryOperationType.REMOVAL);
     }
 
     private boolean checkIfRemovalWasSuccessful() {
@@ -166,7 +168,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 resourcesRemoved.add(result.getResource());
             }
         }
-        System.out.println("Resources removed: " + resourcesRemoved);
         if (resourcesRemoved.size() != resources.size()) {
             rollback();
             return false;

@@ -8,6 +8,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -78,7 +79,8 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
             platformResponse = this.repositoryManager.modifyPlatform(registryPlatform);
             if (platformResponse.getStatus() == 200) {
-                rabbitManager.sendPlatformModifiedMessage(platformResponse.getPlatform());
+                rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
+                        RegistryOperationType.MODIFICATION);
             }
         } catch (JsonSyntaxException e) {
             log.error("Error occured during Platform saving to db", e);
