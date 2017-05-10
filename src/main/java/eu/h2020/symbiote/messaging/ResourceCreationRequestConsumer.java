@@ -12,7 +12,6 @@ import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

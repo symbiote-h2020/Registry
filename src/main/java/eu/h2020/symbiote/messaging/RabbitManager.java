@@ -220,6 +220,7 @@ public class RabbitManager {
     }
 
     /**
+     * todo for release 3 -> refactor
      * Method gathers all of the rabbit consumer starter methods
      */
     private void startConsumers() throws IOException {
@@ -259,31 +260,6 @@ public class RabbitManager {
     }
 
     /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Platform Creation messages....");
-
-            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
-
-            channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
      * Triggers sending message containing Platform accordingly to Operation Type.
      *
      * @param platform
@@ -309,7 +285,6 @@ public class RabbitManager {
                     sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message,
                             platform.getClass().getCanonicalName());
                     log.info("- platform removed message sent");
-
                     break;
             }
 
