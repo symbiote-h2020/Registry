@@ -51,9 +51,9 @@ public class RepositoryManager {
 
         log.info("Received platform to save: " + platform);
 
-        if (platform.getId() != null && !platform.getId().isEmpty()) {
-            log.error("Given platform has not null or empty id!");
-            platformResponse.setMessage("Given platform has not null or empty id!");
+        if (platform.getId() == null && platform.getId().isEmpty()) {
+            log.error("Given platform has null or empty id!");
+            platformResponse.setMessage("Given platform has null or empty id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             if (platformResponse.getStatus() != HttpStatus.SC_BAD_REQUEST) {

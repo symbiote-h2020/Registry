@@ -74,7 +74,7 @@ dependencies {
     */
     //compile project(':SymbIoTeLibraries')
     //compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:66ec2f8a42') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:0b1808eeb9') { changing = true }
 
 
     // Spring

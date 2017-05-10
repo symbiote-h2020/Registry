@@ -69,17 +69,25 @@ public class AuthorizationManager {
         }
 
         // verify if there is a right token issuer in claims
-        if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) return false;
+        if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) {
+            log.error("Presented token was not issued by CoreAAM!");
+            return false;
+        }
 
         // verify that this JWT contains attributes relevant for platform owner
         Map<String, String> attributes = claims.getAtt();
 
         // PO role
-        if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) return false;
+        if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) {
+            log.error("Wrong role claim in token!");
+            return false;
+        }
 
         // owned platform identifier
-        if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) return false;
-
+        if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) {
+            log.error("Platform owner does not match with requested operation!");
+            return false;
+        }
         return true;
     }
 }

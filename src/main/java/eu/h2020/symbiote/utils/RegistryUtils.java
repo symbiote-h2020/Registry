@@ -159,6 +159,8 @@ public class RegistryUtils {
     (eu.h2020.symbiote.core.model.Platform requestPlatform) {
         Platform platform = new Platform();
 
+        platform.setId(requestPlatform.getPlatformId());
+
         platform.setLabels(Arrays.asList(requestPlatform.getName()));
 
         platform.setComments(Arrays.asList(requestPlatform.getDescription()));
@@ -168,6 +170,7 @@ public class RegistryUtils {
         interworkingService.setUrl(requestPlatform.getUrl());
         platform.setInterworkingServices(Arrays.asList(interworkingService));
 
+        //// TODO: 10.05.2017  
         platform.setBody("not null body");
         platform.setRdfFormat("not null rdf");
 
