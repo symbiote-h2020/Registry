@@ -44,7 +44,9 @@ dependencies {
     compile('org.springframework.cloud:spring-cloud-starter-stream-rabbit')
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
+//    compile('com.github.symbiote-h2020:SymbIoTeLibraries:develop-SNAPSHOT') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:aam_integration-SNAPSHOT') { changing = true }
+
 
 //    compile('org.springframework.boot:spring-boot-starter-data-rest')
 //    compile('org.springframework.boot:spring-boot-starter-web')

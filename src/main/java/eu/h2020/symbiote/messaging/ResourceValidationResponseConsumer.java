@@ -253,22 +253,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreResourcesList);
         payload.setPlatformId(resourcesPlatformId);
-        sendMessage(payload);
-    }
-
-    /** Sends Fanout message accordingly to event performed.
-     *
-     * @param payload
-     */
-    private void sendMessage(CoreResourceRegisteredOrModifiedEventPayload payload) {
-        switch (operationType) {
-            case CREATION:
-                rabbitManager.sendResourcesCreatedMessage(payload);
-                break;
-            case MODIFICATION:
-                rabbitManager.sendResourcesModifiedMessage(payload);
-                break;
-        }
+        rabbitManager.sendResourceOperationMessage(payload, operationType);
     }
 
     /**
