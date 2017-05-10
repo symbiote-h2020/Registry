@@ -220,44 +220,165 @@ public class RabbitManager {
     }
 
     /**
-     * todo for release 3 -> refactor
      * Method gathers all of the rabbit consumer starter methods
      */
-    private void startConsumers() throws IOException {
-        Channel channel1 = this.connection.createChannel();
-        Channel channel2 = this.connection.createChannel();
-        Channel channel3 = this.connection.createChannel();
-        Channel channel4 = this.connection.createChannel();
-        Channel channel5 = this.connection.createChannel();
-        Channel channel6 = this.connection.createChannel();
-
-        startConsumer(PLATFORM_CREATION_REQUESTED_QUEUE, platformExchangeName, platformCreationRequestedRoutingKey,
-                new PlatformCreationRequestConsumer(channel1, repositoryManager, this), channel1);
-        startConsumer(PLATFORM_REMOVAL_REQUESTED_QUEUE, platformExchangeName, platformRemovalRequestedRoutingKey,
-                new PlatformCreationRequestConsumer(channel2, repositoryManager, this), channel2);
-        startConsumer(PLATFORM_MODIFICATION_REQUESTED_QUEUE, platformExchangeName, platformModificationRequestedRoutingKey,
-                new PlatformCreationRequestConsumer(channel3, repositoryManager, this), channel3);
-        startConsumer(RESOURCE_CREATION_REQUESTED_QUEUE, platformExchangeName, resourceCreationRequestedRoutingKey,
-                new PlatformCreationRequestConsumer(channel4, repositoryManager, this), channel4);
-        startConsumer(RESOURCE_REMOVAL_REQUESTED_QUEUE, platformExchangeName, resourceRemovalRequestedRoutingKey,
-                new PlatformCreationRequestConsumer(channel5, repositoryManager, this), channel5);
-        startConsumer(RESOURCE_MODIFICATION_REQUESTED_QUEUE, platformExchangeName, resourceModificationRequestedRoutingKey,
-                new PlatformCreationRequestConsumer(channel6, repositoryManager, this), channel6);
+    private void startConsumers() {
+        try {
+            startConsumerOfPlatformCreationMessages();
+            startConsumerOfResourceCreationMessages();
+            startConsumerOfPlatformRemovalMessages();
+            startConsumerOfResourceRemovalMessages();
+            startConsumerOfPlatformModificationMessages();
+            startConsumerOfResourceModificationMessages();
+        } catch (InterruptedException | IOException e) {
+            log.error(e);
+        }
     }
 
-    private void startConsumer(String queueName, String exchangeName, String routingKey, Consumer consumer, Channel channel) {
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfPlatformCreationMessages() throws InterruptedException, IOException {
+        Channel channel;
         try {
-            channel.queueDeclare(queueName, true, false, false, null);
-            channel.queueBind(queueName, exchangeName, routingKey);
+            channel = this.connection.createChannel();
+            channel.queueDeclare(PLATFORM_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for messages on queue \"" + queueName + "\"...");
+            log.info("Receiver waiting for Platform Creation messages....");
 
-            channel.basicConsume(queueName, false, consumer);
+            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfPlatformRemovalMessages() throws InterruptedException, IOException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(PLATFORM_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Platform Removal messages....");
+
+            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfPlatformModificationMessages() throws InterruptedException, IOException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(PLATFORM_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Platform Modification messages....");
+
+            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(PLATFORM_MODIFICATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfResourceCreationMessages() throws InterruptedException, IOException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Creation messages....");
+
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager);
+            channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfResourceRemovalMessages() throws InterruptedException, IOException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Removal messages....");
+
+            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    private void startConsumerOfResourceModificationMessages() throws InterruptedException, IOException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Modification messages....");
+
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager);
+            channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
 
     /**
      * Triggers sending message containing Platform accordingly to Operation Type.
