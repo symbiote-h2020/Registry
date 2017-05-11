@@ -132,8 +132,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     + resourceInstanceValidationResult.getMessage());
         }
 
-        if (operationType.equals(RegistryOperationType.MODIFICATION) &&
-                authorizationManager.checkIfResourcesBelongToPlatform
+        if (authorizationManager.checkIfResourcesBelongToPlatform
                 (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
             makePersistenceOperations(coreResources);
             prepareContentOfMessage();
