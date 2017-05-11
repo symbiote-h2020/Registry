@@ -108,6 +108,8 @@ public class RabbitManager {
     private String rdfResourceValidationRequestedRoutingKey; //dla RDFów
 
 
+    private Channel rpcChannel;
+
     @Autowired
     public RabbitManager(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) {
         this.repositoryManager = repositoryManager;
@@ -147,6 +149,8 @@ public class RabbitManager {
         if (connection != null) {
             try {
                 channel = this.connection.createChannel();
+
+                this.rpcChannel = connection.createChannel();
 
                 channel.exchangeDeclare(this.platformExchangeName,
                         this.platformExchangeType,
@@ -504,8 +508,7 @@ public class RabbitManager {
                                                 DescriptionType descriptionType, RegistryOperationType operationType,
                                                 String message, String platformId) {
         try {
-            Channel channel = this.connection.createChannel();
-            String replyQueueName = channel.queueDeclare().getQueue();
+            String replyQueueName = rpcChannel.queueDeclare().getQueue();
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -516,16 +519,16 @@ public class RabbitManager {
 
             ResourceValidationResponseConsumer responseConsumer =
                     new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this, platformId, operationType, descriptionType,
+                            rpcChannel, repositoryManager, this, platformId, operationType, descriptionType,
                             authorizationManager);
 
-            channel.basicConsume(replyQueueName, true, responseConsumer);
+            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
                     + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
                     + message);
 
-            channel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
+            rpcChannel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
         } catch (IOException e) {
             log.error(e);

@@ -14,8 +14,8 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * RPC Consumer waiting for messages from Semantic Manager. Acts accordingly to received validation/translation results.
  * Created when creation/modification of Resource action is triggered.
- *
+ * <p>
  * Created by mateuszl on 30.03.2017.
  */
 public class ResourceValidationResponseConsumer extends DefaultConsumer {
@@ -45,8 +45,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private String resourcesPlatformId;
     private RegistryOperationType operationType;
     private boolean bulkRequestSuccess = true;
-    private List<CoreResource> savedCoreResourcesList;
-    private List<RegistryPersistenceResult> persistenceOperationResultsList;
     private ObjectMapper mapper;
     private DescriptionType descriptionType;
     private String response;
@@ -80,7 +78,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.operationType = operationType;
         this.descriptionType = descriptionType;
         this.authorizationManager = authorizationManager;
-        this.persistenceOperationResultsList = new ArrayList<>();
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreResourceRegistryResponse();
         response = "";
@@ -134,8 +131,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         if (authorizationManager.checkIfResourcesBelongToPlatform
                 (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
-            makePersistenceOperations(coreResources);
-            prepareContentOfMessage();
+            List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
+            prepareContentOfMessage(persistenceOperationResultsList);
         } else {
             registryResponse.setStatus(400);
             registryResponse.setMessage("One of resources does not match with any Interworking Service in given platform!");
@@ -149,7 +146,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      *
      * @param coreResources
      */
-    private void makePersistenceOperations(List<CoreResource> coreResources) {
+    private List<RegistryPersistenceResult> makePersistenceOperations(List<CoreResource> coreResources) {
+        List<RegistryPersistenceResult> persistenceOperationResultsList = new ArrayList<>();
         switch (operationType) {
             case CREATION:
                 for (CoreResource resource : coreResources) {
@@ -177,18 +175,21 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         "Check list of response objects for details.");
             }
         }
+
+        return persistenceOperationResultsList;
     }
 
     /**
      * prepares content of message with bulk save result
      */
-    private void prepareContentOfMessage() {
+    private void prepareContentOfMessage(List<RegistryPersistenceResult> persistenceOperationResultsList) {
+        List<CoreResource> savedCoreResourcesList;
         if (bulkRequestSuccess) {
             savedCoreResourcesList = persistenceOperationResultsList.stream()
                     .map(RegistryPersistenceResult::getResource)
                     .collect(Collectors.toList());
 
-            sendFanoutMessage();
+            sendFanoutMessage(savedCoreResourcesList);
 
             log.info("Bulk operation successful! (" + this.operationType.toString() + ")");
             registryResponse.setStatus(200);
@@ -217,7 +218,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
     /**
      * Sending RPC response message with list of Resources (with IDs added if process succeed) and status code
-     //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
+     * //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
      */
     private void sendRpcResponse() {
         try {
@@ -236,7 +237,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     /**
      * Sends a Fanout message with payload constisting of modified resources list and its Platform Id.
      */
-    private void sendFanoutMessage() {
+    private void sendFanoutMessage(List<CoreResource> savedCoreResourcesList) {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreResourcesList);
         payload.setPlatformId(resourcesPlatformId);
