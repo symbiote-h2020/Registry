@@ -17,6 +17,7 @@ import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,6 +50,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private ObjectMapper mapper;
     private DescriptionType descriptionType;
     private String response;
+    private AuthorizationManager authorizationManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -66,7 +68,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                                               RabbitManager rabbitManager,
                                               String resourcesPlatformId,
                                               RegistryOperationType operationType,
-                                              DescriptionType descriptionType) {
+                                              DescriptionType descriptionType,
+                                              AuthorizationManager authorizationManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -76,6 +79,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.resourcesPlatformId = resourcesPlatformId;
         this.operationType = operationType;
         this.descriptionType = descriptionType;
+        this.authorizationManager = authorizationManager;
         this.persistenceOperationResultsList = new ArrayList<>();
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreResourceRegistryResponse();
@@ -128,37 +132,17 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     + resourceInstanceValidationResult.getMessage());
         }
 
-        if (checkPlatformAndInterworkingServices(coreResources)) {
-            log.info("Checking OK...");
+        if (operationType.equals(RegistryOperationType.MODIFICATION) &&
+                authorizationManager.checkIfResourcesBelongToPlatform
+                (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
             makePersistenceOperations(coreResources);
             prepareContentOfMessage();
         } else {
-            registryResponse.setStatus(500);
-            registryResponse.setMessage("There is no such platform or it has no Interworking Service with given URL");
+            registryResponse.setStatus(400);
+            registryResponse.setMessage("One of resources does not match with any Interworking Service in given platform!");
         }
 
         sendRpcResponse();
-    }
-
-    private boolean checkPlatformAndInterworkingServices(List<CoreResource> coreResources) {
-        log.info("Checking Platform And Interworking Services...");
-
-        /* TODO commented for tests
-        for (CoreResource resource : coreResources) {
-            //normalization of Interworking Services Urls
-            if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
-                    != "/".charAt(0)) {
-                resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
-            }
-            //performing check of given platform ID and IS URL
-            if (!repositoryManager.checkIfPlatformExistsAndHasInterworkingServiceUrl
-                    (resourcesPlatformId, resource.getInterworkingServiceURL())) {
-                return false;
-            }
-        }
-        */
-
-        return true;
     }
 
     /**

@@ -98,7 +98,6 @@ public class AuthorizationManager {
     }
 
     public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId){
-
         List<InterworkingService> interworkingServices = platformRepository.findOne(platformId).getInterworkingServices();
         List<String> platformInterworkingServicesUrls = interworkingServices.stream()
                 .map(InterworkingService::getUrl)

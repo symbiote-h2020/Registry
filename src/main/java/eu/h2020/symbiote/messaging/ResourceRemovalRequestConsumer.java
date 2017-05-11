@@ -123,8 +123,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (!authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId())) {
-            log.error("One of resources does not match with any Interworking Service in given platform!");
-            response.setMessage("One of resources does not match with any Interworking Service in given platform!");
+            log.error("One of resources does not match with any Interworking Service in given platform!" + resources);
+            response.setMessage("One of resources does not match with any Interworking Service in given platform!" + resources);
             response.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             log.info("- rpc response message sent. Content: " + response);

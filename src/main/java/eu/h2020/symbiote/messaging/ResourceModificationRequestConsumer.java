@@ -31,8 +31,8 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel           the channel to which this consumer is attached
-     * @param rabbitManager     rabbit manager bean passed for access to messages manager
+     * @param channel       the channel to which this consumer is attached
+     * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
     public ResourceModificationRequestConsumer(Channel channel,
                                                RabbitManager rabbitManager,
@@ -58,7 +58,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
-        CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
+        CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
 
         log.info(" [x] Received resources to modify (CoreResourceRegistryRequest):'" + message + "'");
@@ -68,34 +68,41 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException e) {
             log.error("Unable to get CoreResourceRegistryRequest from Message body!", e);
-            registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-            registryResponse.setMessage("Content invalid. Could not deserialize. Resources not modified!");
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
+            response.setStatus(HttpStatus.SC_BAD_REQUEST);
+            response.setMessage("Content invalid. Could not deserialize. Resources not modified!");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+            return;
         }
 
         if (request != null) {
-            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
-                //contact with Semantic Manager accordingly to Type of object Description received
-                switch (request.getDescriptionType()) {
-                    case RDF:
-                        log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
-                        //sending RDF content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                                message, request.getPlatformId(), RegistryOperationType.MODIFICATION);
-                        break;
-                    case BASIC:
-                        log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
-                        //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                message, request.getPlatformId(), RegistryOperationType.MODIFICATION);
-                        break;
-                }
-            } else {
+            if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
                 log.error("Token invalid");
-                registryResponse.setStatus(400);
-                registryResponse.setMessage("Token invalid");
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
+                response.setStatus(400);
+                response.setMessage("Token invalid");
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             }
+        } else {
+            log.error("Request is null!");
+            response.setStatus(400);
+            response.setMessage("Request is null!");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+            return;
+        }
+
+        //contact with Semantic Manager accordingly to Type of object Description received
+        switch (request.getDescriptionType()) {
+            case RDF:
+                log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
+                //sending RDF content to Semantic Manager and passing responsibility to another consumer
+                rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
+                        message, request.getPlatformId(), RegistryOperationType.MODIFICATION);
+                break;
+            case BASIC:
+                log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
+                //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
+                        message, request.getPlatformId(), RegistryOperationType.MODIFICATION);
+                break;
         }
     }
 }

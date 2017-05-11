@@ -516,7 +516,8 @@ public class RabbitManager {
 
             ResourceValidationResponseConsumer responseConsumer =
                     new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            channel, repositoryManager, this, platformId, operationType, descriptionType);
+                            channel, repositoryManager, this, platformId, operationType, descriptionType,
+                            authorizationManager);
 
             channel.basicConsume(replyQueueName, true, responseConsumer);
 
