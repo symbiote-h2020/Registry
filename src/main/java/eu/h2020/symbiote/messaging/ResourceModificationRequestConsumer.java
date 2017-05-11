@@ -74,7 +74,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (authorizationManager.checkAccess(request.getToken(), request.getPlatformId())) {
+            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:

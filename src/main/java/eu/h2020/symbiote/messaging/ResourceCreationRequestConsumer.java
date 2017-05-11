@@ -78,45 +78,48 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (authorizationManager.checkAccess(request.getToken(), request.getPlatformId())) {
-                if (request.getBody() != null) {
-                    //contact with Semantic Manager accordingly to Type of object Description received
-                    switch (request.getDescriptionType()) {
-                        case RDF:
-                            log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
-                            //sending RDF content to Semantic Manager and passing responsibility to another consumer
-                            rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                                    message, request.getPlatformId(), RegistryOperationType.CREATION);
-                            break;
-                        case BASIC:
-                            if (checkIfResourcesHaveNullOrEmptyId(request)) {
-                                log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
-                                //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                                rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                        message, request.getPlatformId(), RegistryOperationType.CREATION);
-                            } else {
-                                log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
-                                registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                                registryResponse.setMessage("One of the resources has ID or list with resources is invalid. Resources not created!");
-                                rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                                        mapper.writeValueAsString(registryResponse));
-                            }
-                            break;
-                    }
-                } else {
-                    log.error("Message body is null!");
-                    registryResponse.setStatus(400);
-                    registryResponse.setMessage("Message body is null!");
-                    rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                            mapper.writeValueAsString(registryResponse));
-                }
-            } else {
+            //checking access by token verification
+            if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
                 log.error("Token invalid");
                 registryResponse.setStatus(400);
                 registryResponse.setMessage("Token invalid");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(registryResponse));
+                return;
             }
+
+            if (request.getBody() != null) {
+                //contact with Semantic Manager accordingly to Type of object Description received
+                switch (request.getDescriptionType()) {
+                    case RDF:
+                        log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
+                        //sending RDF content to Semantic Manager and passing responsibility to another consumer
+                        rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
+                                message, request.getPlatformId(), RegistryOperationType.CREATION);
+                        break;
+                    case BASIC:
+                        if (checkIfResourcesHaveNullOrEmptyId(request)) {
+                            log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
+                            //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                            rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
+                                    message, request.getPlatformId(), RegistryOperationType.CREATION);
+                        } else {
+                            log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
+                            registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+                            registryResponse.setMessage("One of the resources has ID or list with resources is invalid. Resources not created!");
+                            rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                                    mapper.writeValueAsString(registryResponse));
+                        }
+                        break;
+                }
+            } else {
+                log.error("Message body is null!");
+                registryResponse.setStatus(400);
+                registryResponse.setMessage("Message body is null!");
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                        mapper.writeValueAsString(registryResponse));
+            }
+
         }
     }
 

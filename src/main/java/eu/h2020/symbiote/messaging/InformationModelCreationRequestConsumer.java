@@ -104,7 +104,7 @@ public class InformationModelCreationRequestConsumer {
 //    private InformationModel getInformationModel(CoreResourceRegistryRequest request) throws IOException {
 //        InformationModel informationModel = new InformationModel();
 //
-//        if (authorizationManager.checkAccess(request.getToken())) {
+//        if (authorizationManager.checkResourceOperationAccess(request.getToken())) {
 //            switch (request.getDescriptionType()) {
 //                case RDF:
 //                    informationModel = getInformationModelFromRdf(request);

@@ -1,6 +1,9 @@
 package eu.h2020.symbiote.utils;
 
+import eu.h2020.symbiote.core.model.InterworkingService;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.repository.PlatformRepository;
+import eu.h2020.symbiote.repository.ResourceRepository;
 import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
 import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
@@ -16,7 +19,9 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Component responsible for dealing with Symbiote Tokens and checking access right for requests.
@@ -29,24 +34,25 @@ public class AuthorizationManager {
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     private SecurityHandler securityHandler;
     private PlatformRepository platformRepository;
+    private ResourceRepository resourceRepository;
 
     @Autowired
-    public AuthorizationManager(SecurityHandler securityHandler, PlatformRepository platformRepository) {
+    public AuthorizationManager(SecurityHandler securityHandler, PlatformRepository platformRepository,
+                                ResourceRepository resourceRepository) {
         this.securityHandler = securityHandler;
         this.platformRepository = platformRepository;
+        this.resourceRepository = resourceRepository;
     }
 
-    public boolean checkAccess(String tokenString, String platformId) {
+    public boolean checkResourceOperationAccess(String tokenString, String platformId) {
         log.info("Received Token to verification: " + tokenString);
 
         JWTClaims claims;
 
-        /* FIXME Platform verification disabled for now..
         if (platformRepository.findOne(platformId) == null) {
             log.error("Given platform does not exist");
             return false;
         }
-        */
 
         try {
             Token token = securityHandler.verifyCoreToken(tokenString);
@@ -88,6 +94,23 @@ public class AuthorizationManager {
             log.error("Platform owner does not match with requested operation!");
             return false;
         }
+        return true;
+    }
+
+    public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId){
+
+        List<InterworkingService> interworkingServices = platformRepository.findOne(platformId).getInterworkingServices();
+        List<String> platformInterworkingServicesUrls = interworkingServices.stream()
+                .map(InterworkingService::getUrl)
+                .collect(Collectors.toList());
+
+        for (Resource resource : resources) {
+            if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())){
+                log.error("Resource does not match with any Interworking Service in given platform! " + resource);
+                return false;
+            }
+        }
+
         return true;
     }
 }

@@ -94,7 +94,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (authorizationManager.checkAccess(request.getToken(), request.getPlatformId())) {
+            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
                 try {
                     resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
                     });
@@ -107,13 +107,34 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 log.error("Token invalid");
                 response.setStatus(400);
                 response.setMessage("Token invalid");
+
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                log.info("- rpc response message sent. Content: " + response);
+                return;
             }
+        } else {
+            log.error("Request is null");
+            response.setStatus(400);
+            response.setMessage("Request is null");
+
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+            log.info("- rpc response message sent. Content: " + response);
+            return;
+        }
+
+        if (!authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId())) {
+            log.error("One of resources does not match with any Interworking Service in given platform!");
+            response.setMessage("One of resources does not match with any Interworking Service in given platform!");
+            response.setStatus(400);
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+            log.info("- rpc response message sent. Content: " + response);
+            return;
         }
 
         for (Resource resource : resources) {
             if (resource == null) {
-                log.error("Resources list contains a NULL resource!");
-                response.setMessage("Resources list contains a NULL resource!");
+                log.error("Resources list contains a NULL resource!" + resources);
+                response.setMessage("Resources list contains a NULL resource!" + resources);
                 response.setStatus(410);
             } else {
                 if (resource.getId() != null || !resource.getId().isEmpty()) {
@@ -150,8 +171,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         log.info("- rpc response message sent. Content: " + response);
-        resourceRemovalResultList.clear();
-        resourcesRemoved.clear();
     }
 
     private void sendFanoutMessage(String platformId) {

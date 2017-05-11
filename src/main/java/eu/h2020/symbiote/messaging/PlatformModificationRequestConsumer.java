@@ -116,7 +116,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         try {
             request = gson.fromJson(message, RegistryRequest.class);
-            if (authorizationManager.checkAccess(request.getToken())) {
+            if (authorizationManager.checkResourceOperationAccess(request.getToken())) {
                 switch (request.getType()) {
                     case RDF:
                         try {

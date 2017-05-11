@@ -126,7 +126,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (authorizationManager.checkAccess(request.getToken())) {
+            if (authorizationManager.checkResourceOperationAccess(request.getToken())) {
                 try {
                     platforms = gson.fromJson(request.getBody(), listType);
                 } catch (JsonSyntaxException e) {
