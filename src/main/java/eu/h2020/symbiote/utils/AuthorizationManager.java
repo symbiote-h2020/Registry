@@ -63,9 +63,9 @@ public class AuthorizationManager {
             return false;
         } catch (SecurityHandlerDisabledException e) {
             log.info("Security Handler is disabled", e);
-            return true;
         } catch (Exception e) {
             log.error(e);
+            return false;
         }
 
         try {
