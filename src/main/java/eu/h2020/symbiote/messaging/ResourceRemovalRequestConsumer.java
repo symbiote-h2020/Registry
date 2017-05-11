@@ -166,11 +166,12 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     }
 
     private void sendFanoutMessage(List<RegistryPersistenceResult> resourceRemovalResultList) {
-        List<CoreResource> coreResources = resourceRemovalResultList.stream()
+        List<String> resourcesIds = resourceRemovalResultList.stream()
                 .map(RegistryPersistenceResult::getResource)
+                .map(CoreResource::getId)
                 .collect(Collectors.toList());
 
-        rabbitManager.sendResourcesRemovalMessage(coreResources);
+        rabbitManager.sendResourcesRemovalMessage(resourcesIds);
     }
 
     private boolean checkIfRemovalWasSuccessful(List<RegistryPersistenceResult> resourceRemovalResultList,

@@ -7,8 +7,6 @@ import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -441,17 +439,17 @@ public class RabbitManager {
         }
     }
 
-    public void sendResourcesRemovalMessage(List<CoreResource> coreResources){
+    public void sendResourcesRemovalMessage(List<String> resourcesIds){
         ObjectMapper mapper = new ObjectMapper();
         String message = "";
         try {
-            message = mapper.writerFor(new TypeReference<List<Resource>>() {
-            }).writeValueAsString(coreResources);
+            message = mapper.writerFor(new TypeReference<List<String>>() {
+            }).writeValueAsString(resourcesIds);
         } catch (JsonProcessingException e) {
             log.error(e);
         }
         sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
-                message.getClass().getCanonicalName());
+                resourcesIds.getClass().getCanonicalName());
     }
 
     public void sendResourceRdfValidationRpcMessage(DefaultConsumer rpcConsumer,
