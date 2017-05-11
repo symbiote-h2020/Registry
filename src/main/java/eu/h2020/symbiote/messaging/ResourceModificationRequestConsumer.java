@@ -80,6 +80,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 response.setStatus(400);
                 response.setMessage("Token invalid");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                return;
             }
         } else {
             log.error("Request is null!");
