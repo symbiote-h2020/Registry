@@ -40,6 +40,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     private List<Resource> resourcesRemoved;
     private List<Resource> resources;
 
+    //todo SEND BACK LIST WITH ONLY IDs instead of full resources!
+
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
