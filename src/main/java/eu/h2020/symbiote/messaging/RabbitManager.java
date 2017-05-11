@@ -568,6 +568,7 @@ public class RabbitManager {
                     .headers(headers)
                     .build();
 
+            log.info("Sending message. Content: " + message);
             channel.basicPublish(exchange, routingKey, props, message.getBytes());
         } catch (IOException e) {
             log.error(e);

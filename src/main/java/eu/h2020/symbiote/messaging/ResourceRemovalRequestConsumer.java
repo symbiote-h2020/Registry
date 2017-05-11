@@ -171,6 +171,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 .map(CoreResource::getId)
                 .collect(Collectors.toList());
 
+        log.info("Sending fanout message with content: " + resourcesIds);
+
         rabbitManager.sendResourcesRemovalMessage(resourcesIds);
     }
 
