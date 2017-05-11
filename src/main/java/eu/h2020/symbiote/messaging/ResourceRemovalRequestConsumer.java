@@ -36,9 +36,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
-    private List<RegistryPersistenceResult> resourceRemovalResultList;
-    private List<Resource> resourcesRemoved;
-    private List<Resource> resources;
 
     //todo SEND BACK LIST WITH ONLY IDs instead of full resources!
 
@@ -58,9 +55,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
-        resourceRemovalResultList = new ArrayList<>();
-        resourcesRemoved = new ArrayList<>();
-        resources = new ArrayList<>();
     }
 
     /**
@@ -78,6 +72,12 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         ObjectMapper mapper = new ObjectMapper();
+
+
+        List<RegistryPersistenceResult> resourceRemovalResultList = new ArrayList<>();
+        List<Resource> resourcesRemoved = new ArrayList<>();
+        List<Resource> resources = new ArrayList<>();
+
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
@@ -148,8 +148,8 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             }
         }
 
-        if (checkIfRemovalWasSuccessful()) {
-            sendFanoutMessage(request.getPlatformId());
+        if (checkIfRemovalWasSuccessful(resourceRemovalResultList, resourcesRemoved, resources)) {
+            sendFanoutMessage(request.getPlatformId(), resourceRemovalResultList);
 
             response.setMessage("Success");
             response.setStatus(200);
@@ -173,7 +173,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         log.info("- rpc response message sent. Content: " + response);
     }
 
-    private void sendFanoutMessage(String platformId) {
+    private void sendFanoutMessage(String platformId, List<RegistryPersistenceResult> resourceRemovalResultList) {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(resourceRemovalResultList.stream()
                 .map(RegistryPersistenceResult::getResource)
@@ -183,20 +183,21 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendResourceOperationMessage(payload, RegistryOperationType.REMOVAL);
     }
 
-    private boolean checkIfRemovalWasSuccessful() {
+    private boolean checkIfRemovalWasSuccessful(List<RegistryPersistenceResult> resourceRemovalResultList,
+                                                List<Resource> resourcesRemoved, List<Resource> resources) {
         for (RegistryPersistenceResult result : resourceRemovalResultList) {
             if (result.getStatus() == 200) {
                 resourcesRemoved.add(result.getResource());
             }
         }
         if (resourcesRemoved.size() != resources.size()) {
-            rollback();
+            rollback(resourcesRemoved);
             return false;
         }
         return true;
     }
 
-    private void rollback() {
+    private void rollback(List<Resource> resourcesRemoved) {
         for (Resource resource : resourcesRemoved) {
             this.repositoryManager.saveResource(RegistryUtils.convertResourceToCoreResource(resource));
             log.info("Removed resources rollback performed.");
