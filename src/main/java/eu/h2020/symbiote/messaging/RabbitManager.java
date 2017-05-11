@@ -1,11 +1,14 @@
 package eu.h2020.symbiote.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
@@ -430,15 +434,24 @@ public class RabbitManager {
                     sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,
                             payload.getClass().getCanonicalName());
                     break;
-                case REMOVAL:
-                    sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
-                    break;
             }
             log.info("- resources operation (" + operationType + ") message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
             log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
         }
+    }
+
+    public void sendResourcesRemovalMessage(List<CoreResource> coreResources){
+        ObjectMapper mapper = new ObjectMapper();
+        String message = "";
+        try {
+            message = mapper.writerFor(new TypeReference<List<Resource>>() {
+            }).writeValueAsString(coreResources);
+        } catch (JsonProcessingException e) {
+            log.error(e);
+        }
+        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
+                message.getClass().getCanonicalName());
     }
 
     public void sendResourceRdfValidationRpcMessage(DefaultConsumer rpcConsumer,

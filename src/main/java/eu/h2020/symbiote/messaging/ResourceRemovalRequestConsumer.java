@@ -7,12 +7,11 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
@@ -33,6 +32,7 @@ import java.util.stream.Collectors;
 public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceRemovalRequestConsumer.class);
+    ObjectMapper mapper;
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
@@ -55,6 +55,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
+        this.mapper = new ObjectMapper();
     }
 
     /**
@@ -71,9 +72,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-
-
         List<RegistryPersistenceResult> resourceRemovalResultList = new ArrayList<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
         List<Resource> resources = new ArrayList<>();
@@ -107,18 +105,14 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 log.error("Token invalid");
                 response.setStatus(400);
                 response.setMessage("Token invalid");
-
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-                log.info("- rpc response message sent. Content: " + response);
                 return;
             }
         } else {
             log.error("Request is null");
             response.setStatus(400);
             response.setMessage("Request is null");
-
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-            log.info("- rpc response message sent. Content: " + response);
             return;
         }
 
@@ -127,7 +121,6 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             response.setMessage("One of resources does not match with any Interworking Service in given platform!" + resources);
             response.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-            log.info("- rpc response message sent. Content: " + response);
             return;
         }
 
@@ -149,7 +142,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (checkIfRemovalWasSuccessful(resourceRemovalResultList, resourcesRemoved, resources)) {
-            sendFanoutMessage(request.getPlatformId(), resourceRemovalResultList);
+            sendFanoutMessage(resourceRemovalResultList);
 
             response.setMessage("Success");
             response.setStatus(200);
@@ -170,17 +163,14 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         );
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-        log.info("- rpc response message sent. Content: " + response);
     }
 
-    private void sendFanoutMessage(String platformId, List<RegistryPersistenceResult> resourceRemovalResultList) {
-        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
-        payload.setResources(resourceRemovalResultList.stream()
+    private void sendFanoutMessage(List<RegistryPersistenceResult> resourceRemovalResultList) {
+        List<CoreResource> coreResources = resourceRemovalResultList.stream()
                 .map(RegistryPersistenceResult::getResource)
-                .collect(Collectors.toList()));
-        payload.setPlatformId(platformId);
+                .collect(Collectors.toList());
 
-        rabbitManager.sendResourceOperationMessage(payload, RegistryOperationType.REMOVAL);
+        rabbitManager.sendResourcesRemovalMessage(coreResources);
     }
 
     private boolean checkIfRemovalWasSuccessful(List<RegistryPersistenceResult> resourceRemovalResultList,
