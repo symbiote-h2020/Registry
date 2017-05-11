@@ -171,6 +171,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
             if (persistenceResult.getStatus() != 200) {
                 this.bulkRequestSuccess = false;
+                log.error("One (or more) of resources could not be processed. " +
+                        "Check list of response objects for details.");
                 registryResponse.setStatus(500);
                 registryResponse.setMessage("One (or more) of resources could not be processed. " +
                         "Check list of response objects for details.");
@@ -189,6 +191,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
             sendFanoutMessage();
 
+            log.info("Bulk operation successful! (" + this.operationType.toString() + ")");
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
 
@@ -207,8 +210,9 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     rollback(persistenceResult.getResource());
                 }
             }
+            log.error("Bulk request ERROR");
             registryResponse.setStatus(500);
-            registryResponse.setMessage("BULK SAVE ERROR");
+            registryResponse.setMessage("Bulk request ERROR");
         }
     }
 
@@ -252,6 +256,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 repositoryManager.removeResource(resource);
                 break;
             case MODIFICATION:
+                log.error("ROLLBACK NOT IMPLEMENTED!");
                 //todo ??
                 break;
         }

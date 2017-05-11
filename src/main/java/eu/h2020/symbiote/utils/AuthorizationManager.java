@@ -2,6 +2,7 @@ package eu.h2020.symbiote.utils;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import eu.h2020.symbiote.security.SecurityHandler;
@@ -97,19 +98,33 @@ public class AuthorizationManager {
         return true;
     }
 
-    public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId){
-        List<InterworkingService> interworkingServices = platformRepository.findOne(platformId).getInterworkingServices();
+    public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
+        Platform platform = platformRepository.findOne(platformId);
+
+        if (platform == null) {
+            log.error("Given platform does not exists in database");
+            return false;
+        }
+
+        List<InterworkingService> interworkingServices = platform.getInterworkingServices();
+
+        if (interworkingServices == null) {
+            log.error("Interworking services list in given platform is null");
+            return false;
+        }
+
         List<String> platformInterworkingServicesUrls = interworkingServices.stream()
                 .map(InterworkingService::getUrl)
                 .collect(Collectors.toList());
 
         for (Resource resource : resources) {
-            if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())){
+            if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())) {
                 log.error("Resource does not match with any Interworking Service in given platform! " + resource);
                 return false;
             }
         }
 
+        log.info("Interworking services check succeed!");
         return true;
     }
 }
