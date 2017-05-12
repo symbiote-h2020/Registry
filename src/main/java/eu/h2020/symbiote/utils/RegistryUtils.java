@@ -87,7 +87,7 @@ public class RegistryUtils {
      * @return true if it has all the fields and neither is empty.
      */
     public static boolean validateFields(InformationModel informationModel) {
-        //todo for next release extend validation to all fields
+        //todo for release 3. extend validation to all fields
         boolean b;
         if (informationModel.getBody() == null || informationModel.getFormat() == null ||
                 informationModel.getUri() == null) {

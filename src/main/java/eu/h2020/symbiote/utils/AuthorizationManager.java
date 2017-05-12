@@ -4,7 +4,6 @@ import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
-import eu.h2020.symbiote.repository.ResourceRepository;
 import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
 import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
@@ -35,14 +34,11 @@ public class AuthorizationManager {
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     private SecurityHandler securityHandler;
     private PlatformRepository platformRepository;
-    private ResourceRepository resourceRepository;
 
     @Autowired
-    public AuthorizationManager(SecurityHandler securityHandler, PlatformRepository platformRepository,
-                                ResourceRepository resourceRepository) {
+    public AuthorizationManager(SecurityHandler securityHandler, PlatformRepository platformRepository) {
         this.securityHandler = securityHandler;
         this.platformRepository = platformRepository;
-        this.resourceRepository = resourceRepository;
     }
 
     public boolean checkResourceOperationAccess(String tokenString, String platformId) {

@@ -39,7 +39,7 @@ public class RabbitManager {
 
     //// TODO: 09.05.2017 REFACTOR
 
-    //// TODO for next release: 27.03.2017 prepare and start Information Model queues and Consumers
+    //// TODO for release 3.: 27.03.2017 prepare and start Information Model queues and Consumers
 
     public static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
     public static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
@@ -511,7 +511,7 @@ public class RabbitManager {
     }
 
     public void sendInformationModelCreatedMessage(InformationModel informationModel) {
-        //// TODO for next release: 27.03.2017
+        //// TODO for release 3.: 27.03.2017
     }
 
 
