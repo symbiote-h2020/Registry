@@ -505,7 +505,7 @@ public class RabbitManager {
             consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
             log.info("- RPC reply Message sent back! Content: " + response);
         } else {
-            log.warn("Received RPC message without ReplyTo or CorrelationId props.");
+            log.error("Received RPC message without ReplyTo or CorrelationId props.");
         }
         consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
@@ -545,6 +545,11 @@ public class RabbitManager {
         } catch (IOException e) {
             log.error(e);
         }
+    }
+
+    public void closeConsumer (DefaultConsumer consumerToClose, Channel channel) throws IOException {
+
+        channel.basicCancel(consumerToClose.getConsumerTag());
     }
 
     /**

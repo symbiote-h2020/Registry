@@ -229,6 +229,9 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
+
+            rabbitManager.closeConsumer(this, this.getChannel());
+
         } catch (IOException e) {
             log.error(e);
         }
