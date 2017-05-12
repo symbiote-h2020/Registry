@@ -125,7 +125,6 @@ public class RegistryUtils {
      * @return
      */
     public static Resource convertCoreResourceToResource(CoreResource coreResource) {
-        System.out.println("Core resource to convert: " + coreResource);
         Resource resource = new Resource();
         if (coreResource.getId() != null) resource.setId(coreResource.getId());
         resource.setComments(coreResource.getComments());

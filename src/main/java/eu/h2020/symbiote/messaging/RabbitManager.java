@@ -370,7 +370,8 @@ public class RabbitManager {
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceModificationRequestedRoutingKey);
+            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
+                    this.resourceModificationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Resource Modification messages....");
@@ -448,7 +449,7 @@ public class RabbitManager {
         } catch (JsonProcessingException e) {
             log.error(e);
         }
-        sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
+        sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
                 resourcesIds.getClass().getCanonicalName());
     }
 
