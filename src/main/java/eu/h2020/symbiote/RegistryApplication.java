@@ -46,7 +46,7 @@ public class RegistryApplication {
     @Bean
     public SecurityHandler securityHandler() {
         SecurityHandler securityHandler
-                = new SecurityHandler(coreAAMUrl, rabbitHost, rabbitUsername, rabbitPassword, securityEnabled);
+                = new SecurityHandler(coreAAMUrl, rabbitHost, rabbitUsername, rabbitPassword);
         return securityHandler;
     }
 

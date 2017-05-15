@@ -10,7 +10,6 @@ import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
 import eu.h2020.symbiote.security.enums.UserRole;
 import eu.h2020.symbiote.security.exceptions.aam.MalformedJWTException;
 import eu.h2020.symbiote.security.exceptions.aam.TokenValidationException;
-import eu.h2020.symbiote.security.exceptions.sh.SecurityHandlerDisabledException;
 import eu.h2020.symbiote.security.token.Token;
 import eu.h2020.symbiote.security.token.jwt.JWTClaims;
 import eu.h2020.symbiote.security.token.jwt.JWTEngine;
@@ -52,13 +51,14 @@ public class AuthorizationManager {
         }
 
         try {
-            Token token = securityHandler.verifyCoreToken(tokenString);
-            log.info("Token " + token + " was verified");
+            Token token = new Token(tokenString);
+            securityHandler.verifyCoreToken(token);
+            log.info("Token " + token.getToken() + " was verified");
         } catch (TokenValidationException e) {
             log.error("Token could not be verified", e);
             return false;
-        } catch (SecurityHandlerDisabledException e) {
-            log.info("Security Handler is disabled", e);
+//        } catch (SecurityHandlerDisabledException e) {
+//            log.info("Security Handler is disabled", e);
         } catch (Exception e) {
             log.error(e);
             return false;
