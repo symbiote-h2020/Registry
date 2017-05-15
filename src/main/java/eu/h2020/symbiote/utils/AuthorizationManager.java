@@ -8,6 +8,7 @@ import eu.h2020.symbiote.security.SecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
 import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
 import eu.h2020.symbiote.security.enums.UserRole;
+import eu.h2020.symbiote.security.enums.ValidationStatus;
 import eu.h2020.symbiote.security.exceptions.aam.MalformedJWTException;
 import eu.h2020.symbiote.security.exceptions.aam.TokenValidationException;
 import eu.h2020.symbiote.security.token.Token;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static eu.h2020.symbiote.security.enums.ValidationStatus.VALID;
 
 /**
  * Component responsible for dealing with Symbiote Tokens and checking access right for requests.
@@ -50,17 +53,17 @@ public class AuthorizationManager {
             return false;
         }
 
+        Token token;
         try {
-            Token token = new Token(tokenString);
-            securityHandler.verifyCoreToken(token);
-            log.info("Token " + token.getToken() + " was verified");
+            token = new Token(tokenString);
         } catch (TokenValidationException e) {
             log.error("Token could not be verified", e);
             return false;
-//        } catch (SecurityHandlerDisabledException e) {
-//            log.info("Security Handler is disabled", e);
-        } catch (Exception e) {
-            log.error(e);
+        }
+        ValidationStatus validationStatus = securityHandler.verifyCoreToken(token);
+
+        if (validationStatus != VALID) {
+            log.error("Token failed verification due to " + validationStatus);
             return false;
         }
 
