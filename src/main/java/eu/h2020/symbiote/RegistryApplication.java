@@ -23,10 +23,8 @@ import org.springframework.stereotype.Component;
 public class RegistryApplication {
 
     private static Log log = LogFactory.getLog(RegistryApplication.class);
-    @Value("${symbiote.coreaam.url}")
+    @Value("${aam.environment.coreInterfaceAddress}")
     private String coreAAMUrl;
-    @Value("${security.enabled}")
-    private boolean securityEnabled;
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
