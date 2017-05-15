@@ -13,10 +13,10 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories
 class AppConfig extends AbstractMongoConfiguration {
 
-    @Value("${symbiote.registry.mongo.dbname}")
+    @Value("${symbiote.mongo.dbname.registry}")
     private String databaseName;
 
-    @Value("${symbiote.registry.mongo.host}")
+    @Value("${symbiote.mongo.host}")
     private String mongoHost;
 
     @Override
