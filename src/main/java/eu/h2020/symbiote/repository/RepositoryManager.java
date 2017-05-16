@@ -1,9 +1,11 @@
 package eu.h2020.symbiote.repository;
 
-import eu.h2020.symbiote.core.model.InterworkingService;
+import eu.h2020.symbiote.core.model.*;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.*;
+import eu.h2020.symbiote.model.InformationModel;
+import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -150,14 +152,14 @@ public class RepositoryManager {
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
-                copyExistingPlatformData(platform, foundPlatform);
+                Platform modifiedPlatform = copyExistingPlatformData(platform, foundPlatform);
 
-                platformRepository.save(platform);
-                log.info("Platform with id: " + platform.getId() + " modified !");
+                platformRepository.save(modifiedPlatform);
+                log.info("Platform with id: " + modifiedPlatform.getId() + " modified !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setMessage("OK");
-                platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(platform));
+                platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(modifiedPlatform));
             } catch (Exception e) {
                 log.error("Error occurred during Platform modifying in db", e);
                 platformResponse.setMessage("Error occurred during Platform modifying in db");
@@ -167,15 +169,17 @@ public class RepositoryManager {
         return platformResponse;
     }
 
-    private void copyExistingPlatformData(Platform platform, Platform foundPlatform) {
-        if (platform.getComments() == null && foundPlatform.getComments() != null)
+    private Platform copyExistingPlatformData(Platform platform, Platform foundPlatform) {
+        if ((platform.getComments() == null || platform.getComments().isEmpty()) && foundPlatform.getComments() != null)
             platform.setComments(foundPlatform.getComments());
         if (platform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
             platform.setRdfFormat(foundPlatform.getRdfFormat());
-        if (platform.getLabels() == null && foundPlatform.getLabels() != null)
+        if ((platform.getLabels() == null || platform.getLabels().isEmpty()) && foundPlatform.getLabels() != null)
             platform.setLabels(foundPlatform.getLabels());
         if (platform.getBody() == null && foundPlatform.getBody() != null)
             platform.setBody(foundPlatform.getBody());
+
+        return platform;
     }
 
     /**
