@@ -48,11 +48,10 @@ public class AuthorizationManager {
 
         JWTClaims claims;
 
-//todo odkomentowac!!!
-//        if (platformRepository.findOne(platformId) == null) {
-//            log.error("Given platform does not exist");
-//            return false;
-//        }
+        if (platformRepository.findOne(platformId) == null) {
+            log.error("Given platform does not exist");
+            return false;
+        }
 
         Token token;
         try {
