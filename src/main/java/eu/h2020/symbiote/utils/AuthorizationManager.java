@@ -4,7 +4,7 @@ import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
-import eu.h2020.symbiote.security.SecurityHandler;
+import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
 import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
 import eu.h2020.symbiote.security.enums.UserRole;
@@ -34,11 +34,11 @@ import static eu.h2020.symbiote.security.enums.ValidationStatus.VALID;
 public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
-    private SecurityHandler securityHandler;
+    private InternalSecurityHandler securityHandler;
     private PlatformRepository platformRepository;
 
     @Autowired
-    public AuthorizationManager(SecurityHandler securityHandler, PlatformRepository platformRepository) {
+    public AuthorizationManager(InternalSecurityHandler securityHandler, PlatformRepository platformRepository) {
         this.securityHandler = securityHandler;
         this.platformRepository = platformRepository;
     }
@@ -60,7 +60,7 @@ public class AuthorizationManager {
             log.error("Token could not be verified", e);
             return false;
         }
-        ValidationStatus validationStatus = securityHandler.verifyCoreToken(token);
+        ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
 
         if (validationStatus != VALID) {
             log.error("Token failed verification due to " + validationStatus);
@@ -113,8 +113,8 @@ public class AuthorizationManager {
         }
 
         List<String> platformInterworkingServicesUrls = interworkingServices.stream()
-                .map(InterworkingService::getUrl)
-                .collect(Collectors.toList());
+            .map(InterworkingService::getUrl)
+            .collect(Collectors.toList());
 
         for (Resource resource : resources) {
             if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())) {

@@ -1,7 +1,7 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.security.SecurityHandler;
+import eu.h2020.symbiote.security.InternalSecurityHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +42,9 @@ public class RegistryApplication {
     }
 
     @Bean
-    public SecurityHandler securityHandler() {
-        SecurityHandler securityHandler
-                = new SecurityHandler(coreAAMUrl, rabbitHost, rabbitUsername, rabbitPassword);
+    public InternalSecurityHandler securityHandler() {
+        InternalSecurityHandler securityHandler
+            = new InternalSecurityHandler(coreAAMUrl, rabbitHost, rabbitUsername, rabbitPassword);
         return securityHandler;
     }
 
