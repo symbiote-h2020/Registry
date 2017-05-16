@@ -123,20 +123,22 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             } catch (JsonSyntaxException e) {
                 log.error("Unable to get Resources List from semantic response body!", e);
             }
+
+            if (authorizationManager.checkIfResourcesBelongToPlatform
+                    (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
+                List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
+                prepareContentOfMessage(persistenceOperationResultsList);
+            } else {
+                registryResponse.setStatus(400);
+                registryResponse.setMessage("One of resources does not match with any Interworking Service in given platform!");
+            }
+
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("Validation Error. Semantic Manager message: "
                     + resourceInstanceValidationResult.getMessage());
         }
 
-        if (authorizationManager.checkIfResourcesBelongToPlatform
-                (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
-            List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
-            prepareContentOfMessage(persistenceOperationResultsList);
-        } else {
-            registryResponse.setStatus(400);
-            registryResponse.setMessage("One of resources does not match with any Interworking Service in given platform!");
-        }
 
         sendRpcResponse();
     }
