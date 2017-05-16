@@ -179,7 +179,7 @@ public class RepositoryManager {
         if (platform.getBody() == null && foundPlatform.getBody() != null)
             platform.setBody(foundPlatform.getBody());
         if ((platform.getInterworkingServices() == null || platform.getInterworkingServices().isEmpty() ||
-                platform.getInterworkingServices().get( 0 ) == null) && foundPlatform.getInterworkingServices() != null)
+                platform.getInterworkingServices().get( 0 ).getUrl() == null) && foundPlatform.getInterworkingServices() != null)
             platform.setInterworkingServices(foundPlatform.getInterworkingServices());
 
         return platform;

@@ -169,9 +169,6 @@ public class RegistryUtils {
         interworkingService.setUrl(requestPlatform.getUrl());
         platform.setInterworkingServices(Arrays.asList(interworkingService));
 
-        if(requestPlatform.getUrl()==null && requestPlatform.getInformationModelId()==null )
-            platform.setInterworkingServices(null);
-
         //// TODO: 10.05.2017  
         platform.setBody("not null body");
         platform.setRdfFormat("not null rdf");
