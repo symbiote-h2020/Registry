@@ -1,11 +1,9 @@
 package eu.h2020.symbiote.repository;
 
-import eu.h2020.symbiote.core.model.*;
+import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.*;
-import eu.h2020.symbiote.model.InformationModel;
-import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -170,14 +168,19 @@ public class RepositoryManager {
     }
 
     private Platform copyExistingPlatformData(Platform platform, Platform foundPlatform) {
-        if ((platform.getComments() == null || platform.getComments().isEmpty()) && foundPlatform.getComments() != null)
+        if ((platform.getComments() == null || platform.getComments().isEmpty() || platform.getComments().get(0) == null)
+                && foundPlatform.getComments() != null)
             platform.setComments(foundPlatform.getComments());
         if (platform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
             platform.setRdfFormat(foundPlatform.getRdfFormat());
-        if ((platform.getLabels() == null || platform.getLabels().isEmpty()) && foundPlatform.getLabels() != null)
+        if ((platform.getLabels() == null || platform.getLabels().isEmpty() || platform.getLabels().get(0) == null)
+                && foundPlatform.getLabels() != null)
             platform.setLabels(foundPlatform.getLabels());
         if (platform.getBody() == null && foundPlatform.getBody() != null)
             platform.setBody(foundPlatform.getBody());
+        if ((platform.getInterworkingServices() == null || platform.getInterworkingServices().isEmpty() ||
+                platform.getInterworkingServices().get( 0 ) == null) && foundPlatform.getInterworkingServices() != null)
+            platform.setInterworkingServices(foundPlatform.getInterworkingServices());
 
         return platform;
     }
