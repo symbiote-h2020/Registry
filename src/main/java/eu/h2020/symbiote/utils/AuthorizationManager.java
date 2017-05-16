@@ -44,14 +44,15 @@ public class AuthorizationManager {
     }
 
     public boolean checkResourceOperationAccess(String tokenString, String platformId) {
-        log.info("Received Token to verification: " + tokenString);
+        log.info("Received Token to verification: (" + tokenString + ")");
 
         JWTClaims claims;
 
-        if (platformRepository.findOne(platformId) == null) {
-            log.error("Given platform does not exist");
-            return false;
-        }
+//todo odkomentowac!!!
+//        if (platformRepository.findOne(platformId) == null) {
+//            log.error("Given platform does not exist");
+//            return false;
+//        }
 
         Token token;
         try {
