@@ -2,7 +2,7 @@ package eu.h2020.symbiote.utils;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
@@ -98,14 +98,14 @@ public class AuthorizationManager {
     }
 
     public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
-        Platform platform = platformRepository.findOne(platformId);
+        RegistryPlatform registryPlatform = platformRepository.findOne(platformId);
 
-        if (platform == null) {
+        if (registryPlatform == null) {
             log.error("Given platform does not exists in database");
             return false;
         }
 
-        List<InterworkingService> interworkingServices = platform.getInterworkingServices();
+        List<InterworkingService> interworkingServices = registryPlatform.getInterworkingServices();
 
         if (interworkingServices == null) {
             log.error("Interworking services list in given platform is null");

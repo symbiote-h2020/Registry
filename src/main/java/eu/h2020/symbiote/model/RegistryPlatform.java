@@ -14,7 +14,7 @@ import java.util.List;
  * <p>
  * Created by mateuszl
  */
-public class Platform {
+public class RegistryPlatform {
     @Id
     private String id;
     private List<String> labels;
@@ -23,7 +23,7 @@ public class Platform {
     private String rdfFormat;
     private List<InterworkingService> interworkingServices;
 
-    public Platform() {
+    public RegistryPlatform() {
         //for persistence only
     }
 

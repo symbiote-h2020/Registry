@@ -6,7 +6,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -63,18 +63,18 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received requestPlatform to create: '" + message + "'");
 
         eu.h2020.symbiote.core.model.Platform requestPlatform;
-        Platform registryPlatform;
+        RegistryPlatform registryRegistryPlatform;
 
         PlatformResponse platformResponse = new PlatformResponse();
         try {
             requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
 
-            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
-            log.info("Platform converted to RegistryPlatform: " + registryPlatform);
+            log.info("Platform converted to RegistryPlatform: " + registryRegistryPlatform);
 
-            if (RegistryUtils.validateFields(registryPlatform)) {
-                platformResponse = this.repositoryManager.savePlatform(registryPlatform);
+            if (RegistryUtils.validateFields(registryRegistryPlatform)) {
+                platformResponse = this.repositoryManager.savePlatform(registryRegistryPlatform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                             RegistryOperationType.CREATION);

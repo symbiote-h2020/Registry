@@ -3,8 +3,7 @@ package eu.h2020.symbiote.utils;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.InformationModel;
-import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,25 +27,25 @@ public class RegistryUtils {
     /**
      * Checks if given platform has all of the needed fields (besides the id field) and that neither is empty.
      *
-     * @param platform platform to check
+     * @param registryPlatform platform to check
      * @return true if it has all the fields and neither is empty
      */
-    public static boolean validateFields(Platform platform) {
+    public static boolean validateFields(RegistryPlatform registryPlatform) {
         //todo extend validation to all fields
         boolean b;
 
-        for (InterworkingService interworkingService : platform.getInterworkingServices()) {
+        for (InterworkingService interworkingService : registryPlatform.getInterworkingServices()) {
             if (interworkingService.getUrl().trim().charAt(interworkingService.getUrl().length() - 1)
                     != "/".charAt(0)) {
                 interworkingService.setUrl(interworkingService.getUrl().trim() + "/");
             }
         }
 
-        if (platform.getBody() == null || platform.getLabels() == null || platform.getRdfFormat() == null) {
+        if (registryPlatform.getBody() == null || registryPlatform.getLabels() == null || registryPlatform.getRdfFormat() == null) {
             log.info("Given platform has some null fields");
             b = false;
-        } else if (platform.getBody().isEmpty() || platform.getLabels().isEmpty()
-                || platform.getRdfFormat().isEmpty()) {
+        } else if (registryPlatform.getBody().isEmpty() || registryPlatform.getLabels().isEmpty()
+                || registryPlatform.getRdfFormat().isEmpty()) {
             log.info("Given platform has some empty fields");
             b = false;
         } else {
@@ -73,29 +72,6 @@ public class RegistryUtils {
                 || resource.getComments().isEmpty()
                 || resource.getLabels().isEmpty()) {
             log.info("Given resource has some empty fields");
-            b = false;
-        } else {
-            b = true;
-        }
-        return b;
-    }
-
-    /**
-     * Checks if given informationModel has all of the needed fields and that neither is empty.
-     *
-     * @param informationModel informationModel to check
-     * @return true if it has all the fields and neither is empty.
-     */
-    public static boolean validateFields(InformationModel informationModel) {
-        //todo for release 3. extend validation to all fields
-        boolean b;
-        if (informationModel.getBody() == null || informationModel.getFormat() == null ||
-                informationModel.getUri() == null) {
-            log.info("Given informationModel has some null fields");
-            b = false;
-        } else if (informationModel.getBody().isEmpty() || informationModel.getFormat().isEmpty() ||
-                informationModel.getUri().isEmpty()) {
-            log.info("Given informationModel has some empty fields");
             b = false;
         } else {
             b = true;
@@ -154,43 +130,43 @@ public class RegistryUtils {
      * @param requestPlatform
      * @return
      */
-    public static Platform convertRequestPlatformToRegistryPlatform
+    public static RegistryPlatform convertRequestPlatformToRegistryPlatform
     (eu.h2020.symbiote.core.model.Platform requestPlatform) {
-        Platform platform = new Platform();
+        RegistryPlatform registryPlatform = new RegistryPlatform();
 
-        platform.setId(requestPlatform.getPlatformId());
+        registryPlatform.setId(requestPlatform.getPlatformId());
 
-        platform.setLabels(Arrays.asList(requestPlatform.getName()));
+        registryPlatform.setLabels(Arrays.asList(requestPlatform.getName()));
 
-        platform.setComments(Arrays.asList(requestPlatform.getDescription()));
+        registryPlatform.setComments(Arrays.asList(requestPlatform.getDescription()));
 
         InterworkingService interworkingService = new InterworkingService();
         interworkingService.setInformationModelId(requestPlatform.getInformationModelId());
         interworkingService.setUrl(requestPlatform.getUrl());
-        platform.setInterworkingServices(Arrays.asList(interworkingService));
+        registryPlatform.setInterworkingServices(Arrays.asList(interworkingService));
 
         //// TODO: 10.05.2017  
-        platform.setBody("not null body");
-        platform.setRdfFormat("not null rdf");
+        registryPlatform.setBody("not null body");
+        registryPlatform.setRdfFormat("not null rdf");
 
-        return platform;
+        return registryPlatform;
     }
 
     /**
      * Converts Platform (used in Registry Service) to Platform (from Symbiote Libraries)
      *
-     * @param registryPlatform
+     * @param registryRegistryPlatform
      * @return
      */
     public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform
-    (Platform registryPlatform) {
+    (RegistryPlatform registryRegistryPlatform) {
         eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
 
-        platform.setPlatformId(registryPlatform.getId());
-        platform.setName(registryPlatform.getLabels().get(0));
-        platform.setDescription(registryPlatform.getComments().get(0));
-        platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelId());
-        platform.setUrl(registryPlatform.getInterworkingServices().get(0).getUrl());
+        platform.setPlatformId(registryRegistryPlatform.getId());
+        platform.setName(registryRegistryPlatform.getLabels().get(0));
+        platform.setDescription(registryRegistryPlatform.getComments().get(0));
+        platform.setInformationModelId(registryRegistryPlatform.getInterworkingServices().get(0).getInformationModelId());
+        platform.setUrl(registryRegistryPlatform.getInterworkingServices().get(0).getUrl());
 
         return platform;
     }

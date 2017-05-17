@@ -577,6 +577,10 @@ public class RabbitManager {
         }
     }
 
+    public void sendCustomMessage(String exchange, String routingKey, String message, String classType) {
+        sendMessage(exchange, routingKey, message, classType);
+    }
+
     /**
      * Closes given channel if it exists and is open.
      *

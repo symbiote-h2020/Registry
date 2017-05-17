@@ -6,7 +6,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -65,7 +65,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received platform to modify: '" + message + "'");
 
         eu.h2020.symbiote.core.model.Platform requestPlatform;
-        Platform registryPlatform;
+        RegistryPlatform registryRegistryPlatform;
 
         AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                 .Builder()
@@ -75,9 +75,9 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         try {
             requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
 
-            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
-            platformResponse = this.repositoryManager.modifyPlatform(registryPlatform);
+            platformResponse = this.repositoryManager.modifyPlatform(registryRegistryPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                         RegistryOperationType.MODIFICATION);
