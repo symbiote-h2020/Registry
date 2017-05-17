@@ -1,9 +1,10 @@
 package eu.h2020.symbiote.repository;
 
-import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.*;
+import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.model.PlatformResponse;
+import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -325,53 +326,4 @@ public class RepositoryManager {
             resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
         }
     }
-
-    /**
-     * todo for future release
-     *
-     * @param informationModel
-     * @return
-     */
-    public InformationModelResponse saveInformationModel(InformationModel informationModel) {
-        InformationModelResponse response = new InformationModelResponse();
-        response.setInformationModel(informationModel);
-
-        if (informationModel.getUri().trim().charAt(informationModel.getUri().length() - 1) != "/".charAt(0)) {
-            informationModel.setUri(informationModel.getUri().trim() + "/");
-        }
-
-        try {
-            modelRepository.save(informationModel);
-            log.info("Information Model \"" + informationModel + "\" saved !");
-            response.setStatus(HttpStatus.SC_OK);
-            response.setMessage("OK");
-            response.setInformationModel(informationModel);
-        } catch (Exception e) {
-            log.error("Error occurred during Information Model saving to db", e);
-            response.setMessage("Error occurred during Information Model saving to db");
-            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        }
-
-        return response;
-    }
-
-    public boolean checkIfPlatformExistsAndHasInterworkingServiceUrl(String platformId, String interworkingServiceUrl) {
-        Platform platform = platformRepository.findOne(platformId);
-        log.debug("Checking Platform: " + platform);
-
-        if (platform != null) {
-            for (InterworkingService service : platform.getInterworkingServices()) {
-                if (service.getUrl().equals(interworkingServiceUrl)) {
-                    return true;
-                } else {
-                    log.error("There is a mismatch of interworking service urls. Platform Int. Service url: "
-                            + service.getUrl() + ". Interworking Service url " + interworkingServiceUrl);
-                }
-            }
-        } else {
-            log.error(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
-        }
-        return false;
-    }
-
 }

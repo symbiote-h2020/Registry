@@ -7,7 +7,6 @@ import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.model.InformationModel;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
@@ -509,11 +508,6 @@ public class RabbitManager {
         }
         consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
-
-    public void sendInformationModelCreatedMessage(InformationModel informationModel) {
-        //// TODO for release 3.: 27.03.2017
-    }
-
 
     public void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                 Envelope rpcEnvelope, String exchangeName, String routingKey,
