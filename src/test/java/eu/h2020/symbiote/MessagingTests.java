@@ -1,11 +1,19 @@
 package eu.h2020.symbiote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryPlatform;
+import eu.h2020.symbiote.repository.RepositoryManager;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
@@ -13,10 +21,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static eu.h2020.symbiote.TestSetupConfig.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by mateuszl on 16.02.2017.
@@ -26,16 +39,8 @@ public class MessagingTests {
 
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
 
-    public static final String PLATFORM_EXCHANGE_NAME = "symbiote.platform";
-    public static final String PLATFORM_CREATED = "platform.creationRequested";
-    public static final String PLATFORM_MODIFIED = "platform.modificationRequested";
-    public static final String PLATFORM_DELETED = "platform.removalRequested";
-    public static final String RESOURCE_EXCHANGE_NAME = "symbiote.resource";
-    public static final String RESOURCE_CREATED = "resource.creationRequested";
-    public static final String RESOURCE_MODIFIED = "resource.modificationRequested";
-    public static final String RESOURCE_DELETED = "resource.removalRequested";
-
     private Random rand;
+    RepositoryManager mockedRepository;
 
     @InjectMocks
     private RabbitManager rabbitManager;
@@ -58,42 +63,104 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceExchangeAutodelete", false);
         ReflectionTestUtils.setField(rabbitManager, "resourceExchangeInternal", false);
 
-        ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATED);
-        ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFIED);
-        ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_DELETED);
-        ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATED);
-        ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFIED);
-        ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_DELETED);
+        ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATION_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED);
 
+
+        ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
+
+        ReflectionTestUtils.invokeMethod(rabbitManager, "init");
+
+        mockedRepository = mock(RepositoryManager.class);
         rand = new Random();
     }
 
+    @After
+    public void teardown() {
+        log.info("Rabbit cleaned!");
+        try {
+            Connection connection = rabbitManager.getConnection();
+            Channel channel;
+            if (connection != null && connection.isOpen()) {
+                channel = connection.createChannel();
+                channel.queueDelete(PLATFORM_CREATION_REQUESTED);
+                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED);
+                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED);
+                channel.queueDelete(RESOURCE_CREATION_REQUESTED);
+                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED);
+                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED);
+                channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
+                channel.close();
+                connection.close();
+            }
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
-    public void PlatformCreationTest() throws Exception {
-        rabbitManager.init();
+    public void ResourceCreationRequestConsumerTest(){
+    }
 
-        RegistryPlatform platform = new RegistryPlatform ();
-        String platformId = Integer.toString(rand.nextInt(50));
-        String name = "platform" + rand.nextInt(50000);
+    @Test
+    public void ResourceModificationRequestConsumerTest(){
+    }
 
-        platform.setId(platformId);
-        platform.setLabels(new ArrayList<>());
-        platform.getLabels().add(name);
-        platform.setComments(new ArrayList<>());
-        platform.getComments().add("platform_description");
-        platform.setBody("http://www.symbIoTe.com/");
-        platform.setRdfFormat("some RDF Format");
+    @Test
+    public void ResourceRemovalRequestConsumerTest(){
+    }
+
+    @Test
+    public void PlatformCreationRequestConsumerTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository);
+
+        Platform requestPlatform = generatePlatformA();
 
         ObjectMapper mapper = new ObjectMapper();
-        String message = mapper.writeValueAsString(platform);
+        String message = mapper.writeValueAsString(requestPlatform);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATED, message, RegistryPlatform.class.getCanonicalName());
+        PlatformResponse platformResponse = new PlatformResponse();
+        platformResponse.setStatus(200);
+        platformResponse.setMessage("ok");
+        platformResponse.setPlatform(requestPlatform);
+
+        when(mockedRepository.savePlatform(any())).thenReturn(platformResponse);
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the platform has been saved to the repo before querying
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.MILLISECONDS.sleep(200);
 
-        //// TODO: 17.05.2017 FINISH THE TEST
-        
+        Channel channel = rabbitManager.getConnection().createChannel();
+
+        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        verify(mockedRepository).savePlatform(argument.capture());
+
+        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getPlatformId()));
+        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
+        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
     }
+
+    @Test
+    public void PlatformModificationRequestConsumerTest(){
+
+    }
+
+    @Test
+    public void PlatformRemovalRequestConsumerTest(){
+
+    }
+
 
 }

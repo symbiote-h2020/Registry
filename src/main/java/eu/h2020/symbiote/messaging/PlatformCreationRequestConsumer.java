@@ -63,18 +63,18 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received requestPlatform to create: '" + message + "'");
 
         eu.h2020.symbiote.core.model.Platform requestPlatform;
-        RegistryPlatform registryRegistryPlatform;
+        RegistryPlatform registryPlatform;
 
         PlatformResponse platformResponse = new PlatformResponse();
         try {
             requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
 
-            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
-            log.info("Platform converted to RegistryPlatform: " + registryRegistryPlatform);
+            log.info("Platform converted to RegistryPlatform: " + registryPlatform);
 
-            if (RegistryUtils.validateFields(registryRegistryPlatform)) {
-                platformResponse = this.repositoryManager.savePlatform(registryRegistryPlatform);
+            if (RegistryUtils.validateFields(registryPlatform)) {
+                platformResponse = this.repositoryManager.savePlatform(registryPlatform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                             RegistryOperationType.CREATION);

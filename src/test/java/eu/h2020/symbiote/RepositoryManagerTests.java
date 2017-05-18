@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static eu.h2020.symbiote.TestSetupConfig.generateResource;
+import static eu.h2020.symbiote.TestSetupConfig.generateCoreResource;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,7 +38,7 @@ public class RepositoryManagerTests {
 
     @Test
     public void testSaveResourceTriggersRepository() {
-        CoreResource resource = generateResource();
+        CoreResource resource = generateCoreResource();
         when(resourceRepository.save(resource)).thenReturn(resource);
 
         repositoryManager.saveResource(resource);

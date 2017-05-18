@@ -63,6 +63,7 @@ public class RegistryApplication {
 //
             //message retrieval - start rabbit exchange and consumers
             this.rabbitManager.init();
+            this.rabbitManager.startConsumers();
             log.info("CLR run() and Rabbit Manager init()");
         }
     }

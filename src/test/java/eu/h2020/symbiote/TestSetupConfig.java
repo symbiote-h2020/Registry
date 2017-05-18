@@ -2,6 +2,8 @@ package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.RegistryPlatform;
 
 import java.util.Arrays;
 
@@ -10,7 +12,23 @@ import java.util.Arrays;
  */
 public class TestSetupConfig {
 
-    public static final String QUERY_OBSERVEDPROERTY = "/queryByObservedProperty.sparql";
+    public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
+    public static final String PLATFORM_CREATION_REQUESTED = "symbIoTe.platform.creationRequested";
+    public static final String PLATFORM_MODIFICATION_REQUESTED = "symbIoTe.platform.modificationRequested";
+    public static final String PLATFORM_REMOVAL_REQUESTED = "symbIoTe.platform.removalRequested";
+    public static final String RESOURCE_EXCHANGE_NAME = "symbIoTe.resource";
+    public static final String RESOURCE_CREATION_REQUESTED = "symbIoTe.resource.creationRequested";
+    public static final String RESOURCE_MODIFICATION_REQUESTED = "symbIoTe.resource.modificationRequested";
+    public static final String RESOURCE_REMOVAL_REQUESTED = "symbIoTe.resource.removalRequested";
+
+    public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
+
+    public static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
+    public static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
+    public static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceModificationRequestedQueue";
+    public static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
+    public static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
+    public static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
 
     public static final String PLATFORM_A_ID = "1";
     public static final String PLATFORM_A_NAME = "Platform1";
@@ -126,9 +144,23 @@ public class TestSetupConfig {
         return registryPlatform;
     }
 
-    public static CoreResource generateResource() {
+    public static RegistryPlatform genereteRegistryPlatformB(){
+        RegistryPlatform platform = new RegistryPlatform ();
+        platform.setId(PLATFORM_B_ID);
+        platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
+        platform.setComments(Arrays.asList(PLATFORM_B_DESCRIPTION));
+        platform.setBody("http://www.symbIoTe.com/");
+        platform.setRdfFormat("some RDF Format");
+        return platform;
+    }
+
+    public static CoreResource generateCoreResource() {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, PLATFORM_A_URL,
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
+    }
+
+    public static Resource generateResource(){
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, PLATFORM_A_URL);
     }
 
     public static CoreResource generateStationarySensor() {
@@ -153,5 +185,13 @@ public class TestSetupConfig {
         return res;
     }
 
+    public static Resource generateSensor(String label, String comment, String id, String serviceUrl) {
+        CoreResource res = new CoreResource();
+        res.setComments(Arrays.asList(comment));
+        res.setLabels(Arrays.asList(label));
+        res.setId(id);
+        res.setInterworkingServiceURL(serviceUrl);
+        return res;
+    }
 
 }

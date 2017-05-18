@@ -103,9 +103,9 @@ public class RegistryUtils {
     public static Resource convertCoreResourceToResource(CoreResource coreResource) {
         Resource resource = new Resource();
         if (coreResource.getId() != null) resource.setId(coreResource.getId());
-        resource.setComments(coreResource.getComments());
-        resource.setLabels(coreResource.getLabels());
-        resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
+        if (coreResource.getComments() != null) resource.setComments(coreResource.getComments());
+        if (coreResource.getLabels() != null) resource.setLabels(coreResource.getLabels());
+        if (coreResource.getInterworkingServiceURL() != null) resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
         return resource;
     }
 
@@ -118,9 +118,9 @@ public class RegistryUtils {
     public static CoreResource convertResourceToCoreResource(Resource resource) {
         CoreResource coreResource = new CoreResource();
         if (resource.getId() != null) coreResource.setId(resource.getId());
-        coreResource.setComments(resource.getComments());
-        coreResource.setLabels(resource.getLabels());
-        coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
+        if (resource.getComments() != null) coreResource.setComments(resource.getComments());
+        if (resource.getLabels() != null) coreResource.setLabels(resource.getLabels());
+        if (resource.getInterworkingServiceURL() != null) coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
         return coreResource;
     }
 
@@ -146,8 +146,8 @@ public class RegistryUtils {
         registryPlatform.setInterworkingServices(Arrays.asList(interworkingService));
 
         //// TODO: 10.05.2017  
-        registryPlatform.setBody("not null body");
-        registryPlatform.setRdfFormat("not null rdf");
+        registryPlatform.setBody("not null body MOCKED");
+        registryPlatform.setRdfFormat("not null rdf MOCKED");
 
         return registryPlatform;
     }
