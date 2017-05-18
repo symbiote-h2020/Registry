@@ -147,7 +147,7 @@ public class MessagingTests {
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(true);
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(true);
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED, message, Resource.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(50);
@@ -234,7 +234,6 @@ public class MessagingTests {
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).removePlatform(argument.capture());
-
     }
 
 
