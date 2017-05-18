@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.utils;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
@@ -131,7 +132,7 @@ public class RegistryUtils {
      * @return
      */
     public static RegistryPlatform convertRequestPlatformToRegistryPlatform
-    (eu.h2020.symbiote.core.model.Platform requestPlatform) {
+    (Platform requestPlatform) {
         RegistryPlatform registryPlatform = new RegistryPlatform();
 
         registryPlatform.setId(requestPlatform.getPlatformId());
@@ -155,18 +156,18 @@ public class RegistryUtils {
     /**
      * Converts Platform (used in Registry Service) to Platform (from Symbiote Libraries)
      *
-     * @param registryRegistryPlatform
+     * @param registryPlatform
      * @return
      */
-    public static eu.h2020.symbiote.core.model.Platform convertRegistryPlatformToRequestPlatform
-    (RegistryPlatform registryRegistryPlatform) {
-        eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
+    public static Platform convertRegistryPlatformToRequestPlatform
+    (RegistryPlatform registryPlatform) {
+        Platform platform = new Platform();
 
-        platform.setPlatformId(registryRegistryPlatform.getId());
-        platform.setName(registryRegistryPlatform.getLabels().get(0));
-        platform.setDescription(registryRegistryPlatform.getComments().get(0));
-        platform.setInformationModelId(registryRegistryPlatform.getInterworkingServices().get(0).getInformationModelId());
-        platform.setUrl(registryRegistryPlatform.getInterworkingServices().get(0).getUrl());
+        platform.setPlatformId(registryPlatform.getId());
+        platform.setName(registryPlatform.getLabels().get(0));
+        platform.setDescription(registryPlatform.getComments().get(0));
+        platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelId());
+        platform.setUrl(registryPlatform.getInterworkingServices().get(0).getUrl());
 
         return platform;
     }

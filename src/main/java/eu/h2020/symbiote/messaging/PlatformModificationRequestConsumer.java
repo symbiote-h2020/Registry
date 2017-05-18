@@ -6,9 +6,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.RegistryPlatform;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -64,16 +65,11 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to modify: '" + message + "'");
 
-        eu.h2020.symbiote.core.model.Platform requestPlatform;
+        Platform requestPlatform;
         RegistryPlatform registryRegistryPlatform;
 
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
-
         try {
-            requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
+            requestPlatform = mapper.readValue(message, Platform.class);
 
             registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
@@ -88,9 +84,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         }
 
         response = mapper.writeValueAsString(platformResponse);
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
 
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

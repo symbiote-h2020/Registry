@@ -1,7 +1,7 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.repository.PlatformRepository;
+import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import org.junit.After;
@@ -22,14 +22,14 @@ import static org.mockito.Mockito.when;
 public class RepositoryManagerTests {
 
     RepositoryManager repositoryManager;
-    PlatformRepository platformRepository;
+    RegistryPlatformRepository registryPlatformRepository;
     ResourceRepository resourceRepository;
 
     @Before
     public void setup() {
-        platformRepository = Mockito.mock(PlatformRepository.class);
+        registryPlatformRepository = Mockito.mock(RegistryPlatformRepository.class);
         resourceRepository = Mockito.mock(ResourceRepository.class);
-        repositoryManager = new RepositoryManager(platformRepository, resourceRepository);
+        repositoryManager = new RepositoryManager(registryPlatformRepository, resourceRepository);
     }
 
     @After

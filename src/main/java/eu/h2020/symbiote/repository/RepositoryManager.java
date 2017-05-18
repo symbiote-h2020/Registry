@@ -23,12 +23,12 @@ public class RepositoryManager {
     private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID!";
     private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
     private static Log log = LogFactory.getLog(RepositoryManager.class);
-    private PlatformRepository platformRepository;
+    private RegistryPlatformRepository registryPlatformRepository;
     private ResourceRepository resourceRepository;
 
     @Autowired
-    public RepositoryManager(PlatformRepository platformRepository, ResourceRepository resourceRepository) {
-        this.platformRepository = platformRepository;
+    public RepositoryManager(RegistryPlatformRepository registryPlatformRepository, ResourceRepository resourceRepository) {
+        this.registryPlatformRepository = registryPlatformRepository;
         this.resourceRepository = resourceRepository;
     }
 
@@ -58,7 +58,7 @@ public class RepositoryManager {
                 try {
                     log.info("Saving platform: " + registryPlatform.getId());
 
-                    savedRegistryPlatform = platformRepository.save(registryPlatform);
+                    savedRegistryPlatform = registryPlatformRepository.save(registryPlatform);
                     log.info("Platform \"" + savedRegistryPlatform + "\" saved !");
                     platformResponse.setStatus(HttpStatus.SC_OK);
                     platformResponse.setMessage("OK");
@@ -96,7 +96,7 @@ public class RepositoryManager {
             platformResponse.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {
-                platformRepository.delete(registryPlatform.getId());
+                registryPlatformRepository.delete(registryPlatform.getId());
                 log.info("Platform with id: " + registryPlatform.getId() + " removed !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
@@ -138,7 +138,7 @@ public class RepositoryManager {
             platformResponse.setMessage("Given platform has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            foundRegistryPlatform = platformRepository.findOne(registryPlatform.getId());
+            foundRegistryPlatform = registryPlatformRepository.findOne(registryPlatform.getId());
         }
 
         if (foundRegistryPlatform == null) {
@@ -150,7 +150,7 @@ public class RepositoryManager {
                 //fulfilment of empty Platform fields before saving
                 RegistryPlatform modifiedRegistryPlatform = copyExistingPlatformData(registryPlatform, foundRegistryPlatform);
 
-                platformRepository.save(modifiedRegistryPlatform);
+                registryPlatformRepository.save(modifiedRegistryPlatform);
                 log.info("Platform with id: " + modifiedRegistryPlatform.getId() + " modified !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);

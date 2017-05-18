@@ -27,9 +27,7 @@ import java.util.concurrent.TimeoutException;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by mateuszl on 16.02.2017.
@@ -38,10 +36,9 @@ import static org.mockito.Mockito.when;
 public class MessagingTests {
 
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
-
-    private Random rand;
     RepositoryManager mockedRepository;
-
+    private Random rand;
+    ObjectMapper mapper;
     @InjectMocks
     private RabbitManager rabbitManager;
 
@@ -72,11 +69,17 @@ public class MessagingTests {
 
 
         ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
+        ReflectionTestUtils.setField(rabbitManager, "platformRemovedRoutingKey", PLATFORM_REMOVED_ROUTING_KEY);
+        ReflectionTestUtils.setField(rabbitManager, "platformModifiedRoutingKey", PLATFORM_MODIFIED_ROUTING_KEY);
+        ReflectionTestUtils.setField(rabbitManager, "resourceCreatedRoutingKey", RESOURCE_CREATED_ROUTING_KEY);
+        ReflectionTestUtils.setField(rabbitManager, "resourceRemovedRoutingKey", RESOURCE_REMOVED_ROUTING_KEY);
+        ReflectionTestUtils.setField(rabbitManager, "resourceModifiedRoutingKey", RESOURCE_MODIFIED_ROUTING_KEY);
 
         ReflectionTestUtils.invokeMethod(rabbitManager, "init");
 
         mockedRepository = mock(RepositoryManager.class);
         rand = new Random();
+        mapper = new ObjectMapper();
     }
 
     @After
@@ -110,15 +113,15 @@ public class MessagingTests {
     }
 
     @Test
-    public void ResourceCreationRequestConsumerTest(){
+    public void ResourceCreationRequestConsumerTest() {
     }
 
     @Test
-    public void ResourceModificationRequestConsumerTest(){
+    public void ResourceModificationRequestConsumerTest() {
     }
 
     @Test
-    public void ResourceRemovalRequestConsumerTest(){
+    public void ResourceRemovalRequestConsumerTest() {
     }
 
     @Test
@@ -126,8 +129,6 @@ public class MessagingTests {
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository);
 
         Platform requestPlatform = generatePlatformA();
-
-        ObjectMapper mapper = new ObjectMapper();
         String message = mapper.writeValueAsString(requestPlatform);
 
         PlatformResponse platformResponse = new PlatformResponse();
@@ -139,10 +140,8 @@ public class MessagingTests {
 
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
 
-        // Sleep to make sure that the platform has been saved to the repo before querying
-        TimeUnit.MILLISECONDS.sleep(200);
-
-        Channel channel = rabbitManager.getConnection().createChannel();
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(50);
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).savePlatform(argument.capture());
@@ -150,15 +149,58 @@ public class MessagingTests {
         Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getPlatformId()));
         Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
         Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
+        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
     }
 
     @Test
-    public void PlatformModificationRequestConsumerTest(){
+    public void PlatformModificationRequestConsumerTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository);
 
+        Platform requestPlatform = generatePlatformA();
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformResponse platformResponse = new PlatformResponse();
+        platformResponse.setStatus(200);
+        platformResponse.setMessage("ok");
+        platformResponse.setPlatform(requestPlatform);
+
+        when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(50);
+
+        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        verify(mockedRepository).modifyPlatform(argument.capture());
+
+        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getPlatformId()));
+        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
+        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
+        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
     }
 
     @Test
-    public void PlatformRemovalRequestConsumerTest(){
+    public void PlatformRemovalRequestConsumerTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository);
+
+        Platform requestPlatform = generatePlatformA();
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformResponse platformResponse = new PlatformResponse();
+        platformResponse.setStatus(200);
+        platformResponse.setMessage("ok");
+        platformResponse.setPlatform(requestPlatform);
+
+        when(mockedRepository.removePlatform(any())).thenReturn(platformResponse);
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(50);
+
+        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        verify(mockedRepository).removePlatform(argument.capture());
 
     }
 

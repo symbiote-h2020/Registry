@@ -1,5 +1,6 @@
 package eu.h2020.symbiote;
 
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -12,6 +13,8 @@ import java.util.Arrays;
  */
 public class TestSetupConfig {
 
+    public static final String MOCKED_TOKEN = "eyJhbGciOiJFUzI1NiJ9.eyJTWU1CSU9URV9Pd25lZFBsYXRmb3JtIjoidGVzdDFQbGF0IiwiU1lNQklPVEVfUm9sZSI6IlBMQVRGT1JNX09XTkVSIiwidHR5cCI6IkNPUkUiLCJzdWIiOiJUZXN0MSIsImlwayI6Ik1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRXI2OXZEV0pzT3duYW9CM0FDRVJPdnRETWtmNjh5aUd6c3lmR1duOWZnSnJHT2ZoTGJkM2Q5NEMxay9TUW1hRWdTakVOUWI4ZEljME9FYWRSRzFtWGR3PT0iLCJpc3MiOiJTeW1iSW9UZV9Db3JlX0FBTSIsImV4cCI6MTQ5NTExNTExMiwiaWF0IjoxNDk1MTExNTEyLCJqdGkiOiI0ODY1MTQ2NTIiLCJzcGsiOiJNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV5RVJnYXhnQUUzSmUwand6RDBMdjluby9wQVQyUjV0Njc0MzJrcTQxaHNGTWZRSXdyQ212RVRZbW9lekgxYWU2WSsyV0ZCQVdiMHhiMGVUd1ozeWZZdz09In0.M7fIyUsr0GfUN7IyaKMG9T41dabvkFS_UNGeq3RCzzyzA-ttEdHnDNV3oImX7eMS_vvp-prBlnSsVl0dhL131Q";
+
     public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
     public static final String PLATFORM_CREATION_REQUESTED = "symbIoTe.platform.creationRequested";
     public static final String PLATFORM_MODIFICATION_REQUESTED = "symbIoTe.platform.modificationRequested";
@@ -22,6 +25,11 @@ public class TestSetupConfig {
     public static final String RESOURCE_REMOVAL_REQUESTED = "symbIoTe.resource.removalRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
+    public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.modified";
+    public static final String PLATFORM_REMOVED_ROUTING_KEY = "symbIoTe.platform.removed";
+    public static final String RESOURCE_CREATED_ROUTING_KEY = "symbIoTe.resource.created";
+    public static final String RESOURCE_REMOVED_ROUTING_KEY = "symbIoTe.resource.removed";
+    public static final String RESOURCE_MODIFIED_ROUTING_KEY = "symbIoTe.resource.modified";
 
     public static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
     public static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
@@ -55,14 +63,6 @@ public class TestSetupConfig {
     public static final String PLATFORM_B_URI = "http://www.symbiote-h2020.eu/ontology/platforms/2";
     public static final String PLATFORM_B_SERVICE_URI = "http://www.symbiote-h2020.eu/ontology/platforms/2/service/somehost2.com/resourceAccessProxy";
 
-    public static final String PLATFORM_C_ID = "3";
-    public static final String PLATFORM_C_NAME = "Platform3";
-    public static final String PLATFORM_C_MODEL_ID = "31";
-    public static final String PLATFORM_C_DESCRIPTION = "31desc";
-    public static final String PLATFORM_C_FILENAME = "/platformC.ttl";
-    public static final String PLATFORM_C_URI = "http://www.symbiote-h2020.eu/ontology/platforms/3";
-    public static final String PLATFORM_C_SERVICE_URI = "http://www.symbiote-h2020.eu/ontology/platforms/3/service/somehost3.com/resourceAccessProxy";
-
     public static final String RESOURCE_PREDICATE = "http://www.symbiote-h2020.eu/ontology/resources/";
 
     public static final String RESOURCE_101_FILENAME = "/resource101.ttl";
@@ -70,28 +70,6 @@ public class TestSetupConfig {
     public static final String RESOURCE_101_LABEL = "Resource 101";
     public static final String RESOURCE_101_COMMENT = "Resource 101 comment";
     public static final String RESOURCE_101_ID = "101";
-    public static final String RESOURCE_101_LOC_LABEL = "Poznan";
-    public static final String RESOURCE_101_LOC_COMMENT = "Poznan Malta";
-    public static final String RESOURCE_101_LOC_LAT = "52.401790";
-    public static final String RESOURCE_101_LOC_LONG = "16.960144";
-    public static final String RESOURCE_101_LOC_ALT = "200";
-    public static final String RESOURCE_101_OBS1_LABEL = "Temperature";
-    public static final String RESOURCE_101_OBS2_LABEL = "Humidity";
-    public static final String RESOURCE_101_LABEL_UPDATE = "Resource Hundred One";
-
-    public static final String RESOURCE_102_FILENAME = "/resource102.ttl";
-    public static final String RESOURCE_102_URI = RESOURCE_PREDICATE + "102";
-    public static final String RESOURCE_103_FILENAME = "/resource103.ttl";
-    public static final String RESOURCE_103_URI = RESOURCE_PREDICATE + "103";
-    public static final String RESOURCE_201_FILENAME = "/resource201.ttl";
-    public static final String RESOURCE_201_URI = RESOURCE_PREDICATE + "201";
-    public static final String RESOURCE_202_FILENAME = "/resource202.ttl";
-    public static final String RESOURCE_202_URI = RESOURCE_PREDICATE + "202";
-    public static final String RESOURCE_301_FILENAME = "/resource301.ttl";
-    public static final String RESOURCE_301_URI = RESOURCE_PREDICATE + "301";
-
-    public static final String RESOURCE_501_FILENAME = "/resource501.ttl";
-    public static final String RESOURCE_501_URI = RESOURCE_PREDICATE + "501";
 
     public static final String RESOURCE_STATIONARY_FILENAME = "/exampleStationarySensor.json";
     public static final String RESOURCE_STATIONARY_FILENAME_MODIFIED = "/exampleStationarySensorModified.json";
@@ -101,31 +79,9 @@ public class TestSetupConfig {
     public static final String RESOURCE_STATIONARY_URI = RESOURCE_PREDICATE + "stationary1";
     public static final String RESOURCE_STATIONARY_ID = "stationary1";
 
-    public static final String RESOURCE_STATIONARYDEVICE_FILENAME = "/exampleStationaryDevice.json";
-    public static final String RESOURCE_STATIONARYDEVICE_LABEL = "Stationary device 1";
-    public static final String RESOURCE_STATIONARYDEVICE_COMMENT = "This is Stationary Device 1";
-    public static final String RESOURCE_STATIONARYDEVICE_URI = RESOURCE_PREDICATE + "stationarydevice1";
-    public static final String RESOURCE_STATIONARYDEVICE_ID = "stationardevice1";
 
-    public static final String RESOURCE_MOBILE_FILENAME = "/exampleMobileSensor.json";
-    public static final String RESOURCE_MOBILE_LABEL = "Mobile 1";
-    public static final String RESOURCE_MOBILE_URI = RESOURCE_PREDICATE + "mobile1";
-
-    public static final String RESOURCE_SERVICE_FILENAME = "/exampleService.json";
-    public static final String RESOURCE_SERVICE_LABEL = "Service 1";
-    public static final String RESOURCE_SERVICE_URI = RESOURCE_PREDICATE + "service1";
-
-    public static final String RESOURCE_ACTUATING_SERVICE_FILENAME = "/exampleActuatingService.json";
-    public static final String RESOURCE_ACTUATING_SERVICE_LABEL = "Actuating Service 1";
-    public static final String RESOURCE_ACTUATING_SERVICE_URI = RESOURCE_PREDICATE + "actuatingService1";
-
-    public static final String RESOURCE_ACTUATOR_FILENAME = "/exampleActuator.json";
-    public static final String RESOURCE_ACTUATOR_LABEL = "Actuator 1";
-    public static final String RESOURCE_ACTUATOR_URI = RESOURCE_PREDICATE + "590b617566e02516806462e4";
-
-
-    public static eu.h2020.symbiote.core.model.Platform generatePlatformA() {
-        eu.h2020.symbiote.core.model.Platform platform = new eu.h2020.symbiote.core.model.Platform();
+    public static Platform generatePlatformA() {
+        Platform platform = new Platform();
         platform.setPlatformId(PLATFORM_A_ID);
         platform.setInformationModelId(PLATFORM_A_MODEL_ID);
         platform.setDescription(PLATFORM_A_DESCRIPTION);
@@ -134,8 +90,8 @@ public class TestSetupConfig {
         return platform;
     }
 
-    public static eu.h2020.symbiote.core.model.Platform generatePlatformAUpdate() {
-        eu.h2020.symbiote.core.model.Platform registryPlatform = new eu.h2020.symbiote.core.model.Platform();
+    public static Platform generatePlatformAUpdate() {
+        Platform registryPlatform = new Platform();
         registryPlatform.setPlatformId(PLATFORM_A_ID);
         registryPlatform.setInformationModelId(PLATFORM_A_MODEL_ID_UPDATED);
         registryPlatform.setDescription(PLATFORM_A_DESCRIPTION_UPDATED);

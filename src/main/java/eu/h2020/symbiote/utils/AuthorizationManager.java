@@ -3,7 +3,7 @@ package eu.h2020.symbiote.utils;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.PlatformRepository;
+import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
 import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
@@ -35,12 +35,12 @@ public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     private InternalSecurityHandler securityHandler;
-    private PlatformRepository platformRepository;
+    private RegistryPlatformRepository registryPlatformRepository;
 
     @Autowired
-    public AuthorizationManager(InternalSecurityHandler securityHandler, PlatformRepository platformRepository) {
+    public AuthorizationManager(InternalSecurityHandler securityHandler, RegistryPlatformRepository registryPlatformRepository) {
         this.securityHandler = securityHandler;
-        this.platformRepository = platformRepository;
+        this.registryPlatformRepository = registryPlatformRepository;
     }
 
     public boolean checkResourceOperationAccess(String tokenString, String platformId) {
@@ -48,7 +48,7 @@ public class AuthorizationManager {
 
         JWTClaims claims;
 
-        if (platformRepository.findOne(platformId) == null) {
+        if (registryPlatformRepository.findOne(platformId) == null) {
             log.error("Given platform does not exist");
             return false;
         }
@@ -98,7 +98,7 @@ public class AuthorizationManager {
     }
 
     public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
-        RegistryPlatform registryPlatform = platformRepository.findOne(platformId);
+        RegistryPlatform registryPlatform = registryPlatformRepository.findOne(platformId);
 
         if (registryPlatform == null) {
             log.error("Given platform does not exists in database");

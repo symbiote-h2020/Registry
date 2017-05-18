@@ -5,11 +5,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * Registry MongoDB Persistence layer for Platform objects
+ * Registry MongoDB Persistence layer for RegistryPlatform objects
  *
  * Created by mateuszl
  */
 @Repository
-public interface PlatformRepository extends MongoRepository<RegistryPlatform, String>{
+public interface RegistryPlatformRepository extends MongoRepository<RegistryPlatform, String>{
 
 }

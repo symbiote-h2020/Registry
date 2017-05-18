@@ -6,9 +6,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.model.RegistryPlatform;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -64,20 +65,15 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         PlatformResponse platformResponse = new PlatformResponse();
         log.info(" [x] Received platform to remove: '" + message + "'");
 
-        eu.h2020.symbiote.core.model.Platform requestPlatform;
-        RegistryPlatform registryRegistryPlatform;
-
-        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                .Builder()
-                .correlationId(properties.getCorrelationId())
-                .build();
+        Platform requestPlatform;
+        RegistryPlatform registryPlatform;
 
         try {
-            requestPlatform = mapper.readValue(message, eu.h2020.symbiote.core.model.Platform.class);
+            requestPlatform = mapper.readValue(message, Platform.class);
 
-            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
-            platformResponse = this.repositoryManager.removePlatform(registryRegistryPlatform);
+            platformResponse = this.repositoryManager.removePlatform(registryPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                         RegistryOperationType.REMOVAL);
@@ -88,10 +84,10 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         }
 
         response = mapper.writeValueAsString(platformResponse);
-        this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-        log.info("Message with status: " + platformResponse.getStatus() + " sent back");
 
-        this.getChannel().basicAck(envelope.getDeliveryTag(), false);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
+
     }
+
 }
 
