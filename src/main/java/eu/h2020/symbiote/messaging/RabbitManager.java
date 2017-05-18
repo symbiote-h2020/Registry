@@ -224,12 +224,12 @@ public class RabbitManager {
      */
     public void startConsumers() {
         try {
-            startConsumerOfPlatformCreationMessages(repositoryManager);
-            startConsumerOfResourceCreationMessages(repositoryManager);
-            startConsumerOfPlatformRemovalMessages(repositoryManager);
-            startConsumerOfResourceRemovalMessages(repositoryManager);
-            startConsumerOfPlatformModificationMessages(repositoryManager);
-            startConsumerOfResourceModificationMessages(repositoryManager);
+            startConsumerOfPlatformCreationMessages(repositoryManager, authorizationManager);
+            startConsumerOfResourceCreationMessages(repositoryManager, authorizationManager);
+            startConsumerOfPlatformRemovalMessages(repositoryManager, authorizationManager);
+            startConsumerOfResourceRemovalMessages(repositoryManager, authorizationManager);
+            startConsumerOfPlatformModificationMessages(repositoryManager, authorizationManager);
+            startConsumerOfResourceModificationMessages(repositoryManager, authorizationManager);
         } catch (InterruptedException | IOException e) {
             log.error(e);
         }
@@ -242,7 +242,7 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfPlatformCreationMessages(RepositoryManager repositoryManager) throws InterruptedException, IOException {
+    public void startConsumerOfPlatformCreationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException, IOException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -266,7 +266,7 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfPlatformRemovalMessages(RepositoryManager repositoryManager) throws InterruptedException, IOException {
+    public void startConsumerOfPlatformRemovalMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException, IOException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -290,7 +290,7 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfPlatformModificationMessages(RepositoryManager repositoryManager) throws InterruptedException, IOException {
+    public void startConsumerOfPlatformModificationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException, IOException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -314,7 +314,7 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfResourceCreationMessages(RepositoryManager repositoryManager) throws InterruptedException, IOException {
+    public void startConsumerOfResourceCreationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException, IOException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -338,7 +338,7 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfResourceRemovalMessages(RepositoryManager repositoryManager) throws InterruptedException, IOException {
+    public void startConsumerOfResourceRemovalMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException, IOException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -362,7 +362,7 @@ public class RabbitManager {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfResourceModificationMessages(RepositoryManager repositoryManager) throws InterruptedException, IOException {
+    public void startConsumerOfResourceModificationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException, IOException {
         Channel channel;
         try {
             channel = this.connection.createChannel();

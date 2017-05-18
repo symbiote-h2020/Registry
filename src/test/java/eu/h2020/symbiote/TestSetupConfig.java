@@ -1,12 +1,19 @@
 package eu.h2020.symbiote;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Mael on 23/01/2017.
@@ -100,8 +107,8 @@ public class TestSetupConfig {
         return registryPlatform;
     }
 
-    public static RegistryPlatform genereteRegistryPlatformB(){
-        RegistryPlatform platform = new RegistryPlatform ();
+    public static RegistryPlatform genereteRegistryPlatformB() {
+        RegistryPlatform platform = new RegistryPlatform();
         platform.setId(PLATFORM_B_ID);
         platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
         platform.setComments(Arrays.asList(PLATFORM_B_DESCRIPTION));
@@ -115,7 +122,7 @@ public class TestSetupConfig {
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
     }
 
-    public static Resource generateResource(){
+    public static Resource generateResource() {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, PLATFORM_A_URL);
     }
 
@@ -148,6 +155,25 @@ public class TestSetupConfig {
         res.setId(id);
         res.setInterworkingServiceURL(serviceUrl);
         return res;
+    }
+
+    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest(Resource resource1, Resource resource2)
+            throws JsonProcessingException {
+        List<Resource> resourceList = new ArrayList<>();
+        resourceList.add(resource1);
+        resourceList.add(resource2);
+
+        ObjectMapper mapper = new ObjectMapper();
+        String resources = mapper.writerFor(new TypeReference<List<Resource>>() {
+        }).writeValueAsString(resourceList);
+
+        CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
+        coreResourceRegistryRequest.setPlatformId("test1Plat");
+        coreResourceRegistryRequest.setToken(MOCKED_TOKEN);
+        coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
+        coreResourceRegistryRequest.setBody(resources);
+
+        return coreResourceRegistryRequest;
     }
 
 }

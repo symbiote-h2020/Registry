@@ -86,8 +86,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         response = mapper.writeValueAsString(platformResponse);
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
-
     }
-
 }
 

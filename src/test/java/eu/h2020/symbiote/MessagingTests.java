@@ -3,11 +3,16 @@ package eu.h2020.symbiote;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.PlatformResponse;
+import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.utils.AuthorizationManager;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +46,7 @@ public class MessagingTests {
     ObjectMapper mapper;
     @InjectMocks
     private RabbitManager rabbitManager;
+    AuthorizationManager mockedAuthorizationManager;
 
     @Before
     public void setup() throws IOException, TimeoutException {
@@ -78,6 +84,7 @@ public class MessagingTests {
         ReflectionTestUtils.invokeMethod(rabbitManager, "init");
 
         mockedRepository = mock(RepositoryManager.class);
+        mockedAuthorizationManager = mock(AuthorizationManager.class);
         rand = new Random();
         mapper = new ObjectMapper();
     }
@@ -121,12 +128,38 @@ public class MessagingTests {
     }
 
     @Test
-    public void ResourceRemovalRequestConsumerTest() {
+    public void ResourceRemovalRequestConsumerTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfResourceRemovalMessages(mockedRepository, mockedAuthorizationManager);
+
+        Resource resource1 = generateResource();
+        Resource resource2 = generateResource();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        RegistryPersistenceResult registryPersistenceResult1 = new RegistryPersistenceResult();
+        registryPersistenceResult1.setStatus(200);
+        registryPersistenceResult1.setMessage("ok");
+        registryPersistenceResult1.setResource(RegistryUtils.convertResourceToCoreResource(resource1));
+
+        when(mockedRepository.removeResource(any())).thenReturn(registryPersistenceResult1);
+        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+                coreResourceRegistryRequest.getPlatformId())).thenReturn(true);
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(true);
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(50);
+
+        ArgumentCaptor<Resource> argument = ArgumentCaptor.forClass(Resource.class);
+        verify(mockedRepository, times(2)).removeResource(argument.capture());
+
     }
 
     @Test
     public void PlatformCreationRequestConsumerTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository);
+        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generatePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -154,7 +187,7 @@ public class MessagingTests {
 
     @Test
     public void PlatformModificationRequestConsumerTest() throws IOException, InterruptedException {
-        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository);
+        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generatePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -182,7 +215,7 @@ public class MessagingTests {
 
     @Test
     public void PlatformRemovalRequestConsumerTest() throws IOException, InterruptedException {
-        rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository);
+        rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generatePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
