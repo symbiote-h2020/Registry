@@ -154,7 +154,6 @@ public class MessagingTests {
 
         ArgumentCaptor<Resource> argument = ArgumentCaptor.forClass(Resource.class);
         verify(mockedRepository, times(2)).removeResource(argument.capture());
-
     }
 
     @Test
