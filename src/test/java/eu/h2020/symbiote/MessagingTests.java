@@ -150,7 +150,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED, message, Resource.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(50);
+        TimeUnit.MILLISECONDS.sleep(5);
 
         ArgumentCaptor<Resource> argument = ArgumentCaptor.forClass(Resource.class);
         verify(mockedRepository, times(2)).removeResource(argument.capture());
@@ -174,7 +174,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(50);
+        TimeUnit.MILLISECONDS.sleep(5);
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).savePlatform(argument.capture());
@@ -202,7 +202,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(50);
+        TimeUnit.MILLISECONDS.sleep(5);
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).modifyPlatform(argument.capture());
@@ -230,7 +230,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(50);
+        TimeUnit.MILLISECONDS.sleep(5);
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).removePlatform(argument.capture());
