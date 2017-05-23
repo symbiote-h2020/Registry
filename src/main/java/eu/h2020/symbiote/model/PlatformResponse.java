@@ -14,6 +14,7 @@ public class PlatformResponse {
     private Platform platform;
 
     public PlatformResponse() {
+        // Empty constructor
     }
 
     public PlatformResponse(int status, String message, Platform platform) {

@@ -106,7 +106,8 @@ public class RegistryUtils {
         if (coreResource.getId() != null) resource.setId(coreResource.getId());
         if (coreResource.getComments() != null) resource.setComments(coreResource.getComments());
         if (coreResource.getLabels() != null) resource.setLabels(coreResource.getLabels());
-        if (coreResource.getInterworkingServiceURL() != null) resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
+        if (coreResource.getInterworkingServiceURL() != null)
+            resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
         return resource;
     }
 
@@ -121,7 +122,8 @@ public class RegistryUtils {
         if (resource.getId() != null) coreResource.setId(resource.getId());
         if (resource.getComments() != null) coreResource.setComments(resource.getComments());
         if (resource.getLabels() != null) coreResource.setLabels(resource.getLabels());
-        if (resource.getInterworkingServiceURL() != null) coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
+        if (resource.getInterworkingServiceURL() != null)
+            coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
         return coreResource;
     }
 
@@ -163,12 +165,16 @@ public class RegistryUtils {
     (RegistryPlatform registryPlatform) {
         Platform platform = new Platform();
 
-        platform.setPlatformId(registryPlatform.getId());
-        platform.setName(registryPlatform.getLabels().get(0));
-        platform.setDescription(registryPlatform.getComments().get(0));
-        platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelId());
-        platform.setUrl(registryPlatform.getInterworkingServices().get(0).getUrl());
-
+        if (registryPlatform.getId() != null) platform.setPlatformId(registryPlatform.getId());
+        if (registryPlatform.getLabels().get(0) != null) platform.setName(registryPlatform.getLabels().get(0));
+        if (registryPlatform.getComments().get(0) != null)
+            platform.setDescription(registryPlatform.getComments().get(0));
+        if (registryPlatform.getInterworkingServices() != null) {
+            if (registryPlatform.getInterworkingServices().get(0).getInformationModelId() != null)
+                platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelId());
+            if (registryPlatform.getInterworkingServices().get(0).getUrl() != null)
+                platform.setUrl(registryPlatform.getInterworkingServices().get(0).getUrl());
+        }
         return platform;
     }
 }
