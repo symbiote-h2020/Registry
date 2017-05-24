@@ -20,6 +20,7 @@ public class RegistryPersistenceResult {
     }
 
     public RegistryPersistenceResult() {
+        // Empty constructor
     }
 
     /**

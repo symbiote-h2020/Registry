@@ -24,7 +24,7 @@ public class RegistryPlatform {
     private List<InterworkingService> interworkingServices;
 
     public RegistryPlatform() {
-        //for persistence only
+        // Empty constructor
     }
 
     /**

@@ -1,5 +1,6 @@
 package eu.h2020.symbiote;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -120,15 +121,30 @@ public class MessagingTests {
     }
 
     @Test
-    public void ResourceCreationRequestConsumerTest() {
+    public void resourceCreationRequestConsumerTest() throws InterruptedException, JsonProcessingException {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedRepository, mockedAuthorizationManager);
+
+        Resource resource1 = generateResource();
+        Resource resource2 = generateResource();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+        String message = "";
+        try {
+            message = mapper.writeValueAsString(coreResourceRegistryRequest);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
+
+
+    @Test
+    public void resourceModificationRequestConsumerTest() {
     }
 
     @Test
-    public void ResourceModificationRequestConsumerTest() {
-    }
-
-    @Test
-    public void ResourceRemovalRequestConsumerTest() throws IOException, InterruptedException {
+    public void resourceRemovalRequestConsumerTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
         Resource resource1 = generateResource();
@@ -158,7 +174,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void PlatformCreationRequestConsumerTest() throws Exception {
+    public void platformCreationRequestConsumerTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generatePlatformA();
@@ -186,7 +202,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void PlatformModificationRequestConsumerTest() throws IOException, InterruptedException {
+    public void platformModificationRequestConsumerTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generatePlatformA();
@@ -214,7 +230,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void PlatformRemovalRequestConsumerTest() throws IOException, InterruptedException {
+    public void platformRemovalRequestConsumerTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generatePlatformA();
@@ -235,6 +251,4 @@ public class MessagingTests {
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).removePlatform(argument.capture());
     }
-
-
 }

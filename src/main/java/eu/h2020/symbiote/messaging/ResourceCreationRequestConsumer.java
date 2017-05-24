@@ -9,7 +9,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.model.resources.*;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
@@ -137,19 +137,40 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         } catch (IOException e) {
             log.error("Could not deserialize content of request!" + e);
         }
+        return checkIds(resources);
+    }
 
+    private boolean checkIds(List<Resource> resources) {
         try {
             for (Resource resource : resources) {
-                if (resource.getId() != null && !resource.getId().isEmpty()) {
-                    log.error("One of the resources has an ID!");
-                    return false;
+                if (!checkId(resource)) return false;
+                List<ActuatingService> actuatingServices = new ArrayList<>();
+                if (resource instanceof Actuator) {
+                    actuatingServices = ((Actuator) resource).getCapabilities();
+                } else if (resource instanceof MobileDevice) {
+                    actuatingServices = ((MobileDevice) resource).getCapabilities();
+                } else if (resource instanceof StationaryDevice) {
+                    actuatingServices = ((StationaryDevice) resource).getCapabilities();
+                }
+                if (!actuatingServices.isEmpty()) {
+                    for (ActuatingService actuatingService : actuatingServices) {
+                        if (!checkId(actuatingService)) return checkId(actuatingService);
+                    }
                 }
             }
         } catch (Exception e) {
             log.error(e);
             return false;
         }
-
         return true;
     }
+
+    private boolean checkId(Resource resource) {
+        if (resource.getId() != null && !resource.getId().isEmpty()) {
+            log.error("One of the resources (or actuating services) has an ID!");
+            return false;
+        }
+        return true;
+    }
+
 }

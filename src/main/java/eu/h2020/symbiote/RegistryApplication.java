@@ -1,17 +1,13 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.security.InternalSecurityHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.sleuth.sampler.AlwaysSampler;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 
@@ -23,29 +19,9 @@ import org.springframework.stereotype.Component;
 public class RegistryApplication {
 
     private static Log log = LogFactory.getLog(RegistryApplication.class);
-    @Value("${aam.environment.coreInterfaceAddress}")
-    private String coreAAMUrl;
-    @Value("${rabbit.host}")
-    private String rabbitHost;
-    @Value("${rabbit.username}")
-    private String rabbitUsername;
-    @Value("${rabbit.password}")
-    private String rabbitPassword;
 
     public static void main(String[] args) {
         SpringApplication.run(RegistryApplication.class, args);
-    }
-
-    @Bean
-    public AlwaysSampler defaultSampler() {
-        return new AlwaysSampler();
-    }
-
-    @Bean
-    public InternalSecurityHandler securityHandler() {
-        InternalSecurityHandler securityHandler
-            = new InternalSecurityHandler(coreAAMUrl, rabbitHost, rabbitUsername, rabbitPassword);
-        return securityHandler;
     }
 
     @Component
