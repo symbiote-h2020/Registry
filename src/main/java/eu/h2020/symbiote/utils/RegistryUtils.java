@@ -2,6 +2,7 @@ package eu.h2020.symbiote.utils;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.*;
@@ -33,27 +34,21 @@ public class RegistryUtils {
      * @return true if it has all the fields and neither is empty
      */
     public static boolean validateFields(RegistryPlatform registryPlatform) {
-        //todo extend validation to all fields
-        boolean b;
+        //todo extend validation to all fields?
 
-        for (InterworkingService interworkingService : registryPlatform.getInterworkingServices()) {
-            if (interworkingService.getUrl().trim().charAt(interworkingService.getUrl().length() - 1)
-                    != "/".charAt(0)) {
-                interworkingService.setUrl(interworkingService.getUrl().trim() + "/");
-            }
-        }
-
-        if (registryPlatform.getBody() == null || registryPlatform.getLabels() == null || registryPlatform.getRdfFormat() == null) {
+        if (registryPlatform.getLabels() == null || registryPlatform.getInterworkingServices() == null || registryPlatform.getComments() == null) {
             log.info("Given platform has some null fields");
-            b = false;
-        } else if (registryPlatform.getBody().isEmpty() || registryPlatform.getLabels().isEmpty()
-                || registryPlatform.getRdfFormat().isEmpty()) {
+            return false;
+        } else if (registryPlatform.getInterworkingServices().isEmpty() || registryPlatform.getLabels().isEmpty()
+                || registryPlatform.getComments().isEmpty()) {
             log.info("Given platform has some empty fields");
-            b = false;
-        } else {
-            b = true;
+            return false;
+        } else if (registryPlatform.getInterworkingServices().contains(null) || registryPlatform.getLabels().contains(null)
+                || registryPlatform.getComments().contains(null)) {
+            log.info("Given platform has some lists with null objects");
+            return false;
         }
-        return b;
+        return true;
     }
 
     /**
@@ -63,7 +58,7 @@ public class RegistryUtils {
      * @return true if it has all the fields and neither is empty.
      */
     public static boolean validateFields(Resource resource) {
-        //todo extend validation to all fields
+        //todo extend validation to all fields?
         boolean b;
         if (resource.getInterworkingServiceURL() == null
                 || resource.getComments() == null
@@ -129,21 +124,21 @@ public class RegistryUtils {
         return coreResource;
     }
 
-    public static CoreResourceType getTypeForResource(eu.h2020.symbiote.core.model.resources.Resource resource ) {
+    public static CoreResourceType getTypeForResource(eu.h2020.symbiote.core.model.resources.Resource resource) {
         CoreResourceType type = null;
-        if( resource instanceof Actuator) {
+        if (resource instanceof Actuator) {
             type = CoreResourceType.ACTUATOR;
-        } else if( resource instanceof ActuatingService) {
+        } else if (resource instanceof ActuatingService) {
             type = CoreResourceType.ACTUATING_SERVICE;
-        } else if( resource instanceof Service) {
+        } else if (resource instanceof Service) {
             type = CoreResourceType.SERVICE;
-        } else if( resource instanceof MobileDevice) {
+        } else if (resource instanceof MobileDevice) {
             type = CoreResourceType.MOBILE_DEVICE;
-        } else if( resource instanceof MobileSensor) {
+        } else if (resource instanceof MobileSensor) {
             type = CoreResourceType.MOBILE_SENSOR;
-        } else if( resource instanceof StationaryDevice) {
+        } else if (resource instanceof StationaryDevice) {
             type = CoreResourceType.STATIONARY_DEVICE;
-        } else if( resource instanceof StationarySensor) {
+        } else if (resource instanceof StationarySensor) {
             type = CoreResourceType.STATIONARY_SENSOR;
         }
         return type;
@@ -155,25 +150,29 @@ public class RegistryUtils {
      * @param requestPlatform
      * @return
      */
-    public static RegistryPlatform convertRequestPlatformToRegistryPlatform
-    (Platform requestPlatform) {
+    public static RegistryPlatform convertRequestPlatformToRegistryPlatform(Platform requestPlatform) {
         RegistryPlatform registryPlatform = new RegistryPlatform();
-
-        registryPlatform.setId(requestPlatform.getPlatformId());
-
-        registryPlatform.setLabels(Arrays.asList(requestPlatform.getName()));
-
-        registryPlatform.setComments(Arrays.asList(requestPlatform.getDescription()));
-
-        InterworkingService interworkingService = new InterworkingService();
-        interworkingService.setInformationModelId(requestPlatform.getInformationModelId());
-        interworkingService.setUrl(requestPlatform.getUrl());
-        registryPlatform.setInterworkingServices(Arrays.asList(interworkingService));
-
-        //// TODO: 10.05.2017  
-        registryPlatform.setBody("not null body MOCKED");
-        registryPlatform.setRdfFormat("not null rdf MOCKED");
-
+        if (requestPlatform.getPlatformId() != null) {
+            registryPlatform.setId(requestPlatform.getPlatformId());
+        }
+        if (requestPlatform.getName() != null) {
+            registryPlatform.setLabels(Arrays.asList(requestPlatform.getName()));
+        }
+        if (requestPlatform.getDescription() != null) {
+            registryPlatform.setComments(Arrays.asList(requestPlatform.getDescription()));
+        }
+        if (requestPlatform.getInformationModelId() != null) {
+            InterworkingService interworkingService = new InterworkingService();
+            interworkingService.setInformationModelId(requestPlatform.getInformationModelId());
+            interworkingService.setUrl(requestPlatform.getUrl());
+            registryPlatform.setInterworkingServices(Arrays.asList(interworkingService));
+        }
+        if (registryPlatform.getBody() == null) {
+            registryPlatform.setBody("not null body MOCKED");
+        }
+        if (registryPlatform.getRdfFormat() == null) {
+            registryPlatform.setRdfFormat(RDFFormat.JSONLD.toString());
+        }
         return registryPlatform;
     }
 
@@ -187,11 +186,17 @@ public class RegistryUtils {
     (RegistryPlatform registryPlatform) {
         Platform platform = new Platform();
 
-        if (registryPlatform.getId() != null) platform.setPlatformId(registryPlatform.getId());
-        if (registryPlatform.getLabels().get(0) != null) platform.setName(registryPlatform.getLabels().get(0));
-        if (registryPlatform.getComments().get(0) != null)
-            platform.setDescription(registryPlatform.getComments().get(0));
-        if (registryPlatform.getInterworkingServices() != null) {
+        if (registryPlatform.getId() != null && !registryPlatform.getId().isEmpty())
+            platform.setPlatformId(registryPlatform.getId());
+        if (registryPlatform.getLabels() != null && !registryPlatform.getLabels().isEmpty()) {
+            if (registryPlatform.getLabels().get(0) != null)
+                platform.setName(registryPlatform.getLabels().get(0));
+        }
+        if (registryPlatform.getComments() != null && !registryPlatform.getComments().isEmpty()) {
+            if (registryPlatform.getComments().get(0) != null)
+                platform.setDescription(registryPlatform.getComments().get(0));
+        }
+        if (registryPlatform.getInterworkingServices() != null && !registryPlatform.getInterworkingServices().isEmpty()) {
             if (registryPlatform.getInterworkingServices().get(0).getInformationModelId() != null)
                 platform.setInformationModelId(registryPlatform.getInterworkingServices().get(0).getInformationModelId());
             if (registryPlatform.getInterworkingServices().get(0).getUrl() != null)

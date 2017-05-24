@@ -70,6 +70,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
+            platformResponse.setPlatform(requestPlatform);
 
             registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
@@ -80,6 +81,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             }
         } catch (JsonSyntaxException e) {
             log.error("Error occured during Platform saving to db", e);
+            platformResponse.setMessage("Error occured during Platform saving to db");
             platformResponse.setStatus(400);
         }
 

@@ -1,10 +1,11 @@
 package eu.h2020.symbiote.repository;
 
+import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
+import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -85,7 +86,7 @@ public class RepositoryManager {
     public PlatformResponse removePlatform(RegistryPlatform registryPlatform) {
         PlatformResponse platformResponse = new PlatformResponse();
 
-        if (registryPlatform == null || registryPlatform.getId().isEmpty() || registryPlatform.getId() == null) {
+        if (registryPlatform == null || registryPlatform.getId() == null || registryPlatform.getId().isEmpty()) {
             log.error("Given platform is null or has empty PlatformId!");
             platformResponse.setMessage("Given platform is null or has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -128,12 +129,10 @@ public class RepositoryManager {
         PlatformResponse platformResponse = new PlatformResponse();
         platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(registryPlatform));
 
-        if (registryPlatform.getBody().trim().charAt(registryPlatform.getBody().length() - 1) != "/".charAt(0)) {
-            registryPlatform.setBody(registryPlatform.getBody().trim() + "/");
-        }
+        normalizePlatfromsIinterworkingServicesUrls(registryPlatform);
 
         RegistryPlatform foundRegistryPlatform = null;
-        if (registryPlatform.getId().isEmpty() || registryPlatform.getId() == null) {
+        if (registryPlatform.getId() == null || registryPlatform.getId().isEmpty()) {
             log.error("Given platform has empty PlatformId!");
             platformResponse.setMessage("Given platform has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -177,7 +176,7 @@ public class RepositoryManager {
         if (registryPlatform.getBody() == null && foundRegistryPlatform.getBody() != null)
             registryPlatform.setBody(foundRegistryPlatform.getBody());
         if ((registryPlatform.getInterworkingServices() == null || registryPlatform.getInterworkingServices().isEmpty() ||
-                registryPlatform.getInterworkingServices().get( 0 ).getUrl() == null) && foundRegistryPlatform.getInterworkingServices() != null)
+                registryPlatform.getInterworkingServices().get(0).getUrl() == null) && foundRegistryPlatform.getInterworkingServices() != null)
             registryPlatform.setInterworkingServices(foundRegistryPlatform.getInterworkingServices());
 
         return registryPlatform;
@@ -290,7 +289,7 @@ public class RepositoryManager {
             return resourceSavingResult;
         }
 
-        normalizeUrl(resource);
+        normalizeResourceInterworkingServiceUrl(resource);
 
         foundResource = resourceRepository.findOne(resource.getId());
 
@@ -317,10 +316,20 @@ public class RepositoryManager {
         return resourceSavingResult;
     }
 
-    private void normalizeUrl(CoreResource resource) {
+    private void normalizeResourceInterworkingServiceUrl(CoreResource resource) {
         if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
                 != "/".charAt(0)) {
             resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
+        }
+    }
+
+    private void normalizePlatfromsIinterworkingServicesUrls(RegistryPlatform platform) {
+        if (platform.getInterworkingServices() != null && !platform.getInterworkingServices().isEmpty()) {
+            for (InterworkingService service : platform.getInterworkingServices()) {
+                if (service.getUrl().trim().charAt(service.getUrl().length() - 1) != "/".charAt(0)) {
+                    service.setUrl(service.getUrl().trim() + "/");
+                }
+            }
         }
     }
 }

@@ -67,12 +67,12 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceExchangeAutodelete", false);
         ReflectionTestUtils.setField(rabbitManager, "resourceExchangeInternal", false);
 
-        ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED);
-        ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED);
-        ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATION_REQUESTED);
         ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED);
-        ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED_RK);
 
 
         ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
@@ -98,12 +98,12 @@ public class MessagingTests {
             Channel channel;
             if (connection != null && connection.isOpen()) {
                 channel = connection.createChannel();
-                channel.queueDelete(PLATFORM_CREATION_REQUESTED);
-                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED);
-                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED);
+                channel.queueDelete(PLATFORM_CREATION_REQUESTED_RK);
+                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_RK);
+                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_RK);
                 channel.queueDelete(RESOURCE_CREATION_REQUESTED);
                 channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED);
-                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED);
+                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_RK);
                 channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
@@ -134,7 +134,7 @@ public class MessagingTests {
             e.printStackTrace();
         }
 
-
+//// TODO: 24.05.2017  
 
     }
 
@@ -163,7 +163,7 @@ public class MessagingTests {
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(true);
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(true);
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, Resource.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -187,7 +187,7 @@ public class MessagingTests {
 
         when(mockedRepository.savePlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -199,6 +199,36 @@ public class MessagingTests {
         Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
         Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
         Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
+    }
+
+    @Test
+    public void platformCreationRequestConsumerNullFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
+
+        Platform requestPlatform = generatePlatformA();
+        requestPlatform.setName(null);
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void platformCreationRequestConsumerJsonFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
+
+        String message = "[wrong json]";
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+
+        verifyZeroInteractions(mockedRepository);
     }
 
     @Test
@@ -215,7 +245,7 @@ public class MessagingTests {
 
         when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -227,6 +257,20 @@ public class MessagingTests {
         Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
         Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
         Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
+    }
+
+    @Test
+    public void platformModificationRequestConsumerJsonFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
+
+        String message = "[wrong json]";
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+
+        verifyZeroInteractions(mockedRepository);
     }
 
     @Test
@@ -243,12 +287,26 @@ public class MessagingTests {
 
         when(mockedRepository.removePlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).removePlatform(argument.capture());
+    }
+
+    @Test
+    public void platformRemovalRequestConsumerJsonFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
+
+        String message = "[wrong json]";
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+
+        verifyZeroInteractions(mockedRepository);
     }
 }

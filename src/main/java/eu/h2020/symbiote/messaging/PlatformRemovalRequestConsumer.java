@@ -70,6 +70,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
+            platformResponse.setPlatform(requestPlatform);
 
             registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
@@ -80,6 +81,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
             }
         } catch (JsonSyntaxException e) {
             log.error("Error occured during Platform deleting in db", e);
+            platformResponse.setMessage("Error occured during Platform deleting in db");
             platformResponse.setStatus(400);
         }
 

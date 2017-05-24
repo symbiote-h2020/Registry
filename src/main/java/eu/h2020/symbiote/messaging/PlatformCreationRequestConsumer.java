@@ -63,12 +63,13 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received requestPlatform to create: '" + message + "'");
 
-        Platform requestPlatform;
+        Platform requestPlatform = null;
         RegistryPlatform registryPlatform;
 
         PlatformResponse platformResponse = new PlatformResponse();
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
+            platformResponse.setPlatform(requestPlatform);
 
             registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
@@ -82,10 +83,12 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 }
             } else {
                 log.error("Given Platform has some fields null or empty");
+                platformResponse.setMessage("Given Platform has some fields null or empty");
                 platformResponse.setStatus(400);
             }
         } catch (JsonSyntaxException e) {
             log.error("Error occured during Platform saving to db", e);
+            platformResponse.setMessage("Error occured during Platform saving to db");
             platformResponse.setStatus(400);
         }
         response = mapper.writeValueAsString(platformResponse);

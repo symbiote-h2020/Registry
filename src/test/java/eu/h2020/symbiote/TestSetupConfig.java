@@ -25,13 +25,13 @@ public class TestSetupConfig {
     public static final String MOCKED_TOKEN = "eyJhbGciOiJFUzI1NiJ9.eyJTWU1CSU9URV9Pd25lZFBsYXRmb3JtIjoidGVzdDFQbGF0IiwiU1lNQklPVEVfUm9sZSI6IlBMQVRGT1JNX09XTkVSIiwidHR5cCI6IkNPUkUiLCJzdWIiOiJUZXN0MSIsImlwayI6Ik1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRXI2OXZEV0pzT3duYW9CM0FDRVJPdnRETWtmNjh5aUd6c3lmR1duOWZnSnJHT2ZoTGJkM2Q5NEMxay9TUW1hRWdTakVOUWI4ZEljME9FYWRSRzFtWGR3PT0iLCJpc3MiOiJTeW1iSW9UZV9Db3JlX0FBTSIsImV4cCI6MTQ5NTExNTExMiwiaWF0IjoxNDk1MTExNTEyLCJqdGkiOiI0ODY1MTQ2NTIiLCJzcGsiOiJNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV5RVJnYXhnQUUzSmUwand6RDBMdjluby9wQVQyUjV0Njc0MzJrcTQxaHNGTWZRSXdyQ212RVRZbW9lekgxYWU2WSsyV0ZCQVdiMHhiMGVUd1ozeWZZdz09In0.M7fIyUsr0GfUN7IyaKMG9T41dabvkFS_UNGeq3RCzzyzA-ttEdHnDNV3oImX7eMS_vvp-prBlnSsVl0dhL131Q";
 
     public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
-    public static final String PLATFORM_CREATION_REQUESTED = "symbIoTe.platform.creationRequested";
-    public static final String PLATFORM_MODIFICATION_REQUESTED = "symbIoTe.platform.modificationRequested";
-    public static final String PLATFORM_REMOVAL_REQUESTED = "symbIoTe.platform.removalRequested";
+    public static final String PLATFORM_CREATION_REQUESTED_RK = "symbIoTe.platform.creationRequested";
+    public static final String PLATFORM_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.modificationRequested";
+    public static final String PLATFORM_REMOVAL_REQUESTED_RK = "symbIoTe.platform.removalRequested";
     public static final String RESOURCE_EXCHANGE_NAME = "symbIoTe.resource";
     public static final String RESOURCE_CREATION_REQUESTED = "symbIoTe.resource.creationRequested";
     public static final String RESOURCE_MODIFICATION_REQUESTED = "symbIoTe.resource.modificationRequested";
-    public static final String RESOURCE_REMOVAL_REQUESTED = "symbIoTe.resource.removalRequested";
+    public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
     public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.modified";

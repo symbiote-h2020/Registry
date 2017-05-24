@@ -1,11 +1,13 @@
 package eu.h2020.symbiote;
 
+import com.mongodb.MongoException;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -125,10 +127,37 @@ public class RepositoryManagerTests {
     }
 
     @Test
+    public void testSavePlatformReturnsStatus200() throws Exception {
+        RegistryPlatform platform = generateRegistryPlatformB();
+        when(registryPlatformRepository.save(platform)).thenReturn(platform);
+
+        Assert.assertEquals(200,repositoryManager.savePlatform(platform).getStatus());
+    }
+
+    @Test
     public void testSavePlatformWithWrongId() throws Exception {
         RegistryPlatform platform = new RegistryPlatform();
-
-
+        Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
     }
+
+    @Test
+    public void testSavePlatformMongoError() throws Exception {
+        RegistryPlatform platform = generateRegistryPlatformB();
+        when(registryPlatformRepository.save(platform)).thenThrow(new MongoException("MONGO ERROR"));
+        Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
+    }
+
+    @Test
+    public void testRemovePlatformWithWrongId() throws Exception {
+        RegistryPlatform platform = new RegistryPlatform();
+        Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
+    }
+
+    @Test
+    public void testModifyPlatformWithWrongId() throws Exception {
+        RegistryPlatform platform = new RegistryPlatform();
+        Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
+    }
+
 }
 
