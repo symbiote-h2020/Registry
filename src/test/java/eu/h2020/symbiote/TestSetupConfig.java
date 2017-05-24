@@ -34,11 +34,11 @@ public class TestSetupConfig {
     public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
-    public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.modified";
-    public static final String PLATFORM_REMOVED_ROUTING_KEY = "symbIoTe.platform.removed";
+    public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";
+    public static final String PLATFORM_REMOVED_ROUTING_KEY = "symbIoTe.platform.deleted";
     public static final String RESOURCE_CREATED_ROUTING_KEY = "symbIoTe.resource.created";
-    public static final String RESOURCE_REMOVED_ROUTING_KEY = "symbIoTe.resource.removed";
-    public static final String RESOURCE_MODIFIED_ROUTING_KEY = "symbIoTe.resource.modified";
+    public static final String RESOURCE_REMOVED_ROUTING_KEY = "symbIoTe.resource.deleted";
+    public static final String RESOURCE_MODIFIED_ROUTING_KEY = "symbIoTe.resource.updated";
 
     public static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
     public static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";

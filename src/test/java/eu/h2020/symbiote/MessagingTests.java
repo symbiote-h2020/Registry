@@ -2,8 +2,7 @@ package eu.h2020.symbiote;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -43,11 +42,11 @@ public class MessagingTests {
 
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
     RepositoryManager mockedRepository;
-    private Random rand;
     ObjectMapper mapper;
+    AuthorizationManager mockedAuthorizationManager;
+    private Random rand;
     @InjectMocks
     private RabbitManager rabbitManager;
-    AuthorizationManager mockedAuthorizationManager;
 
     @Before
     public void setup() throws IOException, TimeoutException {
@@ -257,6 +256,64 @@ public class MessagingTests {
         Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
         Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
         Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
+    }
+
+    @Test
+    public void platformModificationRequestConsumerMongoFailTest() throws IOException, InterruptedException, TimeoutException {
+        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
+
+        Platform requestPlatform = generatePlatformA();
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformResponse platformResponse = new PlatformResponse();
+        platformResponse.setStatus(400);
+        platformResponse.setMessage("mongo fail");
+        platformResponse.setPlatform(requestPlatform);
+
+        when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
+
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+
+        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        verify(mockedRepository).modifyPlatform(argument.capture());
+
+//// TODO: 24.05.2017  
+/* 
+        Channel channel = rabbitManager.getConnection().createChannel();
+        String queueName = channel.queueDeclare().getQueue();
+        channel.queueBind(queueName, PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFIED_ROUTING_KEY);
+
+        GetResponse response = channel.basicGet(queueName, false);
+        String receivedMessage = "";
+        if (response == null) {
+            // No message retrieved.
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        } else {
+            byte[] body = response.getBody();
+            receivedMessage = new String(body, "UTF-8");
+        }
+
+        channel.basicConsume(queueName, false, "myConsumerTag",
+                new DefaultConsumer(channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag,
+                                               Envelope envelope,
+                                               AMQP.BasicProperties properties,
+                                               byte[] body)
+                            throws IOException
+                    {
+                        String msg = new String(body, "UTF-8");
+                        System.out.println(msg);
+                    }
+                });
+
+*/
+
+//        Assert.assertEquals(mapper.writeValueAsString(requestPlatform), receivedMessage);
     }
 
     @Test
