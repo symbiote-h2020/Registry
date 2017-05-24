@@ -2,7 +2,9 @@ package eu.h2020.symbiote;
 
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import eu.h2020.symbiote.security.InternalSecurityHandler;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.sampler.AlwaysSampler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
@@ -12,6 +14,18 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @Configuration
 @EnableMongoRepositories
 class AppConfig extends AbstractMongoConfiguration {
+
+    @Value("${aam.environment.coreInterfaceAddress}")
+    private String coreAAMUrl;
+
+    @Value("${rabbit.host}")
+    private String rabbitHost;
+
+    @Value("${rabbit.username}")
+    private String rabbitUsername;
+
+    @Value("${rabbit.password}")
+    private String rabbitPassword;
 
     @Value("${symbiote.mongo.dbname.registry}")
     private String databaseName;
@@ -34,4 +48,17 @@ class AppConfig extends AbstractMongoConfiguration {
     public MongoTemplate mongoTemplate() throws Exception {
         return new MongoTemplate(new MongoClient(mongoHost), getDatabaseName());
     }
+
+    @Bean
+    public AlwaysSampler defaultSampler() {
+        return new AlwaysSampler();
+    }
+
+    @Bean
+    public InternalSecurityHandler securityHandler() {
+        InternalSecurityHandler securityHandler
+                = new InternalSecurityHandler(coreAAMUrl, rabbitHost, rabbitUsername, rabbitPassword);
+        return securityHandler;
+    }
+
 }

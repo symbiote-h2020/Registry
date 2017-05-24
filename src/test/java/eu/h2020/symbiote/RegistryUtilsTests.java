@@ -16,7 +16,6 @@ import static eu.h2020.symbiote.TestSetupConfig.generateResource;
  */
 public class RegistryUtilsTests {
 
-
     @Before
     public void setup() {
     }

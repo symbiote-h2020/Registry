@@ -5,9 +5,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.DescriptionType;
+import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 
@@ -49,12 +51,8 @@ public class TestSetupConfig {
     public static final String PLATFORM_A_NAME = "Platform1";
     public static final String PLATFORM_A_MODEL_ID = "11";
     public static final String PLATFORM_A_DESCRIPTION = "11desc";
-    public static final String PLATFORM_A_FILENAME = "/platformA.ttl";
-    //RDF URIs
     public static final String PLATFORM_A_URI = "http://www.symbiote-h2020.eu/ontology/platforms/1";
     public static final String PLATFORM_A_SERVICE_URI = "http://www.symbiote-h2020.eu/ontology/platforms/1/service/somehost1.com/resourceAccessProxy";
-
-    //LINK to Interworking Service
     public static final String PLATFORM_A_URL = "http://somehost1.com/resourceAccessProxy";
 
     public static final String PLATFORM_A_NAME_UPDATED = "Platform1Updated";
@@ -62,18 +60,14 @@ public class TestSetupConfig {
     public static final String PLATFORM_A_DESCRIPTION_UPDATED = "11descUpdated";
     public static final String PLATFORM_A_URL_UPDATED = "http://somehost1.com/resourceAccessProxyUpdated";
 
-    public static final String PLATFORM_B_ID = "2";
-    public static final String PLATFORM_B_NAME = "Platform2";
-    public static final String PLATFORM_B_MODEL_ID = "21";
+    public static final String PLATFORM_B_ID = "PlatB";
+    public static final String PLATFORM_B_NAME = "PlatformB";
     public static final String PLATFORM_B_DESCRIPTION = "21desc";
-    public static final String PLATFORM_B_FILENAME = "/platformB.ttl";
-    public static final String PLATFORM_B_URI = "http://www.symbiote-h2020.eu/ontology/platforms/2";
-    public static final String PLATFORM_B_SERVICE_URI = "http://www.symbiote-h2020.eu/ontology/platforms/2/service/somehost2.com/resourceAccessProxy";
+    public static final String INTERWORKING_SERVICE_URL_B = "http://somehost1.com/platformB";
+    public static final String INFORMATION_MODEL_ID_B = "IM_1";
 
     public static final String RESOURCE_PREDICATE = "http://www.symbiote-h2020.eu/ontology/resources/";
 
-    public static final String RESOURCE_101_FILENAME = "/resource101.ttl";
-    public static final String RESOURCE_101_URI = RESOURCE_PREDICATE + "101";
     public static final String RESOURCE_101_LABEL = "Resource 101";
     public static final String RESOURCE_101_COMMENT = "Resource 101 comment";
     public static final String RESOURCE_101_ID = "101";
@@ -97,33 +91,27 @@ public class TestSetupConfig {
         return platform;
     }
 
-    public static Platform generatePlatformAUpdate() {
-        Platform registryPlatform = new Platform();
-        registryPlatform.setPlatformId(PLATFORM_A_ID);
-        registryPlatform.setInformationModelId(PLATFORM_A_MODEL_ID_UPDATED);
-        registryPlatform.setDescription(PLATFORM_A_DESCRIPTION_UPDATED);
-        registryPlatform.setName(PLATFORM_A_NAME_UPDATED);
-        registryPlatform.setUrl(PLATFORM_A_URL_UPDATED);
-        return registryPlatform;
-    }
-
-    public static RegistryPlatform genereteRegistryPlatformB() {
+    public static RegistryPlatform generateRegistryPlatformB() {
         RegistryPlatform platform = new RegistryPlatform();
         platform.setId(PLATFORM_B_ID);
         platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
         platform.setComments(Arrays.asList(PLATFORM_B_DESCRIPTION));
+        InterworkingService interworkingService = new InterworkingService();
+        interworkingService.setInformationModelId(INFORMATION_MODEL_ID_B);
+        interworkingService.setUrl(INTERWORKING_SERVICE_URL_B);
+        platform.setInterworkingServices(Arrays.asList(interworkingService));
         platform.setBody("http://www.symbIoTe.com/");
         platform.setRdfFormat("some RDF Format");
         return platform;
     }
 
     public static CoreResource generateCoreResource() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, PLATFORM_A_URL,
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, INTERWORKING_SERVICE_URL_B,
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
     }
 
     public static Resource generateResource() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, PLATFORM_A_URL);
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, INTERWORKING_SERVICE_URL_B);
     }
 
     public static CoreResource generateStationarySensor() {
@@ -145,15 +133,17 @@ public class TestSetupConfig {
         res.setInterworkingServiceURL(serviceUrl);
         res.setRdf(rdfFilename);
         res.setRdfFormat(format);
+        res.setType(CoreResourceType.STATIONARY_SENSOR);
         return res;
     }
 
-    public static Resource generateSensor(String label, String comment, String id, String serviceUrl) {
+    public static Resource generateSensor(String label, String comment, String id, String interworkingServiceUrl) {
         CoreResource res = new CoreResource();
         res.setComments(Arrays.asList(comment));
         res.setLabels(Arrays.asList(label));
         res.setId(id);
-        res.setInterworkingServiceURL(serviceUrl);
+        res.setType(CoreResourceType.STATIONARY_SENSOR);
+        res.setInterworkingServiceURL(interworkingServiceUrl);
         return res;
     }
 
@@ -168,7 +158,7 @@ public class TestSetupConfig {
         }).writeValueAsString(resourceList);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
-        coreResourceRegistryRequest.setPlatformId("test1Plat");
+        coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
         coreResourceRegistryRequest.setToken(MOCKED_TOKEN);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);
