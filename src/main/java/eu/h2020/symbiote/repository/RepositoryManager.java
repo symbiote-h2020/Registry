@@ -49,7 +49,7 @@ public class RepositoryManager {
 
         log.info("Received platform to save: " + registryPlatform);
 
-        if (registryPlatform.getId() == null && registryPlatform.getId().isEmpty()) {
+        if (registryPlatform.getId() == null || registryPlatform.getId().isEmpty()) {
             log.error("Given platform has null or empty id!");
             platformResponse.setMessage("Given platform has null or empty id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);

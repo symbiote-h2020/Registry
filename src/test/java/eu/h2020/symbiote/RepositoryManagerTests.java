@@ -124,5 +124,11 @@ public class RepositoryManagerTests {
         verify(registryPlatformRepository).delete(PLATFORM_B_ID);
     }
 
+    @Test
+    public void testSavePlatformWithWrongId() throws Exception {
+        RegistryPlatform platform = new RegistryPlatform();
+
+
+    }
 }
 
