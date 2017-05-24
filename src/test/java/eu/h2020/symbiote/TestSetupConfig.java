@@ -8,6 +8,7 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 
@@ -145,6 +146,7 @@ public class TestSetupConfig {
         res.setInterworkingServiceURL(serviceUrl);
         res.setRdf(rdfFilename);
         res.setRdfFormat(format);
+        res.setType(CoreResourceType.STATIONARY_SENSOR);
         return res;
     }
 
@@ -154,6 +156,7 @@ public class TestSetupConfig {
         res.setLabels(Arrays.asList(label));
         res.setId(id);
         res.setInterworkingServiceURL(serviceUrl);
+        res.setType(CoreResourceType.STATIONARY_SENSOR);
         return res;
     }
 

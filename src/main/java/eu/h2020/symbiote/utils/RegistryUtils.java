@@ -3,7 +3,8 @@ package eu.h2020.symbiote.utils;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.model.internal.CoreResourceType;
+import eu.h2020.symbiote.core.model.resources.*;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -122,7 +123,28 @@ public class RegistryUtils {
         if (resource.getComments() != null) coreResource.setComments(resource.getComments());
         if (resource.getLabels() != null) coreResource.setLabels(resource.getLabels());
         if (resource.getInterworkingServiceURL() != null) coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
+        coreResource.setType(getTypeForResource(resource));
         return coreResource;
+    }
+
+    public static CoreResourceType getTypeForResource(eu.h2020.symbiote.core.model.resources.Resource resource ) {
+        CoreResourceType type = null;
+        if( resource instanceof Actuator) {
+            type = CoreResourceType.ACTUATOR;
+        } else if( resource instanceof ActuatingService) {
+            type = CoreResourceType.ACTUATING_SERVICE;
+        } else if( resource instanceof Service) {
+            type = CoreResourceType.SERVICE;
+        } else if( resource instanceof MobileDevice) {
+            type = CoreResourceType.MOBILE_DEVICE;
+        } else if( resource instanceof MobileSensor) {
+            type = CoreResourceType.MOBILE_SENSOR;
+        } else if( resource instanceof StationaryDevice) {
+            type = CoreResourceType.STATIONARY_DEVICE;
+        } else if( resource instanceof StationarySensor) {
+            type = CoreResourceType.STATIONARY_SENSOR;
+        }
+        return type;
     }
 
     /**
