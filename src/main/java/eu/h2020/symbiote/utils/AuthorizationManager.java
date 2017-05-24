@@ -53,19 +53,7 @@ public class AuthorizationManager {
             return false;
         }
 
-        Token token;
-        try {
-            token = new Token(tokenString);
-        } catch (TokenValidationException e) {
-            log.error("Token could not be verified", e);
-            return false;
-        }
-        ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
-
-        if (validationStatus != VALID) {
-            log.error("Token failed verification due to " + validationStatus);
-            return false;
-        }
+        if (!checkToken(tokenString)) return false;
 
         try {
             claims = JWTEngine.getClaimsFromToken(tokenString);
@@ -92,6 +80,23 @@ public class AuthorizationManager {
         // owned platform identifier
         if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) {
             log.error("Platform owner does not match with requested operation!");
+            return false;
+        }
+        return true;
+    }
+
+    public boolean checkToken(String tokenString) {
+        Token token;
+        try {
+            token = new Token(tokenString);
+        } catch (TokenValidationException e) {
+            log.error("Token could not be verified", e);
+            return false;
+        }
+        ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
+
+        if (validationStatus != VALID) {
+            log.error("Token failed verification due to " + validationStatus);
             return false;
         }
         return true;

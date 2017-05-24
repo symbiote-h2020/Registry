@@ -12,8 +12,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static eu.h2020.symbiote.TestSetupConfig.PLATFORM_B_ID;
 import static eu.h2020.symbiote.TestSetupConfig.generateCoreResource;
-import static eu.h2020.symbiote.TestSetupConfig.genereteRegistryPlatformB;
+import static eu.h2020.symbiote.TestSetupConfig.generateRegistryPlatformB;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,7 +83,7 @@ public class RepositoryManagerTests {
 
     @Test
     public void testSavePlatformTriggersRepository() {
-        RegistryPlatform platform = genereteRegistryPlatformB();
+        RegistryPlatform platform = generateRegistryPlatformB();
         when(registryPlatformRepository.save(platform)).thenReturn(platform);
 
         repositoryManager.savePlatform(platform);
@@ -96,9 +97,9 @@ public class RepositoryManagerTests {
 
     @Test
     public void testModifyPlatformTriggersRepository() {
-        RegistryPlatform platform = genereteRegistryPlatformB();
+        RegistryPlatform platform = generateRegistryPlatformB();
         when(registryPlatformRepository.save(platform)).thenReturn(platform);
-        when(registryPlatformRepository.findOne("2")).thenReturn(platform);
+        when(registryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
         repositoryManager.modifyPlatform(platform);
         try {
@@ -111,8 +112,8 @@ public class RepositoryManagerTests {
 
     @Test
     public void testRemovePlatformTriggersRepository() {
-        RegistryPlatform platform = genereteRegistryPlatformB();
-        when(registryPlatformRepository.findOne("2")).thenReturn(platform);
+        RegistryPlatform platform = generateRegistryPlatformB();
+        when(registryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
         repositoryManager.removePlatform(platform);
         try {
@@ -120,7 +121,7 @@ public class RepositoryManagerTests {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        verify(registryPlatformRepository).delete("2");
+        verify(registryPlatformRepository).delete(PLATFORM_B_ID);
     }
 
 }
