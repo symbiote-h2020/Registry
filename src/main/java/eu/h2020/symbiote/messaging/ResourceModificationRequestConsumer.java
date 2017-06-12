@@ -75,7 +75,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
+            if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId()).isValidated()) {
                 log.error("Token invalid");
                 response.setStatus(400);
                 response.setMessage("Token invalid");

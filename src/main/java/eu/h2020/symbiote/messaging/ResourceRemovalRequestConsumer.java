@@ -92,7 +92,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
+            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId()).isValidated()) {
                 try {
                     resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
                     });

@@ -2,6 +2,7 @@ package eu.h2020.symbiote.utils;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
@@ -43,29 +44,29 @@ public class AuthorizationManager {
         this.registryPlatformRepository = registryPlatformRepository;
     }
 
-    public boolean checkResourceOperationAccess(String tokenString, String platformId) {
+    public AuthorizationResult checkResourceOperationAccess(String tokenString, String platformId) {
         log.info("Received Token to verification: (" + tokenString + ")");
 
         JWTClaims claims;
 
         if (registryPlatformRepository.findOne(platformId) == null) {
-            log.error("Given platform does not exist");
-            return false;
+            return new AuthorizationResult("Given platform does not exist", false);
         }
 
-        if (!checkToken(tokenString)) return false;
+        AuthorizationResult authorizationResult = checkToken(tokenString);
+        if (!authorizationResult.isValidated()) return authorizationResult;
 
         try {
             claims = JWTEngine.getClaimsFromToken(tokenString);
         } catch (MalformedJWTException e) {
-            log.error(e);
-            return false;
+            log.error("Could not get the claims for token!", e);
+            return new AuthorizationResult("Token invalid!", false);
         }
 
         // verify if there is a right token issuer in claims
         if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) {
             log.error("Presented token was not issued by CoreAAM!");
-            return false;
+            return new AuthorizationResult("Token invalid!", false);
         }
 
         // verify that this JWT contains attributes relevant for platform owner
@@ -74,32 +75,32 @@ public class AuthorizationManager {
         // PO role
         if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) {
             log.error("Wrong role claim in token!");
-            return false;
+            return new AuthorizationResult("Token invalid!", false);
         }
 
         // owned platform identifier
         if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) {
             log.error("Platform owner does not match with requested operation!");
-            return false;
+            return new AuthorizationResult("Token invalid!", false);
         }
-        return true;
+        return new AuthorizationResult("Authorization check successful!", true);
     }
 
-    public boolean checkToken(String tokenString) {
+    public AuthorizationResult checkToken(String tokenString) {
         Token token;
         try {
             token = new Token(tokenString);
         } catch (TokenValidationException e) {
             log.error("Token could not be verified", e);
-            return false;
+            return new AuthorizationResult("Token invalid!", false);
         }
         ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
 
         if (validationStatus != VALID) {
             log.error("Token failed verification due to " + validationStatus);
-            return false;
+            return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
         }
-        return true;
+        return new AuthorizationResult("", true);
     }
 
     public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
@@ -118,8 +119,8 @@ public class AuthorizationManager {
         }
 
         List<String> platformInterworkingServicesUrls = interworkingServices.stream()
-            .map(InterworkingService::getUrl)
-            .collect(Collectors.toList());
+                .map(InterworkingService::getUrl)
+                .collect(Collectors.toList());
 
         for (Resource resource : resources) {
             if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())) {

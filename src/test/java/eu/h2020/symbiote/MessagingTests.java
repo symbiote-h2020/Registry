@@ -7,6 +7,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.model.RegistryPlatform;
@@ -159,7 +160,7 @@ public class MessagingTests {
 
         when(mockedRepository.removeResource(any())).thenReturn(registryPersistenceResult1);
         when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
-                coreResourceRegistryRequest.getPlatformId())).thenReturn(true);
+                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(true);
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, Resource.class.getCanonicalName());

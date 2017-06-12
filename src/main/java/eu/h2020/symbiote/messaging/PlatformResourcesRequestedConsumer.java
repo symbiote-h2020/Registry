@@ -77,7 +77,7 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
             return;
         }
 
-        if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
+        if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId()).isValidated()) {
             log.error("Token invalid");
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, "Token invalid");
             return;
