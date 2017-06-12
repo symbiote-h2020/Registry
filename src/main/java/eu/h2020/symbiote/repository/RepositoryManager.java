@@ -13,6 +13,9 @@ import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Class managing persistence actions for Platforms, Resources and Locations using MongoDB repositories.
  * <p>
@@ -315,6 +318,17 @@ public class RepositoryManager {
         }
         return resourceSavingResult;
     }
+
+    //todo test method!
+    public List<CoreResource> getResourcesForPlatform(String platformId) {
+        RegistryPlatform platform = registryPlatformRepository.findOne(platformId);
+        List<CoreResource> coreResources = new ArrayList<>();
+        for (InterworkingService interworkingService : platform.getInterworkingServices()) {
+            coreResources.addAll(resourceRepository.findByInterworkingServiceURL(interworkingService.getUrl()));
+        }
+        return coreResources;
+    }
+
 
     private void normalizeResourceInterworkingServiceUrl(CoreResource resource) {
         if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)

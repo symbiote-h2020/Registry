@@ -48,6 +48,7 @@ public class RabbitManager {
     private static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
     private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
+    private static final String PLATFORM_RESOURCES_REQUESTED_QUEUE = "symbIoTe-Registry-platformResourcesRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
     private static Log log = LogFactory.getLog(RabbitManager.class);
     private AuthorizationManager authorizationManager;
@@ -234,7 +235,32 @@ public class RabbitManager {
             startConsumerOfResourceRemovalMessages(repositoryManager, authorizationManager);
             startConsumerOfPlatformModificationMessages(repositoryManager, authorizationManager);
             startConsumerOfResourceModificationMessages(repositoryManager, authorizationManager);
+            startConsumerOfPlatformResourcesRequestsMessages(repositoryManager, authorizationManager);
         } catch (InterruptedException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    public void startConsumerOfPlatformResourcesRequestsMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(PLATFORM_RESOURCES_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Platform Resources Requests messages....");
+
+            Consumer consumer = new PlatformResourcesRequestedConsumer(channel, repositoryManager, this, authorizationManager);
+            channel.basicConsume(PLATFORM_RESOURCES_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
             log.error(e);
         }
     }

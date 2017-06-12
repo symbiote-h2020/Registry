@@ -280,12 +280,14 @@ public class MessagingTests {
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).modifyPlatform(argument.capture());
 
-//// TODO: 24.05.2017  
-/* 
+//// TODO: 24.05.2017
         Channel channel = rabbitManager.getConnection().createChannel();
-        String queueName = channel.queueDeclare().getQueue();
-        channel.queueBind(queueName, PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFIED_ROUTING_KEY);
-
+        AMQP.Queue.DeclareOk name = channel.queueDeclare("name", false, false, true, null);
+        channel.queueBind(name.getQueue(), PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFIED_ROUTING_KEY);
+        System.out.println(name.getMessageCount());
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        TimeUnit.SECONDS.sleep(5);
+/*
         GetResponse response = channel.basicGet(queueName, false);
         String receivedMessage = "";
         if (response == null) {
