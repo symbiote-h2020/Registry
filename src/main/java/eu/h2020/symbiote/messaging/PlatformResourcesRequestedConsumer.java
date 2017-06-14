@@ -14,6 +14,7 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -67,8 +68,9 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         String response;
-        CoreResourceRegistryRequest request = null;
+        CoreResourceRegistryRequest request;
         List<CoreResource> coreResources;
+        AuthorizationResult authorizationResult;
         String message = new String(body, "UTF-8");
         log.info(" [x] Received requestPlatform to create: '" + message + "'");
 
@@ -80,7 +82,13 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
             return;
         }
 
-        AuthorizationResult authorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+        try {
+            authorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+        } catch (NullArgumentException e) {
+            log.error(e);
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, "Request invalid!");
+            return;
+        }
 
         if (!authorizationResult.isValidated()) {
             log.error("Token invalid! " + authorizationResult.getMessage());

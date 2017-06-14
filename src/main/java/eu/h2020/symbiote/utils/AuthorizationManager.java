@@ -109,19 +109,19 @@ public class AuthorizationManager {
         return new AuthorizationResult("", true);
     }
 
-    public boolean checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
+    public AuthorizationResult checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
         RegistryPlatform registryPlatform = registryPlatformRepository.findOne(platformId);
 
         if (registryPlatform == null) {
             log.error("Given platform does not exists in database");
-            return false;
+            return new AuthorizationResult("Given platform does not exists in database", false);
         }
 
         List<InterworkingService> interworkingServices = registryPlatform.getInterworkingServices();
 
         if (interworkingServices == null) {
             log.error("Interworking services list in given platform is null");
-            return false;
+            return new AuthorizationResult("Interworking services list in given platform is null", false);
         }
 
         List<String> platformInterworkingServicesUrls = interworkingServices.stream()
@@ -131,11 +131,11 @@ public class AuthorizationManager {
         for (Resource resource : resources) {
             if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())) {
                 log.error("Resource does not match with any Interworking Service in given platform! " + resource);
-                return false;
+                return new AuthorizationResult("Resource does not match with any Interworking Service in given platform!", false);
             }
         }
 
         log.info("Interworking services check succeed!");
-        return true;
+        return new AuthorizationResult("Interworking services check succeed!", true);
     }
 }

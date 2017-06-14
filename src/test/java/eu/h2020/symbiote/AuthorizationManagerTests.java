@@ -88,7 +88,7 @@ public class AuthorizationManagerTests {
         when(mockedRegistryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
         List<Resource> resources = Arrays.asList(resource);
 
-        Assert.assertTrue(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID));
+        Assert.assertTrue(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID).isValidated());
     }
 
     @Test
@@ -99,7 +99,7 @@ public class AuthorizationManagerTests {
         when(mockedRegistryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
         List<Resource> resources = Arrays.asList(resource);
 
-        Assert.assertFalse(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID));
+        Assert.assertFalse(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID).isValidated());
     }
 
 }

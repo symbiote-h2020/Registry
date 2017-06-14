@@ -12,6 +12,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
@@ -116,9 +117,11 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             return;
         }
 
-        if (!authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId())) {
-            log.error("One of resources does not match with any Interworking Service in given platform!" + resources);
-            response.setMessage("One of resources does not match with any Interworking Service in given platform!" + resources);
+        AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId());
+
+        if (!authorizationResult.isValidated()) {
+            log.error(authorizationResult.getMessage() + resources);
+            response.setMessage(authorizationResult.getMessage() + resources);
             response.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;

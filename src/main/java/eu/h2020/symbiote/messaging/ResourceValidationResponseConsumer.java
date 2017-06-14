@@ -14,6 +14,7 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.RegistryPersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
@@ -124,13 +125,15 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 log.error("Unable to get Resources List from semantic response body!", e);
             }
 
-            if (authorizationManager.checkIfResourcesBelongToPlatform
-                    (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
+            AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
+                    (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId);
+
+            if (authorizationResult.isValidated()) {
                 List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
                 prepareContentOfMessage(persistenceOperationResultsList);
             } else {
                 registryResponse.setStatus(400);
-                registryResponse.setMessage("One of resources does not match with any Interworking Service in given platform!");
+                registryResponse.setMessage(authorizationResult.getMessage());
             }
 
         } else {
