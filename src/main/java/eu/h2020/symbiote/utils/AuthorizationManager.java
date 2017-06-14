@@ -50,7 +50,7 @@ public class AuthorizationManager {
         JWTClaims claims;
 
         if (registryPlatformRepository.findOne(platformId) == null) {
-            return new AuthorizationResult("Given platform does not exist", false);
+            return new AuthorizationResult("Given platform does not exist in database", false);
         }
 
         AuthorizationResult authorizationResult = checkToken(tokenString);
@@ -60,15 +60,15 @@ public class AuthorizationManager {
             claims = JWTEngine.getClaimsFromToken(tokenString);
         } catch (MalformedJWTException e) {
             log.error("Could not get the claims for token!", e);
-            //todo dont pass Token Verification Fail details "Token ivalid!"
-            return new AuthorizationResult("Could not get the claims for token!", false);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token invalid! Could not get the claims for token!", false);
         }
 
         // verify if there is a right token issuer in claims
         if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) {
             log.error("Presented token was not issued by CoreAAM!");
-            //todo dont pass Token Verification Fail details "Token ivalid!"
-            return new AuthorizationResult("Presented token was not issued by CoreAAM!", false);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token invalid! Presented token was not issued by CoreAAM!", false);
         }
 
         // verify that this JWT contains attributes relevant for platform owner
@@ -77,15 +77,15 @@ public class AuthorizationManager {
         // PO role
         if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) {
             log.error("Wrong role claim in token!");
-            //todo dont pass Token Verification Fail details "Token ivalid!"
-            return new AuthorizationResult("Wrong role claim in token!", false);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token invalid! Wrong role claim in token!", false);
         }
 
         // owned platform identifier
         if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) {
             log.error("Platform owner does not match with requested operation!");
-            //todo dont pass Token Verification Fail details "Token ivalid!"
-            return new AuthorizationResult("Platform owner does not match with requested operation!", false);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token invalid! Platform owner does not match with requested operation!", false);
         }
         return new AuthorizationResult("Authorization check successful!", true);
     }
@@ -96,14 +96,14 @@ public class AuthorizationManager {
             token = new Token(tokenString);
         } catch (TokenValidationException e) {
             log.error("Token could not be verified", e);
-            //todo dont pass Token Verification Fail details "Token ivalid!"
-            return new AuthorizationResult("Token could not be verified", false);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token invalid! Token could not be verified", false);
         }
         ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
 
         if (validationStatus != VALID) {
             log.error("Token failed verification due to " + validationStatus);
-            //todo dont pass Token Verification Fail details "Token ivalid!"
+            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
         }
         return new AuthorizationResult("", true);

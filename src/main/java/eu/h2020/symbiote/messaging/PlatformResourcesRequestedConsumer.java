@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -8,6 +9,8 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -77,15 +80,18 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
             return;
         }
 
-        if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId()).isValidated()) {
-            log.error("Token invalid");
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, "Token invalid");
+        AuthorizationResult authorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+
+        if (!authorizationResult.isValidated()) {
+            log.error("Token invalid! " + authorizationResult.getMessage());
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, authorizationResult.getMessage());
             return;
         }
 
         coreResources = repositoryManager.getResourcesForPlatform(request.getPlatformId());
 
-        response = mapper.writeValueAsString(RegistryUtils.convertCoreResourcesToResources(coreResources));
+        response = mapper.writerFor(new TypeReference<List<Resource>>() {
+        }).writeValueAsString(RegistryUtils.convertCoreResourcesToResources(coreResources));
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
