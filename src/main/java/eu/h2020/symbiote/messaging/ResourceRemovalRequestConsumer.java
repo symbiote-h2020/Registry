@@ -93,20 +93,13 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId()).isValidated()) {
-                try {
-                    resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
-                    });
-                } catch (JsonSyntaxException e) {
-                    log.error("Error occured during getting Resources from Json", e);
-                    response.setStatus(400);
-                    response.setMessage("Error occured during getting Resources from Json");
-                }
-            } else {
-                log.error("Token invalid");
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+            if (!tokenAuthorizationResult.isValidated()){
+                log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);
-                response.setMessage("Token invalid");
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                        mapper.writeValueAsString(response));
                 return;
             }
         } else {
@@ -117,11 +110,21 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             return;
         }
 
-        AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId());
+        try {
+            resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
+            });
+        } catch (JsonSyntaxException e) {
+            log.error("Error occured during getting Resources from Json", e);
+            response.setStatus(400);
+            response.setMessage("Error occured during getting Resources from Json");
+        }
 
-        if (!authorizationResult.isValidated()) {
-            log.error(authorizationResult.getMessage() + resources);
-            response.setMessage(authorizationResult.getMessage() + resources);
+        AuthorizationResult resourcesAccessAuthorizationResult =
+                authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId());
+
+        if (!resourcesAccessAuthorizationResult.isValidated()) {
+            log.error(resourcesAccessAuthorizationResult.getMessage() + resources);
+            response.setMessage(resourcesAccessAuthorizationResult.getMessage() + resources);
             response.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;

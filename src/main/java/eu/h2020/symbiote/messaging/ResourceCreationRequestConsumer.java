@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
@@ -79,10 +80,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             //checking access by token verification
-            if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId()).isValidated()) {
-                log.error("Token invalid");
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+            if (!tokenAuthorizationResult.isValidated()){
+                log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 registryResponse.setStatus(400);
-                registryResponse.setMessage("Token invalid");
+                registryResponse.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(registryResponse));
                 return;
