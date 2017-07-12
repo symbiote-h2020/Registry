@@ -6,9 +6,9 @@ import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,20 +37,23 @@ public class RegistryUtilsTests {
     public void testCoreResourceToResourceConverter() {
 
         CoreResource coreResource = generateCoreResource();
+        addIdToCoreResource(coreResource);
 
         Resource resource = RegistryUtils.convertCoreResourceToResource(coreResource);
 
-        Assert.isTrue(coreResource.getId().equals(resource.getId()), "Different Ids!");
-        Assert.isTrue(coreResource.getLabels().equals(resource.getLabels()), "Different labels!");
-        Assert.isTrue(coreResource.getComments().equals(resource.getComments()), "Different comments!");
-        Assert.isTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()), "Different interworkingServiceUrls!");
+        Assert.assertTrue(coreResource.getId().equals(resource.getId()));
+        Assert.assertTrue(coreResource.getLabels().equals(resource.getLabels()));
+        Assert.assertTrue(coreResource.getComments().equals(resource.getComments()));
+        Assert.assertTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()));
     }
 
     @Test
     public void testCoreResourcesToResourcesConverter() {
 
         CoreResource coreResource1 = generateCoreResource();
+        addIdToCoreResource(coreResource1);
         CoreResource coreResource2 = generateCoreResource();
+        addIdToCoreResource(coreResource2);
 
         List<CoreResource> coreResources = new ArrayList<>();
         coreResources.add(coreResource1);
@@ -59,22 +62,23 @@ public class RegistryUtilsTests {
         List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(coreResources);
 
         for (int i = 0; i < coreResources.size(); i++) {
-            Assert.isTrue(coreResources.get(i).getId().equals(resources.get(i).getId()), "Different Ids!");
-            Assert.isTrue(coreResources.get(i).getLabels().equals(resources.get(i).getLabels()), "Different labels!");
-            Assert.isTrue(coreResources.get(i).getComments().equals(resources.get(i).getComments()), "Different comments!");
-            Assert.isTrue(coreResources.get(i).getInterworkingServiceURL().equals(resources.get(i).getInterworkingServiceURL()), "Different interworkingServiceUrls!");
+            Assert.assertTrue(coreResources.get(i).getId().equals(resources.get(i).getId()));
+            Assert.assertTrue(coreResources.get(i).getLabels().equals(resources.get(i).getLabels()));
+            Assert.assertTrue(coreResources.get(i).getComments().equals(resources.get(i).getComments()));
+            Assert.assertTrue(coreResources.get(i).getInterworkingServiceURL().equals(resources.get(i).getInterworkingServiceURL()));
         }
     }
 
     @Test
     public void testResourceToCoreResourceConverter() {
         Resource resource = generateResource();
+        addIdToResource(resource);
         CoreResource coreResource = RegistryUtils.convertResourceToCoreResource(resource);
 
-        Assert.isTrue(coreResource.getId().equals(resource.getId()), "Different Ids!");
-        Assert.isTrue(coreResource.getLabels().equals(resource.getLabels()), "Different labels!");
-        Assert.isTrue(coreResource.getComments().equals(resource.getComments()), "Different comments!");
-        Assert.isTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()), "Different interworkingServiceUrls!");
+        Assert.assertTrue(coreResource.getId().equals(resource.getId()));
+        Assert.assertTrue(coreResource.getLabels().equals(resource.getLabels()));
+        Assert.assertTrue(coreResource.getComments().equals(resource.getComments()));
+        Assert.assertTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()));
     }
 
     @Test
@@ -82,13 +86,13 @@ public class RegistryUtilsTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         RegistryPlatform registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
-        Assert.isTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()), "Different name!");
-        Assert.isTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()), "Different labels!");
-        Assert.isTrue(registryPlatform.getInterworkingServices().get(0).getUrl().equals(requestPlatform.getUrl()), "Different labels!");
-        Assert.isTrue(registryPlatform.getInterworkingServices().get(0).getInformationModelId().
-                equals(requestPlatform.getInformationModelId()), "Different Information Model Id!");
-        Assert.hasText(registryPlatform.getBody(), "No body!");
-        Assert.hasText(registryPlatform.getRdfFormat(), "No rdf format!");
+        Assert.assertTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()));
+        Assert.assertTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()));
+        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getUrl().equals(requestPlatform.getUrl()));
+        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInformationModelId()));
+        Assert.assertNotNull(registryPlatform.getBody());
+        Assert.assertNotNull(registryPlatform.getRdfFormat());
     }
 
     @Test
@@ -96,51 +100,51 @@ public class RegistryUtilsTests {
         RegistryPlatform registryPlatform = generateRegistryPlatformB();
         Platform requestPlatform = RegistryUtils.convertRegistryPlatformToRequestPlatform(registryPlatform);
 
-        Assert.isTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()), "Different name!");
-        Assert.isTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()), "Different labels!");
-        Assert.isTrue(registryPlatform.getInterworkingServices().get(0).getUrl().equals(requestPlatform.getUrl()), "Different labels!");
-        Assert.isTrue(registryPlatform.getInterworkingServices().get(0).getInformationModelId().
-                equals(requestPlatform.getInformationModelId()), "Different Information Model Id!");
+        Assert.assertTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()));
+        Assert.assertTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()));
+        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getUrl().equals(requestPlatform.getUrl()));
+        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInformationModelId()));
     }
 
     @Test
     public void testPlatformFieldsValidation() {
         RegistryPlatform platform = generateRegistryPlatformB();
-        Assert.isTrue(RegistryUtils.validateFields(platform), "Wrong platform!");
+        Assert.assertTrue(RegistryUtils.validateFields(platform));
     }
 
     @Test
     public void testPlatformFieldsValidationFail() {
         RegistryPlatform platform = null;
-        Assert.isTrue(!RegistryUtils.validateFields(platform), "Wrong platform!");
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
         platform = new RegistryPlatform();
-        Assert.isTrue(!RegistryUtils.validateFields(platform), "Wrong platform!");
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
 
         platform.setComments(new ArrayList<>());
         platform.setLabels(new ArrayList<>());
         platform.setInterworkingServices(new ArrayList<>());
-        Assert.isTrue(!RegistryUtils.validateFields(platform), "Wrong platform!");
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
 
         platform.getComments().add(null);
         platform.getLabels().add(null);
         platform.getInterworkingServices().add(null);
-        Assert.isTrue(!RegistryUtils.validateFields(platform), "Wrong platform!");
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
     }
 
     @Test
     public void testResourceFieldsValidation() {
         Resource resource = generateResource();
-        Assert.isTrue(RegistryUtils.validateFields(resource), "Wrong resource!");
+        Assert.assertTrue(RegistryUtils.validateFields(resource));
     }
 
     @Test
     public void testResourceFieldsValidationFail() {
         Resource resource = null;
-        Assert.isTrue(!RegistryUtils.validateFields(resource), "Wrong resource!");
+        Assert.assertTrue(!RegistryUtils.validateFields(resource));
         resource = new Resource();
-        Assert.isTrue(!RegistryUtils.validateFields(resource), "Wrong resource!");
+        Assert.assertTrue(!RegistryUtils.validateFields(resource));
 
         resource.setInterworkingServiceURL(null);
-        Assert.isTrue(!RegistryUtils.validateFields(resource), "Wrong resource!");
+        Assert.assertTrue(!RegistryUtils.validateFields(resource));
     }
 }

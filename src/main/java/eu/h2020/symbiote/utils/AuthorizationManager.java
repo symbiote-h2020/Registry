@@ -47,14 +47,37 @@ public class AuthorizationManager {
     public AuthorizationResult checkResourceOperationAccess(String tokenString, String platformId) {
         log.info("Received Token to verification: (" + tokenString + ")");
 
-        JWTClaims claims;
-
         if (registryPlatformRepository.findOne(platformId) == null) {
             return new AuthorizationResult("Given platform does not exist in database", false);
         }
 
         AuthorizationResult authorizationResult = checkToken(tokenString);
         if (!authorizationResult.isValidated()) return authorizationResult;
+
+        return getAuthorizationResult(tokenString, platformId);
+    }
+
+    public AuthorizationResult checkToken(String tokenString) {
+        Token token;
+        try {
+            token = new Token(tokenString);
+        } catch (TokenValidationException e) {
+            log.error("Token could not be verified", e);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token invalid! Token could not be verified", false);
+        }
+        ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
+
+        if (validationStatus != VALID) {
+            log.error("Token failed verification due to " + validationStatus);
+            //todo dont pass Token Verification Fail details
+            return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
+        }
+        return new AuthorizationResult("", true);
+    }
+
+    private AuthorizationResult getAuthorizationResult(String tokenString, String platformId) {
+        JWTClaims claims;
 
         try {
             claims = JWTEngine.getClaimsFromToken(tokenString);
@@ -88,25 +111,6 @@ public class AuthorizationManager {
             return new AuthorizationResult("Token invalid! Platform owner does not match with requested operation!", false);
         }
         return new AuthorizationResult("Authorization check successful!", true);
-    }
-
-    public AuthorizationResult checkToken(String tokenString) {
-        Token token;
-        try {
-            token = new Token(tokenString);
-        } catch (TokenValidationException e) {
-            log.error("Token could not be verified", e);
-            //todo dont pass Token Verification Fail details
-            return new AuthorizationResult("Token invalid! Token could not be verified", false);
-        }
-        ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
-
-        if (validationStatus != VALID) {
-            log.error("Token failed verification due to " + validationStatus);
-            //todo dont pass Token Verification Fail details
-            return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
-        }
-        return new AuthorizationResult("", true);
     }
 
     public AuthorizationResult checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {

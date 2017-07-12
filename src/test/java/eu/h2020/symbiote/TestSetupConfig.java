@@ -106,12 +106,22 @@ public class TestSetupConfig {
     }
 
     public static CoreResource generateCoreResource() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, INTERWORKING_SERVICE_URL_B,
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
     }
 
     public static Resource generateResource() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, INTERWORKING_SERVICE_URL_B);
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B);
+    }
+
+    public static CoreResource addIdToCoreResource(CoreResource coreResource){
+        coreResource.setId(RESOURCE_101_ID);
+        return coreResource;
+    }
+
+    public static Resource addIdToResource(Resource resource){
+        resource.setId(RESOURCE_101_ID);
+        return resource;
     }
 
     public static CoreResource generateStationarySensor() {

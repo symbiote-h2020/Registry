@@ -43,7 +43,7 @@ public class AuthorizationManagerTests {
     }
 
     @Test
-    public void testResouceOperationAccessPass() {
+    public void testResourceOperationAccessPass() {
         when(mockedRegistryPlatformRepository.findOne("test1Plat")).thenReturn(generateRegistryPlatformB());
         when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
         Assert.assertTrue("Access test failed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "test1Plat").isValidated());
@@ -62,23 +62,29 @@ public class AuthorizationManagerTests {
     }
 
     @Test
-    public void testResouceOperationAccessFailWithInvalidStatus() {
+    public void testResourceOperationAccessFailWithInvalidStatus() {
         when(mockedRegistryPlatformRepository.findOne("test1Plat")).thenReturn(generateRegistryPlatformB());
         when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.INVALID);
         Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "test1Plat").isValidated());
     }
 
     @Test
-    public void testResouceOperationAccessFailWithWrongPlatformOwner() {
+    public void testResourceOperationAccessFailWithWrongPlatformOwner() {
         when(mockedRegistryPlatformRepository.findOne("wrongOwner")).thenReturn(generateRegistryPlatformB());
         when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
         Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "wrongOwner").isValidated());
     }
 
     @Test
-    public void testResouceOperationAccessFailWithWrongPlatformId() {
+    public void testResourceOperationAccessFailWithWrongPlatformId() {
         when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
-        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "wrongOwner").isValidated());
+        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "wrongPlatformId").isValidated());
+    }
+
+    @Test
+    public void testResourceOperationAccessFailWithWrongIssuer() {
+        when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
+        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "wrongIssuer").isValidated());
     }
 
     @Test

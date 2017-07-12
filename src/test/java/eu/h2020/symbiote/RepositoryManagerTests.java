@@ -14,9 +14,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static eu.h2020.symbiote.TestSetupConfig.PLATFORM_B_ID;
-import static eu.h2020.symbiote.TestSetupConfig.generateCoreResource;
-import static eu.h2020.symbiote.TestSetupConfig.generateRegistryPlatformB;
+import java.util.Arrays;
+
+import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +44,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSaveResourceTriggersRepository() {
         CoreResource resource = generateCoreResource();
+        addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
 
         repositoryManager.saveResource(resource);
@@ -58,6 +59,7 @@ public class RepositoryManagerTests {
     @Test
     public void testModifyResourceTriggersRepository() {
         CoreResource resource = generateCoreResource();
+        addIdToResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
         when(resourceRepository.findOne("101")).thenReturn(resource);
 
@@ -73,6 +75,7 @@ public class RepositoryManagerTests {
     @Test
     public void testRemoveResourceTriggersRepository() {
         CoreResource resource = generateCoreResource();
+        addIdToCoreResource(resource);
         when(resourceRepository.findOne("101")).thenReturn(resource);
         repositoryManager.removeResource(resource);
         try {
@@ -81,6 +84,40 @@ public class RepositoryManagerTests {
             e.printStackTrace();
         }
         verify(resourceRepository).delete("101");
+    }
+
+
+    @Test
+    public void testSaveResourceReturnsStatus200() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        when(resourceRepository.save(coreResource)).thenReturn(addIdToCoreResource(coreResource));
+        Assert.assertEquals(200,repositoryManager.saveResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testSaveResourceWithWrongId() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        Assert.assertNotEquals(200,repositoryManager.saveResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testSaveResourceMongoError(){
+        CoreResource coreResource = generateCoreResource();
+        when(resourceRepository.save(coreResource)).thenThrow(new MongoException("MONGO ERROR"));
+        Assert.assertNotEquals(200,repositoryManager.saveResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testModifyResourceWithWrongId() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        Assert.assertNotEquals(200,repositoryManager.modifyResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testRemoveResourceWithWrongId() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        addIdToCoreResource(coreResource);
+        Assert.assertNotEquals(200,repositoryManager.removeResource(coreResource).getStatus());
     }
 
     @Test
@@ -141,7 +178,7 @@ public class RepositoryManagerTests {
     }
 
     @Test
-    public void testSavePlatformMongoError() throws Exception {
+    public void testSavePlatformMongoError(){
         RegistryPlatform platform = generateRegistryPlatformB();
         when(registryPlatformRepository.save(platform)).thenThrow(new MongoException("MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
@@ -159,5 +196,11 @@ public class RepositoryManagerTests {
         Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
     }
 
+    @Test
+    public void testRemovePlatformWithResourcesFail(){
+        RegistryPlatform platform = generateRegistryPlatformB();
+        when(resourceRepository.findByInterworkingServiceURL(platform.getId())).thenReturn(Arrays.asList(new CoreResource()));
+        Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
+    }
 }
 

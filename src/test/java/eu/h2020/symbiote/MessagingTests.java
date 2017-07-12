@@ -150,7 +150,9 @@ public class MessagingTests {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
         Resource resource1 = generateResource();
+        addIdToResource(resource1);
         Resource resource2 = generateResource();
+        addIdToResource(resource2);
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
 
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
