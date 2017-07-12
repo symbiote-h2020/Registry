@@ -117,17 +117,6 @@ public class RegistryPlatform {
 
     @Override
     public String toString() {
-        /*
-        StringBuilder sb = new StringBuilder();
-        sb.append("Platform with id: " + this.getId() + ", body: " + body + ", rdfFormat: " + rdfFormat + ", labels: [");
-        this.getLabels().forEach(s->sb.append(s + ", "));
-        sb.append("], comments: [");
-        this.getComments().forEach(s->sb.append(s + ", "));
-        sb.append("], interworkingServices: [");
-        this.getInterworkingServices().forEach(s->sb.append(s +", "));
-        sb.append("].");
-        return  sb.toString();
-        */
         return ReflectionToStringBuilder.toString(this);
     }
 

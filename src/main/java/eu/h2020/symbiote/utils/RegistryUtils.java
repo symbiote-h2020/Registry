@@ -36,19 +36,24 @@ public class RegistryUtils {
     public static boolean validateFields(RegistryPlatform registryPlatform) {
         //todo extend validation to all fields?
 
-        if (registryPlatform.getLabels() == null || registryPlatform.getInterworkingServices() == null || registryPlatform.getComments() == null) {
-            log.info("Given platform has some null fields");
+        if (registryPlatform == null) {
+            log.info("Given Platform is null");
             return false;
-        } else if (registryPlatform.getInterworkingServices().isEmpty() || registryPlatform.getLabels().isEmpty()
-                || registryPlatform.getComments().isEmpty()) {
-            log.info("Given platform has some empty fields");
-            return false;
-        } else if (registryPlatform.getInterworkingServices().contains(null) || registryPlatform.getLabels().contains(null)
-                || registryPlatform.getComments().contains(null)) {
-            log.info("Given platform has some lists with null objects");
-            return false;
+        } else {
+            if (registryPlatform.getLabels() == null || registryPlatform.getInterworkingServices() == null || registryPlatform.getComments() == null) {
+                log.info("Given platform has some null fields");
+                return false;
+            } else if (registryPlatform.getInterworkingServices().isEmpty() || registryPlatform.getLabels().isEmpty()
+                    || registryPlatform.getComments().isEmpty()) {
+                log.info("Given platform has some empty fields");
+                return false;
+            } else if (registryPlatform.getInterworkingServices().contains(null) || registryPlatform.getLabels().contains(null)
+                    || registryPlatform.getComments().contains(null)) {
+                log.info("Given platform has some lists with null objects");
+                return false;
+            }
+            return true;
         }
-        return true;
     }
 
     /**
@@ -60,18 +65,23 @@ public class RegistryUtils {
     public static boolean validateFields(Resource resource) {
         //todo extend validation to all fields?
         boolean b;
-        if (resource.getInterworkingServiceURL() == null
-                || resource.getComments() == null
-                || resource.getLabels() == null) {
-            log.info("Given resource has some null fields");
-            b = false;
-        } else if (resource.getInterworkingServiceURL().isEmpty()
-                || resource.getComments().isEmpty()
-                || resource.getLabels().isEmpty()) {
-            log.info("Given resource has some empty fields");
+        if (resource == null) {
+            log.info("Given resource is null");
             b = false;
         } else {
-            b = true;
+            if (resource.getInterworkingServiceURL() == null
+                    || resource.getComments() == null
+                    || resource.getLabels() == null) {
+                log.info("Given resource has some null fields");
+                b = false;
+            } else if (resource.getInterworkingServiceURL().isEmpty()
+                    || resource.getComments().isEmpty()
+                    || resource.getLabels().isEmpty()) {
+                log.info("Given resource has some empty fields");
+                b = false;
+            } else {
+                b = true;
+            }
         }
         return b;
     }

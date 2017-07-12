@@ -81,7 +81,7 @@ public class TestSetupConfig {
     public static final String RESOURCE_STATIONARY_ID = "stationary1";
 
 
-    public static Platform generatePlatformA() {
+    public static Platform generateSymbiotePlatformA() {
         Platform platform = new Platform();
         platform.setPlatformId(PLATFORM_A_ID);
         platform.setInformationModelId(PLATFORM_A_MODEL_ID);

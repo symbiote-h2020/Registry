@@ -179,7 +179,7 @@ public class MessagingTests {
     public void platformCreationRequestConsumerTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
-        Platform requestPlatform = generatePlatformA();
+        Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
         PlatformResponse platformResponse = new PlatformResponse();
@@ -207,7 +207,7 @@ public class MessagingTests {
     public void platformCreationRequestConsumerNullFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
-        Platform requestPlatform = generatePlatformA();
+        Platform requestPlatform = generateSymbiotePlatformA();
         requestPlatform.setName(null);
         String message = mapper.writeValueAsString(requestPlatform);
 
@@ -237,7 +237,7 @@ public class MessagingTests {
     public void platformModificationRequestConsumerTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
-        Platform requestPlatform = generatePlatformA();
+        Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
         PlatformResponse platformResponse = new PlatformResponse();
@@ -265,7 +265,7 @@ public class MessagingTests {
     public void platformModificationRequestConsumerMongoFailTest() throws IOException, InterruptedException, TimeoutException {
         rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
-        Platform requestPlatform = generatePlatformA();
+        Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
         PlatformResponse platformResponse = new PlatformResponse();
@@ -339,7 +339,7 @@ public class MessagingTests {
     public void platformRemovalRequestConsumerTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
-        Platform requestPlatform = generatePlatformA();
+        Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
         PlatformResponse platformResponse = new PlatformResponse();
