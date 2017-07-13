@@ -29,8 +29,8 @@ public class TestSetupConfig {
     public static final String PLATFORM_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.modificationRequested";
     public static final String PLATFORM_REMOVAL_REQUESTED_RK = "symbIoTe.platform.removalRequested";
     public static final String RESOURCE_EXCHANGE_NAME = "symbIoTe.resource";
-    public static final String RESOURCE_CREATION_REQUESTED = "symbIoTe.resource.creationRequested";
-    public static final String RESOURCE_MODIFICATION_REQUESTED = "symbIoTe.resource.modificationRequested";
+    public static final String RESOURCE_CREATION_REQUESTED_RK = "symbIoTe.resource.creationRequested";
+    public static final String RESOURCE_MODIFICATION_REQUESTED_RK = "symbIoTe.resource.modificationRequested";
     public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
@@ -46,6 +46,10 @@ public class TestSetupConfig {
     public static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
     public static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     public static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
+
+
+    public static final String RESOURCE_TRANSLATION_REQUESTED_QUEUE = "symbIoTe.resource.instance.translationRequested";
+    public static final String RESOURCE_VALIDATION_REQUESTED_QUEUE = "symbIoTe.resource.instance.validationRequested";
 
     public static final String PLATFORM_A_ID = "1";
     public static final String PLATFORM_A_NAME = "Platform1";

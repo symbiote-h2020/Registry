@@ -1,10 +1,7 @@
 package eu.h2020.symbiote;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -29,11 +26,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -44,12 +42,13 @@ import static org.mockito.Mockito.*;
 public class MessagingTests {
 
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
-    RepositoryManager mockedRepository;
-    ObjectMapper mapper;
-    AuthorizationManager mockedAuthorizationManager;
-    private Random rand;
+    private RepositoryManager mockedRepository;
+    private ObjectMapper mapper;
+    private AuthorizationManager mockedAuthorizationManager;
     @InjectMocks
     private RabbitManager rabbitManager;
+    private Connection connection;
+    private Channel channel;
 
     @Before
     public void setup() throws IOException, TimeoutException {
@@ -72,8 +71,8 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATION_REQUESTED);
-        ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED);
+        ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED_RK);
 
 
@@ -84,27 +83,30 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovedRoutingKey", RESOURCE_REMOVED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "resourceModifiedRoutingKey", RESOURCE_MODIFIED_ROUTING_KEY);
 
+        ReflectionTestUtils.setField(rabbitManager, "jsonResourceTranslationRequestedRoutingKey", RESOURCE_TRANSLATION_REQUESTED_QUEUE);
+//        ReflectionTestUtils.setField(rabbitManager, "jsonResourceValidationRequestedRoutingKey", RESOURCE_VALIDATION_REQUESTED_QUEUE);
+
         ReflectionTestUtils.invokeMethod(rabbitManager, "init");
 
         mockedRepository = mock(RepositoryManager.class);
         mockedAuthorizationManager = mock(AuthorizationManager.class);
-        rand = new Random();
         mapper = new ObjectMapper();
+        connection = rabbitManager.getConnection();
+        channel = connection.createChannel();
     }
 
     @After
     public void teardown() {
         log.info("Rabbit cleaned!");
         try {
-            Connection connection = rabbitManager.getConnection();
-            Channel channel;
+            connection = rabbitManager.getConnection();
             if (connection != null && connection.isOpen()) {
                 channel = connection.createChannel();
                 channel.queueDelete(PLATFORM_CREATION_REQUESTED_RK);
                 channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_RK);
                 channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_RK);
-                channel.queueDelete(RESOURCE_CREATION_REQUESTED);
-                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED);
+                channel.queueDelete(RESOURCE_CREATION_REQUESTED_RK);
+                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_RK);
                 channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_RK);
                 channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
@@ -123,26 +125,81 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceCreationRequestConsumerTest() throws InterruptedException, JsonProcessingException {
+    public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException {
+
+        String queueName = "RPCqueueCreation";
+
         rabbitManager.startConsumerOfResourceCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Resource resource1 = generateResource();
         Resource resource2 = generateResource();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
-        String message = "";
-        try {
-            message = mapper.writeValueAsString(coreResourceRegistryRequest);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-//// TODO: 24.05.2017  
+        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
+        this.channel.queueDeclare(queueName, true, false, false, null);
+        this.channel.queueBind(queueName, RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK);
+
+        this.channel.basicConsume(queueName, new DefaultConsumer(this.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String messageReceived = new String(body);
+                assertEquals(message, messageReceived);
+
+                assertNotNull(properties);
+
+                String correlationId = properties.getCorrelationId();
+                String replyQueueName = properties.getReplyTo();
+
+                assertNotNull(correlationId);
+                assertNotNull(replyQueueName);
+
+            }
+        });
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
     }
 
 
     @Test
-    public void resourceModificationRequestConsumerTest() {
+    public void resourceModificationRequestConsumerTest() throws InterruptedException, IOException {
+        String queueName = "RPCqueueModification";
+
+        rabbitManager.startConsumerOfResourceModificationMessages(mockedRepository, mockedAuthorizationManager);
+
+        Resource resource1 = generateResource();
+        Resource resource2 = generateResource();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+
+        this.channel.queueDeclare(queueName, true, false, false, null);
+        this.channel.queueBind(queueName, RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK);
+
+        this.channel.basicConsume(queueName, new DefaultConsumer(this.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String messageReceived = new String(body);
+                assertEquals(message, messageReceived);
+
+                assertNotNull(properties);
+
+                String correlationId = properties.getCorrelationId();
+                String replyQueueName = properties.getReplyTo();
+
+                assertNotNull(correlationId);
+                assertNotNull(replyQueueName);
+
+            }
+        });
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
     }
 
     @Test
