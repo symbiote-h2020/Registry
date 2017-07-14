@@ -467,7 +467,7 @@ public class RabbitManager {
         }
     }
 
-    public void sendResourcesRemovalMessage(List<String> resourcesIds){
+    public void sendResourcesRemovalMessage(List<String> resourcesIds) {
         ObjectMapper mapper = new ObjectMapper();
         String message = "";
         try {
@@ -569,7 +569,33 @@ public class RabbitManager {
         }
     }
 
-    public void closeConsumer (DefaultConsumer consumerToClose, Channel channel) throws IOException {
+    public void sendCustomRpcMessage(String exchangeName, String routingKey,
+                                     String message, Consumer responseConsumer) {
+        try {
+            String replyQueueName = "Queue" + Math.random();
+            rpcChannel.queueDeclare(replyQueueName,true,false,false,null);
+
+            String correlationId = UUID.randomUUID().toString();
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
+                    .builder()
+                    .correlationId(correlationId)
+                    .replyTo(replyQueueName)
+                    .build();
+
+            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
+
+            rpcChannel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
+
+            log.info("Sending Custom RPC Message... \nMessage params:\nExchange name: "
+                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
+                    + message);
+        } catch (IOException e) {
+            log.error(e);
+        }
+
+    }
+
+    public void closeConsumer(DefaultConsumer consumerToClose, Channel channel) throws IOException {
 
         channel.basicCancel(consumerToClose.getConsumerTag());
     }

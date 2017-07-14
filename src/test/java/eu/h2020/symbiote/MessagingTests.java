@@ -293,7 +293,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void platformModificationRequestConsumerTest() throws IOException, InterruptedException {
+    public void platformModificationRequestConsumerHappyPathTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();
@@ -334,50 +334,27 @@ public class MessagingTests {
 
         when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message,
+                new DefaultConsumer(this.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String messageReceived = new String(body);
+                PlatformResponse platformResponseReceived = mapper.readValue(messageReceived, PlatformResponse.class);
+
+                assertNotNull(properties);
+                String correlationId = properties.getCorrelationId();
+                assertNotNull(correlationId);
+
+                assertEquals(400, platformResponseReceived.getStatus());
+                assertEquals(requestPlatform, platformResponseReceived.getPlatform());
+
+                log.info("Received reply message!");
+            }
+        });
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(300);
+        TimeUnit.MILLISECONDS.sleep(500);
 
-        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
-        verify(mockedRepository).modifyPlatform(argument.capture());
-
-//// TODO: 24.05.2017
-        Channel channel = rabbitManager.getConnection().createChannel();
-        AMQP.Queue.DeclareOk name = channel.queueDeclare("name", false, false, true, null);
-        channel.queueBind(name.getQueue(), PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFIED_ROUTING_KEY);
-        System.out.println(name.getMessageCount());
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        TimeUnit.SECONDS.sleep(5);
-/*
-        GetResponse response = channel.basicGet(queueName, false);
-        String receivedMessage = "";
-        if (response == null) {
-            // No message retrieved.
-            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        } else {
-            byte[] body = response.getBody();
-            receivedMessage = new String(body, "UTF-8");
-        }
-
-        channel.basicConsume(queueName, false, "myConsumerTag",
-                new DefaultConsumer(channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag,
-                                               Envelope envelope,
-                                               AMQP.BasicProperties properties,
-                                               byte[] body)
-                            throws IOException
-                    {
-                        String msg = new String(body, "UTF-8");
-                        System.out.println(msg);
-                    }
-                });
-
-*/
-
-//        Assert.assertEquals(mapper.writeValueAsString(requestPlatform), receivedMessage);
     }
 
     @Test
