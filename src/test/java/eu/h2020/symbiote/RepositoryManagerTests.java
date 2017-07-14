@@ -2,10 +2,12 @@ package eu.h2020.symbiote;
 
 import com.mongodb.MongoException;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.repository.ResourceRepository;
+import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -97,7 +99,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSaveResourceWithWrongId() throws Exception {
         CoreResource coreResource = generateCoreResource();
-        Assert.assertNotEquals(200,repositoryManager.saveResource(coreResource).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.saveResource(coreResource).getStatus());
     }
 
     @Test
@@ -110,14 +112,38 @@ public class RepositoryManagerTests {
     @Test
     public void testModifyResourceWithWrongId() throws Exception {
         CoreResource coreResource = generateCoreResource();
-        Assert.assertNotEquals(200,repositoryManager.modifyResource(coreResource).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testModifyResourceWithWrongInterworkingService() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        coreResource.setInterworkingServiceURL(null);
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testModifyResourceThatDoesNotExistInDb() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        addIdToCoreResource(coreResource);
+        when(resourceRepository.findOne(coreResource.getId())).thenReturn(null);
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
+    }
+
+
+    @Test
+    public void testModifyResourceFailedWhenSaving() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        addIdToCoreResource(coreResource);
+        when(resourceRepository.findOne(coreResource.getId())).thenReturn(coreResource);
+        when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE ERROR during saving"));
+        Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR,repositoryManager.modifyResource(coreResource).getStatus());
     }
 
     @Test
     public void testRemoveResourceWithWrongId() throws Exception {
-        CoreResource coreResource = generateCoreResource();
-        addIdToCoreResource(coreResource);
-        Assert.assertNotEquals(200,repositoryManager.removeResource(coreResource).getStatus());
+        Resource resource = generateResource();
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
     }
 
     @Test
@@ -201,6 +227,18 @@ public class RepositoryManagerTests {
         RegistryPlatform platform = generateRegistryPlatformB();
         when(resourceRepository.findByInterworkingServiceURL(platform.getId())).thenReturn(Arrays.asList(new CoreResource()));
         Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
+    }
+
+    @Test
+    public void testGetResourcesForPlatform(){
+        RegistryPlatform platform = generateRegistryPlatformB();
+        CoreResource coreResource = generateCoreResource();
+
+        when(registryPlatformRepository.findOne(platform.getId())).thenReturn(platform);
+        when(resourceRepository.findByInterworkingServiceURL(platform.getInterworkingServices().get(0).getUrl())).
+                thenReturn(Arrays.asList(coreResource));
+
+        Assert.assertEquals(repositoryManager.getResourcesForPlatform(platform.getId()),Arrays.asList(coreResource));
     }
 }
 

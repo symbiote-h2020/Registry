@@ -537,10 +537,10 @@ public class RabbitManager {
         consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
 
-    public void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
-                                                Envelope rpcEnvelope, String exchangeName, String routingKey,
-                                                DescriptionType descriptionType, RegistryOperationType operationType,
-                                                String message, String platformId) {
+    private void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
+                                                 Envelope rpcEnvelope, String exchangeName, String routingKey,
+                                                 DescriptionType descriptionType, RegistryOperationType operationType,
+                                                 String message, String platformId) {
         try {
             String replyQueueName = rpcChannel.queueDeclare().getQueue();
 

@@ -232,9 +232,13 @@ public class RepositoryManager {
     public RegistryPersistenceResult removeResource(Resource resource) {
         RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
 
-        if (resource == null || resource.getId().isEmpty() || resource.getId() == null) {
-            log.error("Given resource has empty or null ID!");
-            resourceRemovalResult.setMessage("Given resource has empty or null ID!");
+        if (resource == null || resource.getId() == null) {
+            log.error("Given resource is null or it has null ID!");
+            resourceRemovalResult.setMessage("Given resource is null or it has null ID!");
+            resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else if(resource.getId().isEmpty()) {
+            log.error("Given resource has empty ID!");
+            resourceRemovalResult.setMessage("Given resource has empty ID!");
             resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
