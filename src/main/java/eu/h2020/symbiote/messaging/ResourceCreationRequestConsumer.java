@@ -97,14 +97,14 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                         log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                         //sending RDF content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                                message, request.getPlatformId(), RegistryOperationType.CREATION);
+                                message, request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
                         break;
                     case BASIC:
                         if (checkIfResourcesHaveNullOrEmptyId(request)) {
                             log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                             //sending JSON content to Semantic Manager and passing responsibility to another consumer
                             rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                    message, request.getPlatformId(), RegistryOperationType.CREATION);
+                                    message, request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
                         } else {
                             log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
                             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);

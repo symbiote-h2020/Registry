@@ -40,8 +40,8 @@ public class RabbitManager {
 
     //// TODO for release 3.: 27.03.2017 prepare and start Information Model queues and Consumers
 
-    public static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
-    public static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
+    private static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
+    private static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
     private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
     private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
     private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceModificationRequestedQueue";
@@ -485,14 +485,16 @@ public class RabbitManager {
                                                     Envelope rpcEnvelope,
                                                     String message,
                                                     String platformId,
-                                                    RegistryOperationType operationType) {
+                                                    RegistryOperationType operationType,
+                                                    AuthorizationManager authorizationManager) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.rdfResourceValidationRequestedRoutingKey,
                 RDF,
                 operationType,
                 message,
-                platformId);
+                platformId,
+                authorizationManager);
         log.info("- rdf resource to validation message sent");
     }
 
@@ -501,14 +503,16 @@ public class RabbitManager {
                                                       Envelope rpcEnvelope,
                                                       String message,
                                                       String platformId,
-                                                      RegistryOperationType operationType) {
+                                                      RegistryOperationType operationType,
+                                                      AuthorizationManager authorizationManager) {
         sendRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
                 BASIC,
                 operationType,
                 message,
-                platformId);
+                platformId,
+                authorizationManager);
     }
 
     /**
@@ -540,7 +544,7 @@ public class RabbitManager {
     private void sendRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                  Envelope rpcEnvelope, String exchangeName, String routingKey,
                                                  DescriptionType descriptionType, RegistryOperationType operationType,
-                                                 String message, String platformId) {
+                                                 String message, String platformId, AuthorizationManager authorizationManager) {
         try {
             String replyQueueName = rpcChannel.queueDeclare().getQueue();
 
@@ -573,7 +577,7 @@ public class RabbitManager {
                                      String message, Consumer responseConsumer) {
         try {
             String replyQueueName = "Queue" + Math.random();
-            rpcChannel.queueDeclare(replyQueueName,true,false,false,null);
+            rpcChannel.queueDeclare(replyQueueName, true, false, false, null);
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()

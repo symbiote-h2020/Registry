@@ -48,8 +48,8 @@ public class TestSetupConfig {
     public static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
 
 
-    public static final String RESOURCE_TRANSLATION_REQUESTED_QUEUE = "symbIoTe.resource.instance.translationRequested";
-    public static final String RESOURCE_VALIDATION_REQUESTED_QUEUE = "symbIoTe.resource.instance.validationRequested";
+    public static final String RESOURCE_TRANSLATION_REQUESTED_RK = "symbIoTe.resource.instance.translationRequested";
+    public static final String RESOURCE_VALIDATION_REQUESTED_RK = "symbIoTe.resource.instance.validationRequested";
 
     public static final String PLATFORM_A_ID = "1";
     public static final String PLATFORM_A_NAME = "Platform1";

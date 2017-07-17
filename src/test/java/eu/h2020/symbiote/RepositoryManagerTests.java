@@ -130,7 +130,6 @@ public class RepositoryManagerTests {
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
     }
 
-
     @Test
     public void testModifyResourceFailedWhenSaving() throws Exception {
         CoreResource coreResource = generateCoreResource();
