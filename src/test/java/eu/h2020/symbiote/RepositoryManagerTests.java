@@ -105,7 +105,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSaveResourceMongoError(){
         CoreResource coreResource = generateCoreResource();
-        when(resourceRepository.save(coreResource)).thenThrow(new MongoException("MONGO ERROR"));
+        when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.saveResource(coreResource).getStatus());
     }
 
@@ -205,7 +205,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSavePlatformMongoError(){
         RegistryPlatform platform = generateRegistryPlatformB();
-        when(registryPlatformRepository.save(platform)).thenThrow(new MongoException("MONGO ERROR"));
+        when(registryPlatformRepository.save(platform)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
     }
 
