@@ -300,7 +300,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void platformCreationRequestConsumerNullFailTest() throws Exception {
+    public void platformCreationRequestConsumerNullNameFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();

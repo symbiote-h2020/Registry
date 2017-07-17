@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -79,7 +80,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                         RegistryOperationType.MODIFICATION);
             }
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occured during Platform saving to db", e);
             platformResponse.setMessage("Error occured during Platform saving to db");
             platformResponse.setStatus(400);
