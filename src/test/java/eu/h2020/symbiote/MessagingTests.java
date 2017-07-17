@@ -30,6 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -55,6 +56,7 @@ public class MessagingTests {
     private RabbitManager rabbitManager;
     private Connection connection;
     private Channel channel;
+    public static final String TEMP_QUEUE = "RPCqueue";
 
     @Before
     public void setup() throws IOException, TimeoutException {
@@ -89,6 +91,8 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovedRoutingKey", RESOURCE_REMOVED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "resourceModifiedRoutingKey", RESOURCE_MODIFIED_ROUTING_KEY);
 
+        ReflectionTestUtils.setField(rabbitManager, "platformResourcesRequestedRoutingKey", RESOURCES_FOR_PLATFORM_REQUESTED_RK);
+
         ReflectionTestUtils.setField(rabbitManager, "jsonResourceTranslationRequestedRoutingKey", RESOURCE_TRANSLATION_REQUESTED_RK);
 //        ReflectionTestUtils.setField(rabbitManager, "jsonResourceValidationRequestedRoutingKey", RESOURCE_VALIDATION_REQUESTED_RK);
 
@@ -122,6 +126,8 @@ public class MessagingTests {
                 channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
+                channel.queueDelete(RESOURCES_FOR_PLATFORM_REQUESTED_RK);
+                channel.queueDelete(TEMP_QUEUE);
                 channel.close();
                 connection.close();
             }
@@ -135,7 +141,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerAndValidationConsumerIntegrationTest() throws InterruptedException, IOException, TimeoutException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedRepository, mockedAuthorizationManager);
-        String queueName = "mockedQueue";
 
         Resource resource1 = generateResource();
         Resource resource2 = generateResource();
@@ -147,10 +152,10 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
         when(mockedRepository.saveResource(any())).thenReturn(new RegistryPersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
 
-        this.channel.queueDeclare(queueName, true, false, false, null);
-        this.channel.queueBind(queueName, RESOURCE_EXCHANGE_NAME, RESOURCE_TRANSLATION_REQUESTED_RK);
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_TRANSLATION_REQUESTED_RK);
 
-        this.channel.basicConsume(queueName, new DefaultConsumer(this.channel) {
+        this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 log.debug("\n|||||||| //MOCKED ............ \nSemantic Manager received request!");
@@ -203,7 +208,7 @@ public class MessagingTests {
 
     @Test
     public void resourceModificationRequestConsumerTest() throws InterruptedException, IOException {
-        String queueName = "RPCqueueModification";
+        // FIXME: 17.07.2017
 
         rabbitManager.startConsumerOfResourceModificationMessages(mockedRepository, mockedAuthorizationManager);
 
@@ -216,10 +221,10 @@ public class MessagingTests {
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
-        this.channel.queueDeclare(queueName, true, false, false, null);
-        this.channel.queueBind(queueName, RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK);
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK);
 
-        this.channel.basicConsume(queueName, new DefaultConsumer(this.channel) {
+        this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                 String messageReceived = new String(body);
@@ -443,5 +448,47 @@ public class MessagingTests {
         TimeUnit.MILLISECONDS.sleep(300);
 
         verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void platformResourcesRequestedConsumerTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedRepository, mockedAuthorizationManager);
+
+        Resource resource1 = generateResource();
+        addIdToResource(resource1);
+        Resource resource2 = generateResource();
+        addIdToResource(resource2);
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+
+        List<CoreResource> coreResourcesFound = Arrays.asList(RegistryUtils.convertResourceToCoreResource(resource1),
+                RegistryUtils.convertResourceToCoreResource(resource2));
+        when(mockedRepository.getResourcesForPlatform(coreResourceRegistryRequest.getPlatformId())).
+                thenReturn(coreResourcesFound);
+
+        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK , message,
+                new DefaultConsumer(this.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                        String messageReceived = new String(body);
+                        List<Resource> resourcesReceived = mapper.readValue(messageReceived, new TypeReference<List<Resource>>() {
+                        });
+                        assertNotNull(properties);
+                        String correlationId = properties.getCorrelationId();
+                        assertNotNull(correlationId);
+
+                        assertEquals(resource1, resourcesReceived.get(0));
+
+                        log.info("Received reply message!");
+                    }
+                });
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(500);
     }
 }

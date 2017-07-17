@@ -47,6 +47,7 @@ public class TestSetupConfig {
     public static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     public static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
 
+    public static final String RESOURCES_FOR_PLATFORM_REQUESTED_RK = "symbIoTe.platform.resourcesRequested";
 
     public static final String RESOURCE_TRANSLATION_REQUESTED_RK = "symbIoTe.resource.instance.translationRequested";
     public static final String RESOURCE_VALIDATION_REQUESTED_RK = "symbIoTe.resource.instance.validationRequested";
@@ -179,5 +180,4 @@ public class TestSetupConfig {
 
         return coreResourceRegistryRequest;
     }
-
 }

@@ -81,6 +81,8 @@ public class RabbitManager {
     private String platformModificationRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.modified}")
     private String platformModifiedRoutingKey;
+    @Value("${rabbit.routingKey.platform.resourcesRequested}")
+    private String platformResourcesRequestedRoutingKey;
     @Value("${rabbit.exchange.resource.name}")
     private String resourceExchangeName;
     @Value("${rabbit.exchange.resource.type}")
@@ -253,7 +255,7 @@ public class RabbitManager {
         try {
             channel = this.connection.createChannel();
             channel.queueDeclare(PLATFORM_RESOURCES_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
+            channel.queueBind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName, this.platformResourcesRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
             log.info("Receiver waiting for Platform Resources Requests messages....");

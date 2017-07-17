@@ -72,7 +72,7 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
         List<CoreResource> coreResources;
         AuthorizationResult authorizationResult;
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received requestPlatform to create: '" + message + "'");
+        log.info(" [x] Received request to retrieve resources for platform: '" + message + "'");
 
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
