@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -67,7 +68,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         try {
             //request from CCI received and deserialized
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Unable to get CoreResourceRegistryRequest from Message body!", e);
             response.setStatus(HttpStatus.SC_BAD_REQUEST);
             response.setMessage("Content invalid. Could not deserialize. Resources not modified!");
