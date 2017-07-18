@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.messaging;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
@@ -9,9 +8,9 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.ResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
@@ -21,6 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,8 +69,9 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        String response;
         CoreResourceRegistryRequest request;
+        ResourceRegistryResponse resourceRegistryResponse = new ResourceRegistryResponse();
+        resourceRegistryResponse.setResources(new ArrayList<>());
         List<CoreResource> coreResources;
         AuthorizationResult authorizationResult;
         String message = new String(body, "UTF-8");
@@ -78,31 +79,39 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
 
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException | JsonMappingException |JsonParseException e) {
+        } catch (JsonSyntaxException | JsonMappingException | JsonParseException e) {
             log.error("Error occured during getting Request from Json", e);
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, "Error occured during getting Request from Json");
+            resourceRegistryResponse.setMessage("Error occured during getting Request from Json");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
             return;
         }
 
-        try {
-            authorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
-        } catch (NullArgumentException e) {
-            log.error(e);
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, "Request invalid!");
+        if (request != null) {
+            try {
+                authorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+            } catch (NullArgumentException e) {
+                log.error(e);
+                resourceRegistryResponse.setMessage("Request invalid!");
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
+                return;
+            }
+        } else {
+            log.error("Request is null!");
+            resourceRegistryResponse.setMessage("Request is null!");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
             return;
         }
 
         if (!authorizationResult.isValidated()) {
             log.error("Token invalid! " + authorizationResult.getMessage());
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, authorizationResult.getMessage());
+            resourceRegistryResponse.setMessage(authorizationResult.getMessage());
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
             return;
         }
 
         coreResources = repositoryManager.getResourcesForPlatform(request.getPlatformId());
-
-        response = mapper.writerFor(new TypeReference<List<Resource>>() {
-        }).writeValueAsString(RegistryUtils.convertCoreResourcesToResources(coreResources));
-
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
+        resourceRegistryResponse.setMessage("OK. " + coreResources.size() + " resources found!");
+        resourceRegistryResponse.setResources(RegistryUtils.convertCoreResourcesToResources(coreResources));
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
     }
 }

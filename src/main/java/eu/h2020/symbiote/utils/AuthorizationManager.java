@@ -51,6 +51,13 @@ public class AuthorizationManager {
             return new AuthorizationResult("Given platform does not exist in database", false);
         }
 
+        if (tokenString==null){
+            return new AuthorizationResult("Token is null", false);
+        }
+        if (platformId==null){
+            return new AuthorizationResult("Platform Id is null", false);
+        }
+
         AuthorizationResult authorizationResult = checkToken(tokenString);
         if (!authorizationResult.isValidated()) return authorizationResult;
 

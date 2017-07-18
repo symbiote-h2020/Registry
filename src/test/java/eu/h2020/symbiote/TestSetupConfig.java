@@ -120,12 +120,12 @@ public class TestSetupConfig {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B);
     }
 
-    public static CoreResource addIdToCoreResource(CoreResource coreResource){
+    public static CoreResource addIdToCoreResource(CoreResource coreResource) {
         coreResource.setId(RESOURCE_101_ID);
         return coreResource;
     }
 
-    public static Resource addIdToResource(Resource resource){
+    public static Resource addIdToResource(Resource resource) {
         resource.setId(RESOURCE_101_ID);
         return resource;
     }
@@ -165,6 +165,33 @@ public class TestSetupConfig {
 
     public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest(Resource resource1, Resource resource2)
             throws JsonProcessingException {
+
+        List<Resource> resourceList = new ArrayList<>();
+        resourceList.add(resource1);
+        resourceList.add(resource2);
+
+        ObjectMapper mapper = new ObjectMapper();
+        String resources = mapper.writerFor(new TypeReference<List<Resource>>() {
+        }).writeValueAsString(resourceList);
+
+        CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
+        coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
+        coreResourceRegistryRequest.setToken(MOCKED_TOKEN);
+        coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
+        coreResourceRegistryRequest.setBody(resources);
+
+        return coreResourceRegistryRequest;
+    }
+
+
+    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest()
+            throws JsonProcessingException {
+
+        Resource resource1 = generateResource();
+        addIdToResource(resource1);
+        Resource resource2 = generateResource();
+        addIdToResource(resource2);
+
         List<Resource> resourceList = new ArrayList<>();
         resourceList.add(resource1);
         resourceList.add(resource2);

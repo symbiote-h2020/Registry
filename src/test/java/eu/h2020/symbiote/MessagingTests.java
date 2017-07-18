@@ -3,6 +3,7 @@ package eu.h2020.symbiote;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.core.cci.ResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.Platform;
@@ -47,6 +48,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingTests {
 
+    public static final String TEMP_QUEUE = "RPCqueue";
     private static final String TRANSLATION_PERFORMED = "symbIoTe.platform.instance.translationPerformed";
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
     private RepositoryManager mockedRepository;
@@ -56,7 +58,6 @@ public class MessagingTests {
     private RabbitManager rabbitManager;
     private Connection connection;
     private Channel channel;
-    public static final String TEMP_QUEUE = "RPCqueue";
 
     @Before
     public void setup() throws IOException, TimeoutException {
@@ -472,7 +473,7 @@ public class MessagingTests {
         when(mockedRepository.getResourcesForPlatform(coreResourceRegistryRequest.getPlatformId())).
                 thenReturn(coreResourcesFound);
 
-        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK , message,
+        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
                 new DefaultConsumer(this.channel) {
                     @Override
                     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
@@ -499,15 +500,16 @@ public class MessagingTests {
 
         String message = "[]"; //// FIXME: 18.07.2017 core Resource Registry Request with error
 
-        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK , message,
+        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
                 new DefaultConsumer(this.channel) {
                     @Override
                     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                         String messageReceived = new String(body);
-                        List<Resource> resourcesReceived = null;
+                        ResourceRegistryResponse responseReceived;
+                        List<Resource> resourcesReceived = new ArrayList<>();
                         try {
-                            resourcesReceived = mapper.readValue(messageReceived, new TypeReference<List<Resource>>() {
-                            });
+                            responseReceived = mapper.readValue(messageReceived, ResourceRegistryResponse.class);
+                            resourcesReceived = responseReceived.getResources();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -516,7 +518,6 @@ public class MessagingTests {
                         assertNotNull(correlationId);
 
                         assertEquals(new ArrayList<>(), resourcesReceived);
-
                         log.info("Received reply message: " + messageReceived);
                     }
                 });
@@ -527,4 +528,40 @@ public class MessagingTests {
         verifyZeroInteractions(mockedRepository);
     }
 
+    @Test
+    public void platformResourcesRequestedConsumerNullTokenFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedRepository, mockedAuthorizationManager);
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest();
+        coreResourceRegistryRequest.setToken(null);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkResourceOperationAccess(any(),any())).thenReturn(new AuthorizationResult("null token", false));
+
+        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
+                new DefaultConsumer(this.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                        String messageReceived = new String(body);
+                        ResourceRegistryResponse responseReceived;
+                        List<Resource> resourcesReceived = new ArrayList<>();
+                        try {
+                            responseReceived = mapper.readValue(messageReceived, ResourceRegistryResponse.class);
+                            resourcesReceived = responseReceived.getResources();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        assertNotNull(properties);
+                        String correlationId = properties.getCorrelationId();
+                        assertNotNull(correlationId);
+
+                        assertEquals(new ArrayList<>(), resourcesReceived);
+                        log.info("Received reply message: " + messageReceived);
+                    }
+                });
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        verifyZeroInteractions(mockedRepository);
+    }
 }
