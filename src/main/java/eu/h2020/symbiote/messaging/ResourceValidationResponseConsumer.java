@@ -2,6 +2,7 @@ package eu.h2020.symbiote.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -111,19 +112,15 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         try {
             //receive and read message from Semantic Manager
             resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Unable to get resource validation result from Message body!", e);
             registryResponse.setStatus(500);
             registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
         }
 
         if (resourceInstanceValidationResult.isSuccess()) {
-            try {
-                coreResources = resourceInstanceValidationResult.getObjectDescription();
-                log.info("CoreResources received from SM! Content: " + coreResources);
-            } catch (JsonSyntaxException e) {
-                log.error("Unable to get Resources List from semantic response body!", e);
-            }
+            coreResources = resourceInstanceValidationResult.getObjectDescription();
+            log.info("CoreResources received from SM! Content: " + coreResources);
 
             AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
                     (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId);
@@ -135,14 +132,11 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 registryResponse.setStatus(400);
                 registryResponse.setMessage(authorizationResult.getMessage());
             }
-
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("Validation Error. Semantic Manager message: "
                     + resourceInstanceValidationResult.getMessage());
         }
-
-
         sendRpcResponse();
     }
 
@@ -236,7 +230,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
 
             rabbitManager.closeConsumer(this, this.getChannel());
-
         } catch (IOException e) {
             log.error(e);
         }

@@ -1,6 +1,8 @@
 package eu.h2020.symbiote.messaging;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -76,7 +78,7 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
 
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException |JsonParseException e) {
             log.error("Error occured during getting Request from Json", e);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, "Error occured during getting Request from Json");
             return;

@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.messaging;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -86,7 +87,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occured during getting Operation Request from Json", e);
             response.setStatus(400);
             response.setMessage("Error occured during getting Operation Request from Json");
@@ -113,7 +114,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         try {
             resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
             });
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occured during getting Resources from Json", e);
             response.setStatus(400);
             response.setMessage("Error occured during getting Resources from Json");

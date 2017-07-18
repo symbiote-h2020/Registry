@@ -127,6 +127,7 @@ public class MessagingTests {
                 channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCES_FOR_PLATFORM_REQUESTED_RK);
+                channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
                 channel.queueDelete(TEMP_QUEUE);
                 channel.close();
                 connection.close();
@@ -351,7 +352,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(300);
+        TimeUnit.MILLISECONDS.sleep(500);
 
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
         verify(mockedRepository).modifyPlatform(argument.capture());
@@ -408,7 +409,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(300);
+        TimeUnit.MILLISECONDS.sleep(500);
 
         verifyZeroInteractions(mockedRepository);
     }
@@ -445,7 +446,7 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(300);
+        TimeUnit.MILLISECONDS.sleep(500);
 
         verifyZeroInteractions(mockedRepository);
     }
@@ -482,7 +483,7 @@ public class MessagingTests {
                         String correlationId = properties.getCorrelationId();
                         assertNotNull(correlationId);
 
-                        assertEquals(resource1, resourcesReceived.get(0));
+                        assertEquals(resource1.getId(), resourcesReceived.get(0).getId());
 
                         log.info("Received reply message!");
                     }
@@ -491,4 +492,39 @@ public class MessagingTests {
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(500);
     }
+
+    @Test
+    public void platformResourcesRequestedConsumerJsonFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedRepository, mockedAuthorizationManager);
+
+        String message = "[]"; //// FIXME: 18.07.2017 core Resource Registry Request with error
+
+        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK , message,
+                new DefaultConsumer(this.channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                        String messageReceived = new String(body);
+                        List<Resource> resourcesReceived = null;
+                        try {
+                            resourcesReceived = mapper.readValue(messageReceived, new TypeReference<List<Resource>>() {
+                            });
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        assertNotNull(properties);
+                        String correlationId = properties.getCorrelationId();
+                        assertNotNull(correlationId);
+
+                        assertEquals(new ArrayList<>(), resourcesReceived);
+
+                        log.info("Received reply message: " + messageReceived);
+                    }
+                });
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
 }

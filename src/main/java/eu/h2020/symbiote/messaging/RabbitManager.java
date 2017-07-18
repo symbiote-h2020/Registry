@@ -210,6 +210,8 @@ public class RabbitManager {
                         this.rdfResourceValidationRequestedRoutingKey);
                 channel.queueUnbind(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.jsonResourceTranslationRequestedRoutingKey);
+                channel.queueUnbind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName,
+                        this.platformResourcesRequestedRoutingKey);
                 channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
@@ -218,6 +220,7 @@ public class RabbitManager {
                 channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
                 channel.queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
                 channel.queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
                 closeChannel(channel);
                 this.connection.close();
             }
@@ -579,7 +582,7 @@ public class RabbitManager {
                                      String message, Consumer responseConsumer) {
         try {
             String replyQueueName = "Queue" + Math.random();
-            rpcChannel.queueDeclare(replyQueueName, true, false, false, null);
+            rpcChannel.queueDeclare(replyQueueName, true, false, true, null);
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -602,7 +605,6 @@ public class RabbitManager {
     }
 
     public void closeConsumer(DefaultConsumer consumerToClose, Channel channel) throws IOException {
-
         channel.basicCancel(consumerToClose.getConsumerTag());
     }
 
