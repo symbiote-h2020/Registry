@@ -49,7 +49,6 @@ import static org.mockito.Mockito.*;
 public class MessagingTests {
 
     public static final String TEMP_QUEUE = "RPCqueue";
-    private static final String TRANSLATION_PERFORMED = "symbIoTe.platform.instance.translationPerformed";
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
     private RepositoryManager mockedRepository;
     private ObjectMapper mapper;

@@ -2,7 +2,8 @@ package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.model.internal.CoreResourceType;
+import eu.h2020.symbiote.core.model.resources.*;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
@@ -140,11 +141,34 @@ public class RegistryUtilsTests {
     @Test
     public void testResourceFieldsValidationFail() {
         Resource resource = null;
-        Assert.assertTrue(!RegistryUtils.validateFields(resource));
+        Assert.assertFalse(RegistryUtils.validateFields(resource));
         resource = new Resource();
-        Assert.assertTrue(!RegistryUtils.validateFields(resource));
+        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        resource.setInterworkingServiceURL("");
+        resource.setId("");
+        resource.setLabels(new ArrayList<>());
+        resource.setComments(new ArrayList<>());
+        Assert.assertFalse(RegistryUtils.validateFields(resource));
+    }
 
-        resource.setInterworkingServiceURL(null);
-        Assert.assertTrue(!RegistryUtils.validateFields(resource));
+    @Test
+    public void testResourceTypeChecker(){
+        Resource resource = new Actuator();
+        Assert.assertEquals(CoreResourceType.ACTUATOR, RegistryUtils.getTypeForResource(resource));
+        resource = new ActuatingService();
+        Assert.assertEquals(CoreResourceType.ACTUATING_SERVICE, RegistryUtils.getTypeForResource(resource));
+        resource = new Service();
+        Assert.assertEquals(CoreResourceType.SERVICE, RegistryUtils.getTypeForResource(resource));
+        resource = new MobileDevice();
+        Assert.assertEquals(CoreResourceType.MOBILE_DEVICE, RegistryUtils.getTypeForResource(resource));
+        resource = new MobileSensor();
+        Assert.assertEquals(CoreResourceType.MOBILE_SENSOR, RegistryUtils.getTypeForResource(resource));
+        resource = new StationaryDevice();
+        Assert.assertEquals(CoreResourceType.STATIONARY_DEVICE, RegistryUtils.getTypeForResource(resource));
+        resource = new StationarySensor();
+        Assert.assertEquals(CoreResourceType.STATIONARY_SENSOR, RegistryUtils.getTypeForResource(resource));
+
+        Assert.assertNotEquals(CoreResourceType.STATIONARY_DEVICE, RegistryUtils.getTypeForResource(resource));
+
     }
 }
