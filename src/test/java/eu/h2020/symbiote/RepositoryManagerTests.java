@@ -19,8 +19,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by mateuszl on 17.05.2017.
@@ -259,6 +258,13 @@ public class RepositoryManagerTests {
     public void testRemovePlatformWithResourcesFail(){
         RegistryPlatform platform = generateRegistryPlatformB();
         when(resourceRepository.findByInterworkingServiceURL(platform.getId())).thenReturn(Arrays.asList(new CoreResource()));
+        Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
+    }
+
+    @Test
+    public void testRemovePlatformMongoError(){
+        RegistryPlatform platform = generateRegistryPlatformB();
+        doThrow(new MongoException("FAKE MONGO Exception")).when(registryPlatformRepository).delete(platform.getId());
         Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
     }
 

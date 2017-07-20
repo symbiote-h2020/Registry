@@ -201,9 +201,8 @@ public class MessagingTests {
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
-        verify(mockedRepository, times(2)).saveResource(any());
+        // Timeout to make sure that the message has been delivered
+        verify(mockedRepository, timeout(500).times(2)).saveResource(any());
     }
 
 
@@ -247,6 +246,7 @@ public class MessagingTests {
 
     @Test
     public void resourceRemovalRequestConsumerTest() throws IOException, InterruptedException {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
         Resource resource1 = generateResource();
@@ -279,6 +279,7 @@ public class MessagingTests {
 
     @Test
     public void platformCreationRequestConsumerTest() throws Exception {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();
@@ -307,6 +308,7 @@ public class MessagingTests {
 
     @Test
     public void platformCreationRequestConsumerNullNameFailTest() throws Exception {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();
@@ -323,6 +325,7 @@ public class MessagingTests {
 
     @Test
     public void platformCreationRequestConsumerJsonFailTest() throws Exception {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         String message = "[wrong json]";
@@ -337,6 +340,7 @@ public class MessagingTests {
 
     @Test
     public void platformModificationRequestConsumerHappyPathTest() throws IOException, InterruptedException {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();
@@ -351,11 +355,9 @@ public class MessagingTests {
 
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
-
         ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
-        verify(mockedRepository).modifyPlatform(argument.capture());
+        // Timeout to make sure that the message has been delivered
+        verify(mockedRepository, timeout(500)).modifyPlatform(argument.capture());
 
         Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getPlatformId()));
         Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
@@ -395,13 +397,13 @@ public class MessagingTests {
                     }
                 });
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
-
+        // Timeout to make sure that the message has been delivered
+        verify(mockedRepository, timeout(500)).modifyPlatform(any());
     }
 
     @Test
     public void platformModificationRequestConsumerJsonFailTest() throws Exception {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
 
         String message = "[wrong json]";
@@ -409,13 +411,14 @@ public class MessagingTests {
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(1000);
 
         verifyZeroInteractions(mockedRepository);
     }
 
     @Test
     public void platformRemovalRequestConsumerTest() throws IOException, InterruptedException {
+        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();
