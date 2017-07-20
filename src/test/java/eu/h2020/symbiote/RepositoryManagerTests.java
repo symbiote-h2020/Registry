@@ -46,7 +46,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSaveResourceTriggersRepository() {
         CoreResource resource = generateCoreResource();
-        addIdToCoreResource(resource);
+        resource = addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
 
         repositoryManager.saveResource(resource);
@@ -61,7 +61,7 @@ public class RepositoryManagerTests {
     @Test
     public void testModifyResourceTriggersRepository() {
         CoreResource resource = generateCoreResource();
-        addIdToResource(resource);
+        resource = addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
         when(resourceRepository.findOne("101")).thenReturn(resource);
 
@@ -105,6 +105,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSaveResourceMongoError(){
         CoreResource coreResource = generateCoreResource();
+        coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.saveResource(coreResource).getStatus());
     }
@@ -116,8 +117,17 @@ public class RepositoryManagerTests {
     }
 
     @Test
-    public void testModifyResourceWithWrongInterworkingService() throws Exception {
+    public void testModifyResourceWithEmptyInterworkingService() throws Exception {
         CoreResource coreResource = generateCoreResource();
+        coreResource = addIdToCoreResource(coreResource);
+        coreResource.setInterworkingServiceURL("");
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
+    }
+
+    @Test
+    public void testModifyResourceWithNullInterworkingService() throws Exception {
+        CoreResource coreResource = generateCoreResource();
+        coreResource = addIdToCoreResource(coreResource);
         coreResource.setInterworkingServiceURL(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
     }
@@ -125,7 +135,7 @@ public class RepositoryManagerTests {
     @Test
     public void testModifyResourceThatDoesNotExistInDb() throws Exception {
         CoreResource coreResource = generateCoreResource();
-        addIdToCoreResource(coreResource);
+        coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.findOne(coreResource.getId())).thenReturn(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
     }
@@ -133,16 +143,40 @@ public class RepositoryManagerTests {
     @Test
     public void testModifyResourceFailedWhenSaving() throws Exception {
         CoreResource coreResource = generateCoreResource();
-        addIdToCoreResource(coreResource);
+        coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.findOne(coreResource.getId())).thenReturn(coreResource);
         when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE ERROR during saving"));
         Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR,repositoryManager.modifyResource(coreResource).getStatus());
     }
 
     @Test
-    public void testRemoveResourceWithWrongId() throws Exception {
+    public void testRemoveResourceWithoutId() throws Exception {
         Resource resource = generateResource();
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
+    }
+
+    @Test
+    public void testRemoveResourceWithWrongId() throws Exception {
+        Resource resource = generateResource();
+        resource.setId("");
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
+    }
+
+    @Test
+    public void testRemoveResourceThatDoesNotExist() throws Exception {
+        Resource resource = generateResource();
+        resource.setId("1234");
+        when(resourceRepository.findOne(resource.getId())).thenReturn(null);
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
+    }
+
+
+    @Test
+    public void testRemoveResourceMongoException() throws Exception {
+        Resource resource = generateResource();
+        resource.setId("1234");
+        when(resourceRepository.findOne(resource.getId())).thenThrow(new MongoException("FAKE MONGO ERROR"));
+        Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR,repositoryManager.removeResource(resource).getStatus());
     }
 
     @Test

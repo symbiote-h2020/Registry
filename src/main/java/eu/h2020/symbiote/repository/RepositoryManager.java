@@ -289,9 +289,14 @@ public class RepositoryManager {
             return resourceSavingResult;
         }
 
-        if (resource.getInterworkingServiceURL().isEmpty() || resource.getInterworkingServiceURL() == null) {
-            log.error("Given resource has empty or null Interworking service URL!");
-            resourceSavingResult.setMessage("Given resource has empty or null Interworking service URL!");
+        if (resource.getInterworkingServiceURL() == null) {
+            log.error("Given resource has null Interworking service URL!");
+            resourceSavingResult.setMessage("Given resource has null Interworking service URL!");
+            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            return resourceSavingResult;
+        } else if (resource.getInterworkingServiceURL().isEmpty()){
+            log.error("Given resource has empty Interworking service URL!");
+            resourceSavingResult.setMessage("Given resource has empty Interworking service URL!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             return resourceSavingResult;
         }
