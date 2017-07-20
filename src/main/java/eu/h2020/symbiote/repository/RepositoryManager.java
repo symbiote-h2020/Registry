@@ -232,24 +232,15 @@ public class RepositoryManager {
     public RegistryPersistenceResult removeResource(Resource resource) {
         RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
 
-        if (resource == null || resource.getId() == null) {
-            log.error("Given resource is null or it has null ID!");
-            resourceRemovalResult.setMessage("Given resource is null or it has null ID!");
-            resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if(resource.getId().isEmpty()) {
-            log.error("Given resource has empty ID!");
-            resourceRemovalResult.setMessage("Given resource has empty ID!");
+        if (resource == null || resource.getId() == null || resource.getId().isEmpty()) {
+            log.error("Given resource is null or it has null or empty ID!");
+            resourceRemovalResult.setMessage("Given resource is null or it has null or empty ID!");
             resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
             try {
                 CoreResource foundResource = resourceRepository.findOne(resource.getId());
                 if (foundResource != null) {
-//                    if (foundResource.getLocation() != null) {
-//                        Location loc = foundResource.getLocation();
-//                        removeLocation(loc);
-//                        log.info("Location with id: " + loc.getId() + " removed !");
-//                    }
                     resourceRepository.delete(resource.getId());
                     resourceRemovalResult.setStatus(HttpStatus.SC_OK);
                     resourceRemovalResult.setMessage("OK");
@@ -289,14 +280,9 @@ public class RepositoryManager {
             return resourceSavingResult;
         }
 
-        if (resource.getInterworkingServiceURL() == null) {
-            log.error("Given resource has null Interworking service URL!");
-            resourceSavingResult.setMessage("Given resource has null Interworking service URL!");
-            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            return resourceSavingResult;
-        } else if (resource.getInterworkingServiceURL().isEmpty()){
-            log.error("Given resource has empty Interworking service URL!");
-            resourceSavingResult.setMessage("Given resource has empty Interworking service URL!");
+        if (resource.getInterworkingServiceURL() == null || resource.getInterworkingServiceURL().isEmpty()) {
+            log.error("Given resource has null or empty Interworking service URL!");
+            resourceSavingResult.setMessage("Given resource has null or empty Interworking service URL!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             return resourceSavingResult;
         }

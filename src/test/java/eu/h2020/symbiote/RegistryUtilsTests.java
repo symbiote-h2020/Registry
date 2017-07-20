@@ -122,12 +122,16 @@ public class RegistryUtilsTests {
         Assert.assertTrue(!RegistryUtils.validateFields(platform));
 
         platform.setComments(new ArrayList<>());
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
         platform.setLabels(new ArrayList<>());
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
         platform.setInterworkingServices(new ArrayList<>());
         Assert.assertTrue(!RegistryUtils.validateFields(platform));
 
         platform.getComments().add(null);
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
         platform.getLabels().add(null);
+        Assert.assertTrue(!RegistryUtils.validateFields(platform));
         platform.getInterworkingServices().add(null);
         Assert.assertFalse(RegistryUtils.validateFields(platform));
     }
@@ -145,8 +149,11 @@ public class RegistryUtilsTests {
         resource = new Resource();
         Assert.assertFalse(RegistryUtils.validateFields(resource));
         resource.setInterworkingServiceURL("");
+        Assert.assertFalse(RegistryUtils.validateFields(resource));
         resource.setId("");
+        Assert.assertFalse(RegistryUtils.validateFields(resource));
         resource.setLabels(new ArrayList<>());
+        Assert.assertFalse(RegistryUtils.validateFields(resource));
         resource.setComments(new ArrayList<>());
         Assert.assertFalse(RegistryUtils.validateFields(resource));
     }
