@@ -9,9 +9,9 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.ResourceListResponse;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.model.AuthorizationResult;
-import eu.h2020.symbiote.model.ResourcesListResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -71,7 +71,7 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         CoreResourceRegistryRequest request;
-        ResourcesListResponse resourceRegistryResponse = new ResourcesListResponse();
+        ResourceListResponse resourceRegistryResponse = new ResourceListResponse();
         resourceRegistryResponse.setResources(new ArrayList<>());
         List<CoreResource> coreResources;
         AuthorizationResult authorizationResult;
