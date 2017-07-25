@@ -120,7 +120,7 @@ public class AuthorizationManager {
         return new AuthorizationResult("Authorization check successful!", true);
     }
 
-    public AuthorizationResult checkIfResourcesBelongToPlatform(List<Resource> resources, String platformId) {
+    public AuthorizationResult checkIfResourcesBelongToPlatform(Map<String, Resource> resources, String platformId) {
         RegistryPlatform registryPlatform = registryPlatformRepository.findOne(platformId);
 
         if (registryPlatform == null) {
@@ -139,9 +139,9 @@ public class AuthorizationManager {
                 .map(InterworkingService::getUrl)
                 .collect(Collectors.toList());
 
-        for (Resource resource : resources) {
-            if (!platformInterworkingServicesUrls.contains(resource.getInterworkingServiceURL())) {
-                log.error("Resource does not match with any Interworking Service in given platform! " + resource);
+        for (String key : resources.keySet()) {
+            if (!platformInterworkingServicesUrls.contains(resources.get(key).getInterworkingServiceURL())) {
+                log.error("Resource does not match with any Interworking Service in given platform! " + resources.get(key));
                 return new AuthorizationResult("Resource does not match with any Interworking Service in given platform!", false);
             }
         }

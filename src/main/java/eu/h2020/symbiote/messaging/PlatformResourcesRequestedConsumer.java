@@ -8,16 +8,17 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.cci.ResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.ResourcesListResponse;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         CoreResourceRegistryRequest request;
-        ResourceRegistryResponse resourceRegistryResponse = new ResourceRegistryResponse();
+        ResourcesListResponse resourceRegistryResponse = new ResourcesListResponse();
         resourceRegistryResponse.setResources(new ArrayList<>());
         List<CoreResource> coreResources;
         AuthorizationResult authorizationResult;
@@ -110,8 +111,9 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
         }
 
         coreResources = repositoryManager.getResourcesForPlatform(request.getPlatformId());
+        resourceRegistryResponse.setStatus(HttpStatus.SC_OK);
         resourceRegistryResponse.setMessage("OK. " + coreResources.size() + " resources found!");
-        resourceRegistryResponse.setResources(RegistryUtils.convertCoreResourcesToResources(coreResources));
+        resourceRegistryResponse.setResources(RegistryUtils.convertCoreResourcesToResourcesList(coreResources));
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
     }
 }

@@ -60,7 +60,7 @@ public class RegistryUtilsTests {
         coreResources.add(coreResource1);
         coreResources.add(coreResource2);
 
-        List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(coreResources);
+        List<Resource> resources = RegistryUtils.convertCoreResourcesToResourcesList(coreResources);
 
         for (int i = 0; i < coreResources.size(); i++) {
             Assert.assertTrue(coreResources.get(i).getId().equals(resources.get(i).getId()));

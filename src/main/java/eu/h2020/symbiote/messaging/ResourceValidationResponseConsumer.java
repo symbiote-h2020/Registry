@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -104,7 +105,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         String message = new String(body, "UTF-8");
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
-        List<CoreResource> coreResources = new ArrayList<>();
+        Map<String, CoreResource> coreResources;
         registryResponse.setDescriptionType(descriptionType);
 
         log.info("[x] Received '" + descriptionType + "' validation result: '" + message + "'");
@@ -123,7 +124,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             log.info("CoreResources received from SM! Content: " + coreResources);
 
             AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
-                    (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId);
+                    (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
 
             if (authorizationResult.isValidated()) {
                 List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
@@ -145,25 +146,24 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      *
      * @param coreResources
      */
-    private List<RegistryPersistenceResult> makePersistenceOperations(List<CoreResource> coreResources) {
+    private List<RegistryPersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
         List<RegistryPersistenceResult> persistenceOperationResultsList = new ArrayList<>();
         switch (operationType) {
             case CREATION:
-                for (CoreResource resource : coreResources) {
+                for (String key : coreResources.keySet()) {
                     RegistryPersistenceResult resourceSavingResult =
-                            this.repositoryManager.saveResource(resource);
+                            this.repositoryManager.saveResource(coreResources.get(key));
                     persistenceOperationResultsList.add(resourceSavingResult);
                 }
                 break;
             case MODIFICATION:
-                for (CoreResource resource : coreResources) {
+                for (String key : coreResources.keySet()) {
                     RegistryPersistenceResult resourceModificationResult =
-                            this.repositoryManager.modifyResource(resource);
+                            this.repositoryManager.modifyResource(coreResources.get(key));
                     persistenceOperationResultsList.add(resourceModificationResult);
                 }
                 break;
         }
-
         for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
             if (persistenceResult.getStatus() != 200) {
                 this.bulkRequestSuccess = false;
@@ -174,7 +174,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         "Check list of response objects for details.");
             }
         }
-
         return persistenceOperationResultsList;
     }
 
@@ -194,7 +193,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
 
-            List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
+            List<Resource> resources = RegistryUtils.convertCoreResourcesToResourcesList(savedCoreResourcesList);
 
             try {
                 registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {

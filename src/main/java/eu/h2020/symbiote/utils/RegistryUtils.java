@@ -10,9 +10,7 @@ import eu.h2020.symbiote.model.RegistryPlatform;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utils for Registry project.
@@ -87,12 +85,27 @@ public class RegistryUtils {
     }
 
     /**
+     * Converts given Map of Core Resources to Resources
+     *
+     * @param coreResources
+     * @return
+     */
+    public static Map<String, Resource> convertCoreResourcesToResourcesMap(Map<String, CoreResource> coreResources) {
+        Map<String, Resource> resources = new HashMap<>();
+        for (String key : coreResources.keySet()) {
+            Resource resource = convertCoreResourceToResource(coreResources.get(key));
+            resources.put(key, resource);
+        }
+        return resources;
+    }
+
+    /**
      * Converts given list of Core Resources to Resources
      *
      * @param coreResources
      * @return
      */
-    public static List<Resource> convertCoreResourcesToResources(List<CoreResource> coreResources) {
+    public static List<Resource> convertCoreResourcesToResourcesList(List<CoreResource> coreResources) {
         List<Resource> resources = new ArrayList<>();
         for (CoreResource coreResource : coreResources) {
             Resource resource = convertCoreResourceToResource(coreResource);
