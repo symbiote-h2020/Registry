@@ -13,9 +13,7 @@ import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by Mael on 23/01/2017.
@@ -166,12 +164,12 @@ public class TestSetupConfig {
     public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest(Resource resource1, Resource resource2)
             throws JsonProcessingException {
 
-        List<Resource> resourceList = new ArrayList<>();
-        resourceList.add(resource1);
-        resourceList.add(resource2);
+        Map<String, Resource> resourceList = new HashMap<>();
+        resourceList.put("1", resource1);
+        resourceList.put("2", resource2);
 
         ObjectMapper mapper = new ObjectMapper();
-        String resources = mapper.writerFor(new TypeReference<List<Resource>>() {
+        String resources = mapper.writerFor(new TypeReference<Map<String, Resource>>() {
         }).writeValueAsString(resourceList);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
@@ -192,12 +190,12 @@ public class TestSetupConfig {
         Resource resource2 = generateResource();
         addIdToResource(resource2);
 
-        List<Resource> resourceList = new ArrayList<>();
-        resourceList.add(resource1);
-        resourceList.add(resource2);
+        Map<String, Resource> resourceList = new HashMap<>();
+        resourceList.put("1", resource1);
+        resourceList.put("2", resource2);
 
         ObjectMapper mapper = new ObjectMapper();
-        String resources = mapper.writerFor(new TypeReference<List<Resource>>() {
+        String resources = mapper.writerFor(new TypeReference<Map<String, Resource>>() {
         }).writeValueAsString(resourceList);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();

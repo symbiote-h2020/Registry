@@ -20,7 +20,10 @@ import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
@@ -133,13 +136,14 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      * @return
      */
     private boolean checkIfResourcesHaveNullOrEmptyId(CoreResourceRegistryRequest request) {
-        List<Resource> resources = new ArrayList<>();
+        Map<String, Resource> resourceMap = new HashMap<>();
         try {
-            resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
+            resourceMap = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
             });
         } catch (IOException e) {
             log.error("Could not deserialize content of request!" + e);
         }
+        List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
         return checkIds(resources);
     }
 

@@ -30,9 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -171,9 +169,9 @@ public class MessagingTests {
                 assertNotNull(correlationId);
                 assertNotNull(replyQueueName);
 
-                List<CoreResource> resources = new ArrayList<>();
+                Map<String, CoreResource> resources = new HashMap<>();
                 try {
-                    resources = mapper.readValue(request.getBody(), new TypeReference<List<CoreResource>>() {
+                    resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, CoreResource>>() {
                     });
                 } catch (IOException e) {
                     log.error("Could not deserialize content of request!" + e);
@@ -508,7 +506,7 @@ public class MessagingTests {
                     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                         String messageReceived = new String(body);
                         ResourceRegistryResponse responseReceived;
-                        List<Resource> resourcesReceived = new ArrayList<>();
+                        Map<String, Resource> resourcesReceived = new HashMap<>();
                         try {
                             responseReceived = mapper.readValue(messageReceived, ResourceRegistryResponse.class);
                             resourcesReceived = responseReceived.getResources();
@@ -545,7 +543,7 @@ public class MessagingTests {
                     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                         String messageReceived = new String(body);
                         ResourceRegistryResponse responseReceived;
-                        List<Resource> resourcesReceived = new ArrayList<>();
+                        Map<String, Resource> resourcesReceived = new HashMap<>();
                         try {
                             responseReceived = mapper.readValue(messageReceived, ResourceRegistryResponse.class);
                             resourcesReceived = responseReceived.getResources();

@@ -13,8 +13,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
@@ -93,7 +93,8 @@ public class AuthorizationManagerTests {
         Resource resource = generateResource();
         RegistryPlatform platform = generateRegistryPlatformB();
         when(mockedRegistryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
-        List<Resource> resources = Arrays.asList(resource);
+        Map<String, Resource> resources = new HashMap<>();
+        resources.put("3", resource);
 
         Assert.assertTrue(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID).isValidated());
     }
@@ -104,7 +105,9 @@ public class AuthorizationManagerTests {
         resource.setInterworkingServiceURL("http://other_url.com/");
         RegistryPlatform platform = generateRegistryPlatformB();
         when(mockedRegistryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
-        List<Resource> resources = Arrays.asList(resource);
+
+        Map<String, Resource> resources = new HashMap<>();
+        resources.put("3", resource);
 
         Assert.assertFalse(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID).isValidated());
     }

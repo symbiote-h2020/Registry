@@ -23,7 +23,9 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -76,7 +78,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             throws IOException {
         List<RegistryPersistenceResult> resourceRemovalResultList = new ArrayList<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
-        List<Resource> resources = new ArrayList<>();
+        Map<String, Resource> resources = new HashMap<>();
 
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
@@ -112,7 +114,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         try {
-            resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
+            resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
             });
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occured during getting Resources from Json", e);
@@ -131,14 +133,14 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             return;
         }
 
-        for (Resource resource : resources) {
-            if (resource == null) {
+        for (String key : resources.keySet()) {
+            if (resources.get(key) == null) {
                 log.error("Resources list contains a NULL resource!" + resources);
                 response.setMessage("Resources list contains a NULL resource!" + resources);
                 response.setStatus(410);
             } else {
-                if (resource.getId() != null || !resource.getId().isEmpty()) {
-                    resourceRemovalResult = this.repositoryManager.removeResource(resource);
+                if (resources.get(key).getId() != null || !resources.get(key).getId().isEmpty()) {
+                    resourceRemovalResult = this.repositoryManager.removeResource(resources.get(key));
                 } else {
                     log.error("Given Resource has id null or empty");
                     resourceRemovalResult.setMessage("Given Resource has ID null or empty");
@@ -184,7 +186,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     }
 
     private boolean checkIfRemovalWasSuccessful(List<RegistryPersistenceResult> resourceRemovalResultList,
-                                                List<Resource> resourcesRemoved, List<Resource> resources) {
+                                                List<Resource> resourcesRemoved, Map<String, Resource> resources) {
         for (RegistryPersistenceResult result : resourceRemovalResultList) {
             if (result.getStatus() == 200) {
                 resourcesRemoved.add(result.getResource());
