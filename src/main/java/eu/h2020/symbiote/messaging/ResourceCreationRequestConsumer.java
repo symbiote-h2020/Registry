@@ -88,7 +88,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             if (!tokenAuthorizationResult.isValidated()){
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 registryResponse.setStatus(400);
-                registryResponse.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                registryResponse.setMessage("Error: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(registryResponse));
                 return;

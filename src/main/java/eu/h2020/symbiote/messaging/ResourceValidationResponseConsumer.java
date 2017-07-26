@@ -26,9 +26,9 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * RPC Consumer waiting for messages from Semantic Manager. Acts accordingly to received validation/translation results.
@@ -127,7 +127,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
 
             if (authorizationResult.isValidated()) {
-                List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
+                Map<String, RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
                 prepareContentOfMessage(persistenceOperationResultsList);
             } else {
                 registryResponse.setStatus(400);
@@ -146,26 +146,26 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      *
      * @param coreResources
      */
-    private List<RegistryPersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
-        List<RegistryPersistenceResult> persistenceOperationResultsList = new ArrayList<>();
+    private Map<String, RegistryPersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
+        Map<String, RegistryPersistenceResult> persistenceOperationResultsMap = new HashMap<>();
         switch (operationType) {
             case CREATION:
                 for (String key : coreResources.keySet()) {
                     RegistryPersistenceResult resourceSavingResult =
                             this.repositoryManager.saveResource(coreResources.get(key));
-                    persistenceOperationResultsList.add(resourceSavingResult);
+                    persistenceOperationResultsMap.put(key, resourceSavingResult);
                 }
                 break;
             case MODIFICATION:
                 for (String key : coreResources.keySet()) {
                     RegistryPersistenceResult resourceModificationResult =
                             this.repositoryManager.modifyResource(coreResources.get(key));
-                    persistenceOperationResultsList.add(resourceModificationResult);
+                    persistenceOperationResultsMap.put(key, resourceModificationResult);
                 }
                 break;
         }
-        for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
-            if (persistenceResult.getStatus() != 200) {
+        for (String key : persistenceOperationResultsMap.keySet()) {
+            if (persistenceOperationResultsMap.get(key).getStatus() != 200) {
                 this.bulkRequestSuccess = false;
                 log.error("One (or more) of resources could not be processed. " +
                         "Check list of response objects for details.");
@@ -174,38 +174,38 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         "Check list of response objects for details.");
             }
         }
-        return persistenceOperationResultsList;
+        return persistenceOperationResultsMap;
     }
 
     /**
      * prepares content of message with bulk save result
      */
-    private void prepareContentOfMessage(List<RegistryPersistenceResult> persistenceOperationResultsList) {
-        List<CoreResource> savedCoreResourcesList;
+    private void prepareContentOfMessage(Map<String, RegistryPersistenceResult> persistenceOperationResultsMap) {
+        List<CoreResource> savedCoreResourcesList = new ArrayList<>();
+        Map<String, Resource> savedResourcesMap = new HashMap<>();
         if (bulkRequestSuccess) {
-            savedCoreResourcesList = persistenceOperationResultsList.stream()
-                    .map(RegistryPersistenceResult::getResource)
-                    .collect(Collectors.toList());
-
+            for (String key : persistenceOperationResultsMap.keySet()) {
+                RegistryPersistenceResult registryPersistenceResult = persistenceOperationResultsMap.get(key);
+                savedCoreResourcesList.add(registryPersistenceResult.getResource());
+                savedResourcesMap.put(key, RegistryUtils.convertCoreResourceToResource(registryPersistenceResult.getResource()));
+            }
             sendFanoutMessage(savedCoreResourcesList);
 
             log.info("Bulk operation successful! (" + this.operationType.toString() + ")");
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
 
-            List<Resource> resources = RegistryUtils.convertCoreResourcesToResourcesList(savedCoreResourcesList);
-
             try {
-                registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-                }).writeValueAsString(resources));
+                registryResponse.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
+                }).writeValueAsString(savedResourcesMap));
             } catch (JsonProcessingException e) {
                 log.error("Could not map list of resource to JSON", e);
             }
 
         } else {
-            for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
-                if (persistenceResult.getStatus() == 200) {
-                    rollback(persistenceResult.getResource());
+            for (String key : persistenceOperationResultsMap.keySet()) {
+                if (persistenceOperationResultsMap.get(key).getStatus() == 200) {
+                    rollback(persistenceOperationResultsMap.get(key).getResource());
                 }
             }
             log.error("Bulk request ERROR");
