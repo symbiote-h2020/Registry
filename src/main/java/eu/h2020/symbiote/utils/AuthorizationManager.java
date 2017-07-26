@@ -51,10 +51,10 @@ public class AuthorizationManager {
             return new AuthorizationResult("Given platform does not exist in database", false);
         }
 
-        if (tokenString==null){
+        if (tokenString == null) {
             return new AuthorizationResult("Token is null", false);
         }
-        if (platformId==null){
+        if (platformId == null) {
             return new AuthorizationResult("Platform Id is null", false);
         }
 
@@ -65,14 +65,12 @@ public class AuthorizationManager {
     }
 
     public AuthorizationResult checkToken(String tokenString) {
-        Token token;
-        try {
-            token = new Token(tokenString);
-        } catch (TokenValidationException e) {
-            log.error("Token could not be verified", e);
+        Token token = getToken(tokenString);
+        if (token == null) {
             //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token invalid! Token could not be verified", false);
         }
+
         ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
 
         if (validationStatus != VALID) {
@@ -81,6 +79,17 @@ public class AuthorizationManager {
             return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
         }
         return new AuthorizationResult("", true);
+    }
+
+    private Token getToken(String tokenString) {
+        Token token;
+        try {
+            token = new Token(tokenString);
+        } catch (TokenValidationException e) {
+            log.error("Token could not be verified", e);
+            return null;
+        }
+        return token;
     }
 
     private AuthorizationResult getAuthorizationResult(String tokenString, String platformId) {

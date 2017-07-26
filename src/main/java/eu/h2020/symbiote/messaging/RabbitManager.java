@@ -578,6 +578,14 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Method publishes a custom RPC Message through RabbitMQ using given parameters.
+     *
+     * @param exchangeName
+     * @param routingKey
+     * @param message
+     * @param responseConsumer
+     */
     public void sendCustomRpcMessage(String exchangeName, String routingKey,
                                      String message, Consumer responseConsumer) {
         try {

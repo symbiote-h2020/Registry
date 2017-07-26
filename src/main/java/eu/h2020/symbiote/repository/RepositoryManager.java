@@ -167,6 +167,7 @@ public class RepositoryManager {
         return platformResponse;
     }
 
+    //// TODO: 25.07.2017 test method!
     private RegistryPlatform copyExistingPlatformData(RegistryPlatform registryPlatform, RegistryPlatform foundRegistryPlatform) {
         if ((registryPlatform.getComments() == null || registryPlatform.getComments().isEmpty() || registryPlatform.getComments().get(0) == null)
                 && foundRegistryPlatform.getComments() != null)
@@ -314,7 +315,6 @@ public class RepositoryManager {
         return resourceSavingResult;
     }
 
-    //todo test method!
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         RegistryPlatform platform = registryPlatformRepository.findOne(platformId);
         List<CoreResource> coreResources = new ArrayList<>();

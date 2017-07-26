@@ -255,6 +255,12 @@ public class RepositoryManagerTests {
     }
 
     @Test
+    public void testmodifyPlatformMongoError(){
+        RegistryPlatform platform = generateRegistryPlatformB();
+        doThrow(new MongoException("FAKE MONGO Exception")).when(registryPlatformRepository).save(platform);
+        Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
+    }
+    @Test
     public void testRemovePlatformWithResourcesFail(){
         RegistryPlatform platform = generateRegistryPlatformB();
         when(resourceRepository.findByInterworkingServiceURL(platform.getId())).thenReturn(Arrays.asList(new CoreResource()));

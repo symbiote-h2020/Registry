@@ -17,12 +17,6 @@ public class PlatformResponse {
         // Empty constructor
     }
 
-    public PlatformResponse(int status, String message, Platform platform) {
-        this.status = status;
-        this.message = message;
-        this.platform = platform;
-    }
-
     /**
      * @return
      */
