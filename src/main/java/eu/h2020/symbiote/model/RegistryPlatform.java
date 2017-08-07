@@ -14,6 +14,7 @@ import java.util.List;
  * <p>
  * Created by mateuszl
  */
+@Deprecated
 public class RegistryPlatform {
     @Id
     private String id;

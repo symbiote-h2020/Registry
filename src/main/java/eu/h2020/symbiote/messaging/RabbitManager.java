@@ -287,7 +287,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Creation messages....");
 
-            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new PlatformCreationRequestConsumerOld(channel, repositoryManager, this);
             channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -311,7 +311,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Removal messages....");
 
-            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new PlatformRemovalRequestConsumerOld(channel, repositoryManager, this);
             channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -335,7 +335,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Modification messages....");
 
-            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new PlatformModificationRequestConsumerOld(channel, repositoryManager, this);
             channel.basicConsume(PLATFORM_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);

@@ -19,9 +19,12 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 07.08.2017.
+ * RabbitMQ Consumer implementation used for Platform Modification actions
+ * <p>
+ * Created by mateuszl
  */
-public class PlatformModificationRequestConsumer extends DefaultConsumer {
+@Deprecated
+public class PlatformModificationRequestConsumerOld extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(PlatformModificationRequestConsumerOld.class);
     private RepositoryManager repositoryManager;
@@ -35,7 +38,7 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public PlatformModificationRequestConsumer(Channel channel,
+    public PlatformModificationRequestConsumerOld(Channel channel,
                                                   RepositoryManager repositoryManager,
                                                   RabbitManager rabbitManager) {
         super(channel);
@@ -58,9 +61,6 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-
-        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
-
         ObjectMapper mapper = new ObjectMapper();
         String response;
         PlatformResponse platformResponse = new PlatformResponse();

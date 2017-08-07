@@ -14,7 +14,7 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.AuthorizationResult;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -76,13 +76,13 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        List<RegistryPersistenceResult> resourceRemovalResultList = new ArrayList<>();
+        List<ResourcePersistenceResult> resourceRemovalResultList = new ArrayList<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
         Map<String, Resource> resources = new HashMap<>();
 
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
-        RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
+        ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
 
         String message = new String(body, "UTF-8");
         log.info(" [x] Received resource to remove: '" + message + "'");
@@ -164,9 +164,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
                 }).writeValueAsString(resourceRemovalResultList.stream()
-                        .map(registryPersistenceResult ->
+                        .map(resourcePersistenceResult ->
                                 RegistryUtils.convertCoreResourceToResource
-                                        (registryPersistenceResult.getResource()))
+                                        (resourcePersistenceResult.getResource()))
                         .collect(Collectors.toList())
                 )
         );
@@ -174,9 +174,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
 
-    private void sendFanoutMessage(List<RegistryPersistenceResult> resourceRemovalResultList) {
+    private void sendFanoutMessage(List<ResourcePersistenceResult> resourceRemovalResultList) {
         List<String> resourcesIds = resourceRemovalResultList.stream()
-                .map(RegistryPersistenceResult::getResource)
+                .map(ResourcePersistenceResult::getResource)
                 .map(CoreResource::getId)
                 .collect(Collectors.toList());
 
@@ -185,9 +185,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendResourcesRemovalMessage(resourcesIds);
     }
 
-    private boolean checkIfRemovalWasSuccessful(List<RegistryPersistenceResult> resourceRemovalResultList,
+    private boolean checkIfRemovalWasSuccessful(List<ResourcePersistenceResult> resourceRemovalResultList,
                                                 List<Resource> resourcesRemoved, Map<String, Resource> resources) {
-        for (RegistryPersistenceResult result : resourceRemovalResultList) {
+        for (ResourcePersistenceResult result : resourceRemovalResultList) {
             if (result.getStatus() == 200) {
                 resourcesRemoved.add(result.getResource());
             }

@@ -19,13 +19,11 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 
 /**
- * RabbitMQ Consumer implementation used for Platform Removal actions
- * <p>
- * Created by mateuszl
+ * Created by mateuszl on 07.08.2017.
  */
 public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformRemovalRequestConsumer.class);
+    private static Log log = LogFactory.getLog(PlatformRemovalRequestConsumerOld.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -38,8 +36,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public PlatformRemovalRequestConsumer(Channel channel,
-                                          RepositoryManager repositoryManager,
-                                          RabbitManager rabbitManager) {
+                                             RepositoryManager repositoryManager,
+                                             RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -60,6 +58,9 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
+
+        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
+
         ObjectMapper mapper = new ObjectMapper();
         String response;
         String message = new String(body, "UTF-8");

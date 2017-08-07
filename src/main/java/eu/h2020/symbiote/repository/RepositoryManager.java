@@ -4,7 +4,7 @@ import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.PlatformResponse;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -197,8 +197,8 @@ public class RepositoryManager {
      * @return ResourceSavingResult containing Http status code and Resource with added 'Id' (generated in MongoDB),
      * in JSON format
      */
-    public RegistryPersistenceResult saveResource(CoreResource resource) {
-        RegistryPersistenceResult resourceSavingResult = new RegistryPersistenceResult();
+    public ResourcePersistenceResult saveResource(CoreResource resource) {
+        ResourcePersistenceResult resourceSavingResult = new ResourcePersistenceResult();
         resourceSavingResult.setResource(resource);
 
         if (resource.getId() == null || resource.getId().isEmpty()) {
@@ -230,8 +230,8 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
      */
-    public RegistryPersistenceResult removeResource(Resource resource) {
-        RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
+    public ResourcePersistenceResult removeResource(Resource resource) {
+        ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
 
         if (resource == null || resource.getId() == null || resource.getId().isEmpty()) {
             log.error("Given resource is null or it has null or empty ID!");
@@ -267,8 +267,8 @@ public class RepositoryManager {
      * @param resource Resource with given properties in JSON format
      * @return ResourceSavingResult containing Http status code and Modified Resource, in JSON format
      */
-    public RegistryPersistenceResult modifyResource(CoreResource resource) {
-        RegistryPersistenceResult resourceSavingResult = new RegistryPersistenceResult();
+    public ResourcePersistenceResult modifyResource(CoreResource resource) {
+        ResourcePersistenceResult resourceSavingResult = new ResourcePersistenceResult();
         CoreResource foundResource;
         resourceSavingResult.setResource(resource);
 

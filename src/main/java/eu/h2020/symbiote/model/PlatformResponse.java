@@ -8,6 +8,7 @@ import eu.h2020.symbiote.core.model.Platform;
  *
  * Created by mateuszl
  */
+@Deprecated
 public class PlatformResponse {
     private int status;
     private String message;

@@ -19,11 +19,14 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 
 /**
- * Created by mateuszl on 07.08.2017.
+ * RabbitMQ Consumer implementation used for Platform Removal actions
+ * <p>
+ * Created by mateuszl
  */
-public class PlatformModificationRequestConsumer extends DefaultConsumer {
+@Deprecated
+public class PlatformRemovalRequestConsumerOld extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformModificationRequestConsumerOld.class);
+    private static Log log = LogFactory.getLog(PlatformRemovalRequestConsumerOld.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -35,9 +38,9 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public PlatformModificationRequestConsumer(Channel channel,
-                                                  RepositoryManager repositoryManager,
-                                                  RabbitManager rabbitManager) {
+    public PlatformRemovalRequestConsumerOld(Channel channel,
+                                             RepositoryManager repositoryManager,
+                                             RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -58,32 +61,29 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-
-        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
-
         ObjectMapper mapper = new ObjectMapper();
         String response;
-        PlatformResponse platformResponse = new PlatformResponse();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received platform to modify: '" + message + "'");
+        PlatformResponse platformResponse = new PlatformResponse();
+        log.info(" [x] Received platform to remove: '" + message + "'");
 
         Platform requestPlatform;
-        RegistryPlatform registryRegistryPlatform;
+        RegistryPlatform registryPlatform;
 
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
 
-            platformResponse = this.repositoryManager.modifyPlatform(registryRegistryPlatform);
+            platformResponse = this.repositoryManager.removePlatform(registryPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
-                        RegistryOperationType.MODIFICATION);
+                        RegistryOperationType.REMOVAL);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during Platform saving to db", e);
-            platformResponse.setMessage("Error occured during Platform saving to db");
+            log.error("Error occured during Platform deleting in db", e);
+            platformResponse.setMessage("Error occured during Platform deleting in db");
             platformResponse.setStatus(400);
         }
 
@@ -92,3 +92,4 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }
+

@@ -12,7 +12,7 @@ import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.PlatformResponse;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
@@ -149,7 +149,7 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
-        when(mockedRepository.saveResource(any())).thenReturn(new RegistryPersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
+        when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
 
         this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
         this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_TRANSLATION_REQUESTED_RK);
@@ -255,12 +255,12 @@ public class MessagingTests {
 
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        RegistryPersistenceResult registryPersistenceResult1 = new RegistryPersistenceResult();
-        registryPersistenceResult1.setStatus(200);
-        registryPersistenceResult1.setMessage("ok");
-        registryPersistenceResult1.setResource(RegistryUtils.convertResourceToCoreResource(resource1));
+        ResourcePersistenceResult resourcePersistenceResult1 = new ResourcePersistenceResult();
+        resourcePersistenceResult1.setStatus(200);
+        resourcePersistenceResult1.setMessage("ok");
+        resourcePersistenceResult1.setResource(RegistryUtils.convertResourceToCoreResource(resource1));
 
-        when(mockedRepository.removeResource(any())).thenReturn(registryPersistenceResult1);
+        when(mockedRepository.removeResource(any())).thenReturn(resourcePersistenceResult1);
         when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));

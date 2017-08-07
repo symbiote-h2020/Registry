@@ -17,7 +17,7 @@ import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.repository.RepositoryManager;
 import eu.h2020.symbiote.utils.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -127,7 +127,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
 
             if (authorizationResult.isValidated()) {
-                Map<String, RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
+                Map<String, ResourcePersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
                 prepareContentOfMessage(persistenceOperationResultsList);
             } else {
                 registryResponse.setStatus(400);
@@ -146,19 +146,19 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      *
      * @param coreResources
      */
-    private Map<String, RegistryPersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
-        Map<String, RegistryPersistenceResult> persistenceOperationResultsMap = new HashMap<>();
+    private Map<String, ResourcePersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
+        Map<String, ResourcePersistenceResult> persistenceOperationResultsMap = new HashMap<>();
         switch (operationType) {
             case CREATION:
                 for (String key : coreResources.keySet()) {
-                    RegistryPersistenceResult resourceSavingResult =
+                    ResourcePersistenceResult resourceSavingResult =
                             this.repositoryManager.saveResource(coreResources.get(key));
                     persistenceOperationResultsMap.put(key, resourceSavingResult);
                 }
                 break;
             case MODIFICATION:
                 for (String key : coreResources.keySet()) {
-                    RegistryPersistenceResult resourceModificationResult =
+                    ResourcePersistenceResult resourceModificationResult =
                             this.repositoryManager.modifyResource(coreResources.get(key));
                     persistenceOperationResultsMap.put(key, resourceModificationResult);
                 }
@@ -180,14 +180,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     /**
      * prepares content of message with bulk save result
      */
-    private void prepareContentOfMessage(Map<String, RegistryPersistenceResult> persistenceOperationResultsMap) {
+    private void prepareContentOfMessage(Map<String, ResourcePersistenceResult> persistenceOperationResultsMap) {
         List<CoreResource> savedCoreResourcesList = new ArrayList<>();
         Map<String, Resource> savedResourcesMap = new HashMap<>();
         if (bulkRequestSuccess) {
             for (String key : persistenceOperationResultsMap.keySet()) {
-                RegistryPersistenceResult registryPersistenceResult = persistenceOperationResultsMap.get(key);
-                savedCoreResourcesList.add(registryPersistenceResult.getResource());
-                savedResourcesMap.put(key, RegistryUtils.convertCoreResourceToResource(registryPersistenceResult.getResource()));
+                ResourcePersistenceResult resourcePersistenceResult = persistenceOperationResultsMap.get(key);
+                savedCoreResourcesList.add(resourcePersistenceResult.getResource());
+                savedResourcesMap.put(key, RegistryUtils.convertCoreResourceToResource(resourcePersistenceResult.getResource()));
             }
             sendFanoutMessage(savedCoreResourcesList);
 
