@@ -4,7 +4,7 @@ import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.*;
-import eu.h2020.symbiote.model.RegistryPlatform;
+import eu.h2020.symbiote.model.Platform;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -83,9 +83,9 @@ public class RegistryUtilsTests {
     }
 
     @Test
-    public void testConverterRequestPlatformToRegistryPlatform() {
+    public void testConverterRequestPlatformToPlatform() {
         Platform requestPlatform = generateSymbiotePlatformA();
-        RegistryPlatform registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+        Platform registryPlatform = RegistryUtils.convertRequestPlatformToPlatform(requestPlatform);
 
         Assert.assertTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()));
         Assert.assertTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()));
@@ -97,9 +97,9 @@ public class RegistryUtilsTests {
     }
 
     @Test
-    public void testConverterRegistryPlatformToRequestPlatform() {
-        RegistryPlatform registryPlatform = generateRegistryPlatformB();
-        Platform requestPlatform = RegistryUtils.convertRegistryPlatformToRequestPlatform(registryPlatform);
+    public void testConverterPlatformToRequestPlatform() {
+        Platform registryPlatform = generatePlatformB();
+        Platform requestPlatform = RegistryUtils.convertPlatformToRequestPlatform(registryPlatform);
 
         Assert.assertTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()));
         Assert.assertTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()));
@@ -110,15 +110,15 @@ public class RegistryUtilsTests {
 
     @Test
     public void testPlatformFieldsValidation() {
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         Assert.assertTrue(RegistryUtils.validateFields(platform));
     }
 
     @Test
     public void testPlatformFieldsValidationFail() {
-        RegistryPlatform platform = null;
+        Platform platform = null;
         Assert.assertTrue(!RegistryUtils.validateFields(platform));
-        platform = new RegistryPlatform();
+        platform = new Platform();
         Assert.assertTrue(!RegistryUtils.validateFields(platform));
 
         platform.setComments(new ArrayList<>());

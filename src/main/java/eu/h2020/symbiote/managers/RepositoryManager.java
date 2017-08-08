@@ -46,7 +46,7 @@ public class RepositoryManager {
      * Url of given platform is appended with "/" if it does not end with it.
      *
      * @param platformToSave Platform to save - in JSON format
-     * @return PlatformResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
+     * @return PlatformRegistryResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
      */
     public PlatformRegistryResponse savePlatform(Platform platformToSave) {
         PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
@@ -90,7 +90,7 @@ public class RepositoryManager {
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
      * @param platformToModify Platform to remove - in JSON format
-     * @return PlatformResponse with Http status code and modified Platform object - in JSON format
+     * @return PlatformRegistryResponse with Http status code and modified Platform object - in JSON format
      */
     public PlatformRegistryResponse modifyPlatform(Platform platformToModify) {
         PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
@@ -114,14 +114,14 @@ public class RepositoryManager {
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
-                Platform modifiedRegistryPlatform = copyExistingPlatformData(platformToModify, foundPlatform);
+                Platform modifiedPlatform = copyExistingPlatformData(platformToModify, foundPlatform);
 
-                platformRepository.save(modifiedRegistryPlatform);
-                log.info("Platform with id: " + modifiedRegistryPlatform.getId() + " modified !");
+                platformRepository.save(modifiedPlatform);
+                log.info("Platform with id: " + modifiedPlatform.getId() + " modified !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setMessage("OK");
-                platformResponse.setPlatform(modifiedRegistryPlatform);
+                platformResponse.setPlatform(modifiedPlatform);
             } catch (Exception e) {
                 log.error("Error occurred during Platform modifying in db", e);
                 platformResponse.setMessage("Error occurred during Platform modifying in db");
@@ -138,7 +138,7 @@ public class RepositoryManager {
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
      * @param platformToRemove Platform to remove - in JSON format
-     * @return PlatformResponse with Http status code and removed Platform object - in JSON format
+     * @return PlatformRegistryResponse with Http status code and removed Platform object - in JSON format
      */
     public PlatformRegistryResponse removePlatform(Platform platformToRemove) {
         PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();

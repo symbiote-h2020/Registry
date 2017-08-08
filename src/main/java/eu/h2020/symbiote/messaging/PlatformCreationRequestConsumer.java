@@ -22,7 +22,7 @@ import java.io.IOException;
  */
 public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformCreationRequestConsumerOld.class);
+    private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -71,7 +71,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            log.info("Platform converted to RegistryPlatform: " + requestPlatform);
+            log.info("Platform converted to Platform: " + requestPlatform);
 
             if (RegistryUtils.validateFields(requestPlatform)) {
                 platformResponse = this.repositoryManager.savePlatform(requestPlatform);

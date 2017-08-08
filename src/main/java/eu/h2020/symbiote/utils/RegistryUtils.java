@@ -174,7 +174,7 @@ public class RegistryUtils {
      * @param requestPlatform
      * @return
      *
-    public static Platform convertRequestPlatformToRegistryPlatform(Platform requestPlatform) {
+    public static Platform convertRequestPlatformToPlatform(Platform requestPlatform) {
         Platform convertedPlatform = new Platform();
         if (requestPlatform.getId() != null) {
             convertedPlatform.setId(requestPlatform.getId());
@@ -205,8 +205,8 @@ public class RegistryUtils {
      * @param registryPlatform
      * @return
 
-    public static Platform convertRegistryPlatformToRequestPlatform
-    (RegistryPlatform registryPlatform) {
+    public static Platform convertPlatformToRequestPlatform
+    (Platform registryPlatform) {
         Platform platform = new Platform();
 
         if (registryPlatform.getId() != null && !registryPlatform.getId().isEmpty())

@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.model;
 
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.model.internal.CoreResource;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 /**
@@ -8,20 +8,20 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
  *
  * Created by mateuszl
  */
-public class ResourcePersistenceResult extends AbstractRegistryPersistenceResult<Resource> {
+public class ResourcePersistenceResult extends AbstractPersistenceResult<CoreResource> {
 
     public ResourcePersistenceResult() {
     }
 
-    public ResourcePersistenceResult(int status, String message, Resource persistenceObject) {
+    public ResourcePersistenceResult(int status, String message, CoreResource persistenceObject) {
         super(status, message, persistenceObject);
     }
 
-    public void setResource(Resource resource){
+    public void setResource(CoreResource resource){
         super.setPersistenceObject(resource);
     }
 
-    public Resource getResource(){
+    public CoreResource getResource(){
         return super.getPersistenceObject();
     }
 

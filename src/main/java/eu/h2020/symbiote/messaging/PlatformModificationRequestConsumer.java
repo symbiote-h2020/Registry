@@ -7,12 +7,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.model.PlatformResponse;
-import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -23,7 +21,7 @@ import java.io.IOException;
  */
 public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformModificationRequestConsumerOld.class);
+    private static Log log = LogFactory.getLog(PlatformModificationRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -63,20 +61,17 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String response;
-        PlatformResponse platformResponse = new PlatformResponse();
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         String message = new String(body, "UTF-8");
         log.info(" [x] Received platform to modify: '" + message + "'");
 
         Platform requestPlatform;
-        RegistryPlatform registryRegistryPlatform;
 
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
-
-            platformResponse = this.repositoryManager.modifyPlatform(registryRegistryPlatform);
+            platformResponse = this.repositoryManager.modifyPlatform(requestPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                         RegistryOperationType.MODIFICATION);

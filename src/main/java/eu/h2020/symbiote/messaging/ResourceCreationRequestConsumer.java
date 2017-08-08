@@ -10,16 +10,15 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
-import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,6 +147,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     }
 
     private boolean checkIds(List<Resource> resources) {
+        //mocked !! // TODO: 08.08.2017 // FIXME: 08.08.2017
+        /*
         try {
             for (Resource resource : resources) {
                 if (!checkId(resource)) return false;
@@ -169,6 +170,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             log.error(e);
             return false;
         }
+        */
         return true;
     }
 

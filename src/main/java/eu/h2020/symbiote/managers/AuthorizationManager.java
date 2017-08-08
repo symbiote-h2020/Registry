@@ -1,10 +1,10 @@
 package eu.h2020.symbiote.managers;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.AuthorizationResult;
-import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.RegistryPlatformRepository;
+import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.CoreAttributes;
 import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
@@ -36,18 +36,18 @@ public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     private InternalSecurityHandler securityHandler;
-    private RegistryPlatformRepository registryPlatformRepository;
+    private PlatformRepository platformRepository;
 
     @Autowired
-    public AuthorizationManager(InternalSecurityHandler securityHandler, RegistryPlatformRepository registryPlatformRepository) {
+    public AuthorizationManager(InternalSecurityHandler securityHandler, PlatformRepository platformRepository) {
         this.securityHandler = securityHandler;
-        this.registryPlatformRepository = registryPlatformRepository;
+        this.platformRepository = platformRepository;
     }
 
     public AuthorizationResult checkResourceOperationAccess(String tokenString, String platformId) {
         log.info("Received Token to verification: (" + tokenString + ")");
 
-        if (registryPlatformRepository.findOne(platformId) == null) {
+        if (platformRepository.findOne(platformId) == null) {
             return new AuthorizationResult("Given platform does not exist in database", false);
         }
 
@@ -130,7 +130,7 @@ public class AuthorizationManager {
     }
 
     public AuthorizationResult checkIfResourcesBelongToPlatform(Map<String, Resource> resources, String platformId) {
-        RegistryPlatform registryPlatform = registryPlatformRepository.findOne(platformId);
+        Platform registryPlatform = platformRepository.findOne(platformId);
 
         if (registryPlatform == null) {
             log.error("Given platform does not exists in database");

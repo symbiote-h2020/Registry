@@ -11,9 +11,10 @@ import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPlatform;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Mael on 23/01/2017.
@@ -53,11 +54,12 @@ public class TestSetupConfig {
 
     public static final String PLATFORM_A_ID = "1";
     public static final String PLATFORM_A_NAME = "Platform1";
-    public static final String PLATFORM_A_MODEL_ID = "11";
     public static final String PLATFORM_A_DESCRIPTION = "11desc";
     public static final String PLATFORM_A_URI = "http://www.symbiote-h2020.eu/ontology/platforms/1";
     public static final String PLATFORM_A_SERVICE_URI = "http://www.symbiote-h2020.eu/ontology/platforms/1/service/somehost1.com/resourceAccessProxy";
     public static final String PLATFORM_A_URL = "http://somehost1.com/resourceAccessProxy";
+    public static final String INTERWORKING_SERVICE_URL_A = "http://somehost1.com/platformA";
+    public static final String INFORMATION_MODEL_ID_A = "IM_1";
 
     public static final String PLATFORM_A_NAME_UPDATED = "Platform1Updated";
     public static final String PLATFORM_A_MODEL_ID_UPDATED = "11Updated";
@@ -68,7 +70,7 @@ public class TestSetupConfig {
     public static final String PLATFORM_B_NAME = "PlatformB";
     public static final String PLATFORM_B_DESCRIPTION = "21desc";
     public static final String INTERWORKING_SERVICE_URL_B = "http://somehost1.com/platformB";
-    public static final String INFORMATION_MODEL_ID_B = "IM_1";
+    public static final String INFORMATION_MODEL_ID_B = "IM_2";
 
     public static final String RESOURCE_PREDICATE = "http://www.symbiote-h2020.eu/ontology/resources/";
 
@@ -87,25 +89,29 @@ public class TestSetupConfig {
 
     public static Platform generateSymbiotePlatformA() {
         Platform platform = new Platform();
-        platform.setPlatformId(PLATFORM_A_ID);
-        platform.setInformationModelId(PLATFORM_A_MODEL_ID);
-        platform.setDescription(PLATFORM_A_DESCRIPTION);
-        platform.setName(PLATFORM_A_NAME);
-        platform.setUrl(PLATFORM_A_URL);
+        platform.setId(PLATFORM_A_ID);
+        platform.setComments(Arrays.asList(PLATFORM_A_DESCRIPTION));
+        platform.setLabels(Arrays.asList(PLATFORM_A_NAME));
+        InterworkingService interworkingService = new InterworkingService();
+        interworkingService.setInformationModelId(INFORMATION_MODEL_ID_A);
+        interworkingService.setUrl(INTERWORKING_SERVICE_URL_A);
+        platform.setInterworkingServices(Arrays.asList(interworkingService));
+        platform.setRdf("http://www.symbIoTe.com/");
+        platform.setRdfFormat(RDFFormat.JSONLD);
         return platform;
     }
 
-    public static RegistryPlatform generateRegistryPlatformB() {
-        RegistryPlatform platform = new RegistryPlatform();
+    public static Platform generatePlatformB() {
+        Platform platform = new Platform();
         platform.setId(PLATFORM_B_ID);
-        platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
         platform.setComments(Arrays.asList(PLATFORM_B_DESCRIPTION));
+        platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
         InterworkingService interworkingService = new InterworkingService();
         interworkingService.setInformationModelId(INFORMATION_MODEL_ID_B);
         interworkingService.setUrl(INTERWORKING_SERVICE_URL_B);
         platform.setInterworkingServices(Arrays.asList(interworkingService));
-        platform.setBody("http://www.symbIoTe.com/");
-        platform.setRdfFormat("some RDF Format");
+        platform.setRdf("http://www.symbIoTe.com/");
+        platform.setRdfFormat(RDFFormat.JSONLD);
         return platform;
     }
 

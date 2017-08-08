@@ -1,8 +1,8 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.RegistryPlatformRepository;
+import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.ValidationStatus;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -27,14 +27,14 @@ import static org.mockito.Mockito.when;
 public class AuthorizationManagerTests {
 
     AuthorizationManager authorizationManager;
-    RegistryPlatformRepository mockedRegistryPlatformRepository;
+    PlatformRepository mockedPlatformRepository;
     InternalSecurityHandler mockedSecurityHandler;
 
     @Before
     public void setup() throws IOException, TimeoutException {
         mockedSecurityHandler = Mockito.mock(InternalSecurityHandler.class);
-        mockedRegistryPlatformRepository = Mockito.mock(RegistryPlatformRepository.class);
-        authorizationManager = new AuthorizationManager(mockedSecurityHandler, mockedRegistryPlatformRepository);
+        mockedPlatformRepository = Mockito.mock(PlatformRepository.class);
+        authorizationManager = new AuthorizationManager(mockedSecurityHandler, mockedPlatformRepository);
     }
 
     @After
@@ -45,7 +45,7 @@ public class AuthorizationManagerTests {
     //// TODO: 13.07.2017
 //    @Test
 //    public void testResourceOperationAccessPass() {
-//        when(mockedRegistryPlatformRepository.findOne("test1Plat")).thenReturn(generateRegistryPlatformB());
+//        when(mockedPlatformRepository.findOne("test1Plat")).thenReturn(generatePlatformB());
 //        when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
 //        Assert.assertTrue(authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "test1Plat").isValidated());
 //    }
@@ -64,14 +64,14 @@ public class AuthorizationManagerTests {
 
     @Test
     public void testResourceOperationAccessFailWithInvalidStatus() {
-        when(mockedRegistryPlatformRepository.findOne("test1Plat")).thenReturn(generateRegistryPlatformB());
+        when(mockedPlatformRepository.findOne("test1Plat")).thenReturn(generatePlatformB());
         when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.INVALID);
         Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "test1Plat").isValidated());
     }
 
     @Test
     public void testResourceOperationAccessFailWithWrongPlatformOwner() {
-        when(mockedRegistryPlatformRepository.findOne("wrongOwner")).thenReturn(generateRegistryPlatformB());
+        when(mockedPlatformRepository.findOne("wrongOwner")).thenReturn(generatePlatformB());
         when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
         Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(MOCKED_TOKEN, "wrongOwner").isValidated());
     }
@@ -91,8 +91,8 @@ public class AuthorizationManagerTests {
     @Test
     public void testIfResourceBelongsToPlatform(){
         Resource resource = generateResource();
-        RegistryPlatform platform = generateRegistryPlatformB();
-        when(mockedRegistryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
+        Platform platform = generatePlatformB();
+        when(mockedPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
         Map<String, Resource> resources = new HashMap<>();
         resources.put("3", resource);
 
@@ -103,8 +103,8 @@ public class AuthorizationManagerTests {
     public void testIfResourceDoesNotBelongToPlatform(){
         Resource resource = generateResource();
         resource.setInterworkingServiceURL("http://other_url.com/");
-        RegistryPlatform platform = generateRegistryPlatformB();
-        when(mockedRegistryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
+        Platform platform = generatePlatformB();
+        when(mockedPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
         Map<String, Resource> resources = new HashMap<>();
         resources.put("3", resource);

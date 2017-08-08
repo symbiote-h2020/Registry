@@ -3,19 +3,18 @@ package eu.h2020.symbiote;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.cci.ResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
-import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
-import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -280,28 +279,28 @@ public class MessagingTests {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
-        Platform requestPlatform = generateSymbiotePlatformA();
+        eu.h2020.symbiote.core.model.Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformResponse platformResponse = new PlatformResponse();
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         platformResponse.setStatus(200);
         platformResponse.setMessage("ok");
         platformResponse.setPlatform(requestPlatform);
 
         when(mockedRepository.savePlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
 
-        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        ArgumentCaptor<Platform> argument = ArgumentCaptor.forClass(Platform.class);
         verify(mockedRepository).savePlatform(argument.capture());
 
-        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getPlatformId()));
-        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
-        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
-        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
+        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInterworkingServices().get(0)));
     }
 
     @Test
@@ -310,10 +309,10 @@ public class MessagingTests {
         rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
 
         Platform requestPlatform = generateSymbiotePlatformA();
-        requestPlatform.setName(null);
+        requestPlatform.setLabels(Arrays.asList(null));
         String message = mapper.writeValueAsString(requestPlatform);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -328,7 +327,7 @@ public class MessagingTests {
 
         String message = "[wrong json]";
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -344,23 +343,23 @@ public class MessagingTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformResponse platformResponse = new PlatformResponse();
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         platformResponse.setStatus(200);
         platformResponse.setMessage("ok");
         platformResponse.setPlatform(requestPlatform);
 
         when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
-        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        ArgumentCaptor<Platform> argument = ArgumentCaptor.forClass(Platform.class);
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500)).modifyPlatform(argument.capture());
 
-        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getPlatformId()));
-        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getDescription()));
-        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getName()));
-        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInformationModelId()));
+        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }
 
     @Test
@@ -370,7 +369,7 @@ public class MessagingTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformResponse platformResponse = new PlatformResponse();
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         platformResponse.setStatus(400);
         platformResponse.setMessage("mongo fail");
         platformResponse.setPlatform(requestPlatform);
@@ -382,7 +381,7 @@ public class MessagingTests {
                     @Override
                     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                         String messageReceived = new String(body);
-                        PlatformResponse platformResponseReceived = mapper.readValue(messageReceived, PlatformResponse.class);
+                        PlatformRegistryResponse platformResponseReceived = mapper.readValue(messageReceived, PlatformRegistryResponse.class);
 
                         assertNotNull(properties);
                         String correlationId = properties.getCorrelationId();
@@ -406,7 +405,7 @@ public class MessagingTests {
 
         String message = "[wrong json]";
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(1000);
@@ -422,19 +421,19 @@ public class MessagingTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformResponse platformResponse = new PlatformResponse();
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         platformResponse.setStatus(200);
         platformResponse.setMessage("ok");
         platformResponse.setPlatform(requestPlatform);
 
         when(mockedRepository.removePlatform(any())).thenReturn(platformResponse);
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
 
-        ArgumentCaptor<RegistryPlatform> argument = ArgumentCaptor.forClass(RegistryPlatform.class);
+        ArgumentCaptor<Platform> argument = ArgumentCaptor.forClass(Platform.class);
         verify(mockedRepository).removePlatform(argument.capture());
     }
 
@@ -444,7 +443,7 @@ public class MessagingTests {
 
         String message = "[wrong json]";
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, RegistryPlatform.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(500);

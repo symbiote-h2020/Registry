@@ -1,11 +1,11 @@
 package eu.h2020.symbiote;
 
 import com.mongodb.MongoException;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import org.apache.http.HttpStatus;
 import org.junit.After;
@@ -28,12 +28,12 @@ import static org.mockito.Mockito.*;
 public class RepositoryManagerTests {
 
     RepositoryManager repositoryManager;
-    RegistryPlatformRepository registryPlatformRepository;
+    PlatformRepository registryPlatformRepository;
     ResourceRepository resourceRepository;
 
     @Before
     public void setup() {
-        registryPlatformRepository = Mockito.mock(RegistryPlatformRepository.class);
+        registryPlatformRepository = Mockito.mock(PlatformRepository.class);
         resourceRepository = Mockito.mock(ResourceRepository.class);
         repositoryManager = new RepositoryManager(registryPlatformRepository, resourceRepository);
     }
@@ -180,7 +180,7 @@ public class RepositoryManagerTests {
 
     @Test
     public void testSavePlatformTriggersRepository() {
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         when(registryPlatformRepository.save(platform)).thenReturn(platform);
 
         repositoryManager.savePlatform(platform);
@@ -194,7 +194,7 @@ public class RepositoryManagerTests {
 
     @Test
     public void testModifyPlatformTriggersRepository() {
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         when(registryPlatformRepository.save(platform)).thenReturn(platform);
         when(registryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
@@ -209,7 +209,7 @@ public class RepositoryManagerTests {
 
     @Test
     public void testRemovePlatformTriggersRepository() {
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         when(registryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
         repositoryManager.removePlatform(platform);
@@ -223,7 +223,7 @@ public class RepositoryManagerTests {
 
     @Test
     public void testSavePlatformReturnsStatus200() throws Exception {
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         when(registryPlatformRepository.save(platform)).thenReturn(platform);
 
         Assert.assertEquals(200,repositoryManager.savePlatform(platform).getStatus());
@@ -231,52 +231,52 @@ public class RepositoryManagerTests {
 
     @Test
     public void testSavePlatformWithWrongId() throws Exception {
-        RegistryPlatform platform = new RegistryPlatform();
+        Platform platform = new Platform();
         Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
     }
 
     @Test
     public void testSavePlatformMongoError(){
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         when(registryPlatformRepository.save(platform)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
     }
 
     @Test
     public void testRemovePlatformWithWrongId() throws Exception {
-        RegistryPlatform platform = new RegistryPlatform();
+        Platform platform = new Platform();
         Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
     }
 
     @Test
     public void testModifyPlatformWithWrongId() throws Exception {
-        RegistryPlatform platform = new RegistryPlatform();
+        Platform platform = new Platform();
         Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
     }
 
     @Test
     public void testmodifyPlatformMongoError(){
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         doThrow(new MongoException("FAKE MONGO Exception")).when(registryPlatformRepository).save(platform);
         Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
     }
     @Test
     public void testRemovePlatformWithResourcesFail(){
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         when(resourceRepository.findByInterworkingServiceURL(platform.getId())).thenReturn(Arrays.asList(new CoreResource()));
         Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
     }
 
     @Test
     public void testRemovePlatformMongoError(){
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         doThrow(new MongoException("FAKE MONGO Exception")).when(registryPlatformRepository).delete(platform.getId());
         Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
     }
 
     @Test
     public void testGetResourcesForPlatform(){
-        RegistryPlatform platform = generateRegistryPlatformB();
+        Platform platform = generatePlatformB();
         CoreResource coreResource = generateCoreResource();
 
         when(registryPlatformRepository.findOne(platform.getId())).thenReturn(platform);

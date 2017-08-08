@@ -6,7 +6,7 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 /**
  * Created by mateuszl on 07.08.2017.
  */
-public class PlatformPersistenceResult extends AbstractRegistryPersistenceResult<Platform>{
+public class PlatformPersistenceResult extends AbstractPersistenceResult<Platform> {
 
     public PlatformPersistenceResult() {
     }
