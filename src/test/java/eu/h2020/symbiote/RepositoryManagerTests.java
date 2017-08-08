@@ -5,7 +5,7 @@ import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RegistryPlatformRepository;
-import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import org.apache.http.HttpStatus;
 import org.junit.After;

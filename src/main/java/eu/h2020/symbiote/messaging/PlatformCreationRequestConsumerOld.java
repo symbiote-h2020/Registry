@@ -11,7 +11,7 @@ import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -17,6 +17,14 @@ public class ResourcePersistenceResult extends AbstractRegistryPersistenceResult
         super(status, message, persistenceObject);
     }
 
+    public void setResource(Resource resource){
+        super.setPersistenceObject(resource);
+    }
+
+    public Resource getResource(){
+        return super.getPersistenceObject();
+    }
+
     @Override
     public String toString() {
         return ReflectionToStringBuilder.toString(this);

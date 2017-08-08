@@ -15,6 +15,14 @@ public class PlatformPersistenceResult extends AbstractRegistryPersistenceResult
         super(status, message, persistenceObject);
     }
 
+    public void setPlatform(Platform platform){
+        super.setPersistenceObject(platform);
+    }
+
+    public Platform getPlatform(){
+        return super.getPersistenceObject();
+    }
+
     @Override
     public String toString() {
         return ReflectionToStringBuilder.toString(this);

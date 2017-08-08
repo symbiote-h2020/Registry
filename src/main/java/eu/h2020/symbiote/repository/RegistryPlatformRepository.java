@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
  *
  * Created by mateuszl
  */
+@Deprecated
 @Repository
 public interface RegistryPlatformRepository extends MongoRepository<RegistryPlatform, String>{
 

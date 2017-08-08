@@ -8,8 +8,8 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayl
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.repository.RepositoryManager;
-import eu.h2020.symbiote.utils.AuthorizationManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;

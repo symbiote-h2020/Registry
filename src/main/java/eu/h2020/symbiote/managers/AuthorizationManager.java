@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.utils;
+package eu.h2020.symbiote.managers;
 
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.resources.Resource;

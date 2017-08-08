@@ -1,16 +1,16 @@
 package eu.h2020.symbiote.utils;
 
-import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.*;
-import eu.h2020.symbiote.model.RegistryPlatform;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Utils for Registry project.
@@ -28,25 +28,25 @@ public class RegistryUtils {
     /**
      * Checks if given platform has all of the needed fields (besides the id field) and that neither is empty.
      *
-     * @param registryPlatform platform to check
+     * @param platform platform to check
      * @return true if it has all the fields and neither is empty
      */
-    public static boolean validateFields(RegistryPlatform registryPlatform) {
+    public static boolean validateFields(Platform platform) {
         //todo extend validation to all fields?
 
-        if (registryPlatform == null) {
+        if (platform == null) {
             log.info("Given Platform is null");
             return false;
         } else {
-            if (registryPlatform.getLabels() == null || registryPlatform.getInterworkingServices() == null || registryPlatform.getComments() == null) {
+            if (platform.getLabels() == null || platform.getInterworkingServices() == null || platform.getComments() == null) {
                 log.info("Given platform has some null fields");
                 return false;
-            } else if (registryPlatform.getInterworkingServices().isEmpty() || registryPlatform.getLabels().isEmpty()
-                    || registryPlatform.getComments().isEmpty()) {
+            } else if (platform.getInterworkingServices().isEmpty() || platform.getLabels().isEmpty()
+                    || platform.getComments().isEmpty()) {
                 log.info("Given platform has some empty fields");
                 return false;
-            } else if (registryPlatform.getInterworkingServices().contains(null) || registryPlatform.getLabels().contains(null)
-                    || registryPlatform.getComments().contains(null)) {
+            } else if (platform.getInterworkingServices().contains(null) || platform.getLabels().contains(null)
+                    || platform.getComments().contains(null)) {
                 log.info("Given platform has some lists with null objects");
                 return false;
             }
@@ -167,44 +167,44 @@ public class RegistryUtils {
         return type;
     }
 
+    /* Deprecated ////////////////////
     /**
      * Converts Platform (from Symbiote Libraries) to Platform (used in Registry Service)
      *
      * @param requestPlatform
      * @return
-     */
-    public static RegistryPlatform convertRequestPlatformToRegistryPlatform(Platform requestPlatform) {
-        RegistryPlatform registryPlatform = new RegistryPlatform();
-        if (requestPlatform.getPlatformId() != null) {
-            registryPlatform.setId(requestPlatform.getPlatformId());
+     *
+    public static Platform convertRequestPlatformToRegistryPlatform(Platform requestPlatform) {
+        Platform convertedPlatform = new Platform();
+        if (requestPlatform.getId() != null) {
+            convertedPlatform.setId(requestPlatform.getId());
         }
-        if (requestPlatform.getName() != null) {
-            registryPlatform.setLabels(Arrays.asList(requestPlatform.getName()));
+        if (requestPlatform.getLabels() != null) {
+            convertedPlatform.setLabels(Arrays.asList(requestPlatform.get()));
         }
         if (requestPlatform.getDescription() != null) {
-            registryPlatform.setComments(Arrays.asList(requestPlatform.getDescription()));
+            convertedPlatform.setComments(Arrays.asList(requestPlatform.getDescription()));
         }
         if (requestPlatform.getInformationModelId() != null) {
             InterworkingService interworkingService = new InterworkingService();
             interworkingService.setInformationModelId(requestPlatform.getInformationModelId());
             interworkingService.setUrl(requestPlatform.getUrl());
-            registryPlatform.setInterworkingServices(Arrays.asList(interworkingService));
+            convertedPlatform.setInterworkingServices(Arrays.asList(interworkingService));
         }
-        if (registryPlatform.getBody() == null) {
-            registryPlatform.setBody("not null body MOCKED");
+        if (convertedPlatform.getBody() == null) {
+            convertedPlatform.setBody("not null body MOCKED");
         }
-        if (registryPlatform.getRdfFormat() == null) {
-            registryPlatform.setRdfFormat(RDFFormat.JSONLD.toString());
+        if (convertedPlatform.getRdfFormat() == null) {
+            convertedPlatform.setRdfFormat(RDFFormat.JSONLD.toString());
         }
-        return registryPlatform;
+        return convertedPlatform;
     }
-
     /**
      * Converts Platform (used in Registry Service) to Platform (from Symbiote Libraries)
      *
      * @param registryPlatform
      * @return
-     */
+
     public static Platform convertRegistryPlatformToRequestPlatform
     (RegistryPlatform registryPlatform) {
         Platform platform = new Platform();
@@ -227,4 +227,5 @@ public class RegistryUtils {
         }
         return platform;
     }
+*/
 }

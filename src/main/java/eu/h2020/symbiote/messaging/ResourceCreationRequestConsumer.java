@@ -13,7 +13,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.model.resources.*;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.utils.AuthorizationManager;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;

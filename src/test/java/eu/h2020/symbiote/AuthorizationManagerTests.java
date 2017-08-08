@@ -5,7 +5,7 @@ import eu.h2020.symbiote.model.RegistryPlatform;
 import eu.h2020.symbiote.repository.RegistryPlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.ValidationStatus;
-import eu.h2020.symbiote.utils.AuthorizationManager;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

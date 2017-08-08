@@ -7,11 +7,10 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.RepositoryManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,20 +64,17 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received requestPlatform to create: '" + message + "'");
 
-        Platform requestPlatform = null;
-        RegistryPlatform registryPlatform;
+        Platform requestPlatform;
 
-        PlatformResponse platformResponse = new PlatformResponse();
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            registryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            log.info("Platform converted to RegistryPlatform: " + requestPlatform);
 
-            log.info("Platform converted to RegistryPlatform: " + registryPlatform);
-
-            if (RegistryUtils.validateFields(registryPlatform)) {
-                platformResponse = this.repositoryManager.savePlatform(registryPlatform);
+            if (RegistryUtils.validateFields(requestPlatform)) {
+                platformResponse = this.repositoryManager.savePlatform(requestPlatform);
                 if (platformResponse.getStatus() == 200) {
                     rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
                             RegistryOperationType.CREATION);

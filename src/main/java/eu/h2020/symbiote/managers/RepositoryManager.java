@@ -1,11 +1,13 @@
-package eu.h2020.symbiote.repository;
+package eu.h2020.symbiote.managers;
 
+import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.PlatformResponse;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
-import eu.h2020.symbiote.model.RegistryPlatform;
+import eu.h2020.symbiote.repository.PlatformRepository;
+import eu.h2020.symbiote.repository.ResourceRepository;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,12 +29,12 @@ public class RepositoryManager {
     private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID!";
     private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
     private static Log log = LogFactory.getLog(RepositoryManager.class);
-    private RegistryPlatformRepository registryPlatformRepository;
+    private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
 
     @Autowired
-    public RepositoryManager(RegistryPlatformRepository registryPlatformRepository, ResourceRepository resourceRepository) {
-        this.registryPlatformRepository = registryPlatformRepository;
+    public RepositoryManager(PlatformRepository platformRepository, ResourceRepository resourceRepository) {
+        this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
     }
 
@@ -43,73 +45,35 @@ public class RepositoryManager {
      * If saving in DB goes wrong it returns 'internal server error' status.
      * Url of given platform is appended with "/" if it does not end with it.
      *
-     * @param registryPlatform Platform to save - in JSON format
+     * @param platformToSave Platform to save - in JSON format
      * @return PlatformResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
      */
-    public PlatformResponse savePlatform(RegistryPlatform registryPlatform) {
-        PlatformResponse platformResponse = new PlatformResponse();
-        RegistryPlatform savedRegistryPlatform = null;
-        platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(registryPlatform));
+    public PlatformRegistryResponse savePlatform(Platform platformToSave) {
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
+        Platform savedPlatform;
+        platformResponse.setPlatform(platformToSave);
 
-        log.info("Received platform to save: " + registryPlatform);
+        log.info("Received platform to save: " + platformToSave);
 
-        if (registryPlatform.getId() == null || registryPlatform.getId().isEmpty()) {
+        if (platformToSave.getId() == null || platformToSave.getId().isEmpty()) {
             log.error("Given platform has null or empty id!");
             platformResponse.setMessage("Given platform has null or empty id!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             if (platformResponse.getStatus() != HttpStatus.SC_BAD_REQUEST) {
                 try {
-                    log.info("Saving platform: " + registryPlatform.getId());
+                    log.info("Saving platform: " + platformToSave.getId());
 
-                    savedRegistryPlatform = registryPlatformRepository.save(registryPlatform);
-                    log.info("Platform \"" + savedRegistryPlatform + "\" saved !");
+                    savedPlatform = platformRepository.save(platformToSave);
+                    log.info("Platform \"" + savedPlatform + "\" saved !");
                     platformResponse.setStatus(HttpStatus.SC_OK);
                     platformResponse.setMessage("OK");
-                    platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(savedRegistryPlatform));
+                    platformResponse.setPlatform(savedPlatform);
                 } catch (Exception e) {
                     log.error("Error occurred during Platform saving to db", e);
                     platformResponse.setMessage("Error occurred during Platform saving to db");
                     platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
                 }
-            }
-        }
-        return platformResponse;
-    }
-
-    /**
-     * Removes given Platform from MongoDB. It triggers delete action in Platform Repository and if it ends successfully
-     * it returns http status '200' and removed Platform object.
-     * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
-     * If saving in DB goes wrong it returns 'internal server error' status.
-     *
-     * @param registryPlatform Platform to remove - in JSON format
-     * @return PlatformResponse with Http status code and removed Platform object - in JSON format
-     */
-    public PlatformResponse removePlatform(RegistryPlatform registryPlatform) {
-        PlatformResponse platformResponse = new PlatformResponse();
-
-        if (registryPlatform == null || registryPlatform.getId() == null || registryPlatform.getId().isEmpty()) {
-            log.error("Given platform is null or has empty PlatformId!");
-            platformResponse.setMessage("Given platform is null or has empty PlatformId!");
-            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resourceRepository.findByInterworkingServiceURL(registryPlatform.getId()) != null
-                && !resourceRepository.findByInterworkingServiceURL(registryPlatform.getId()).isEmpty()) {
-            log.error("Given Platform has registered resources. Take care of resources first.");
-            platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
-            platformResponse.setStatus(HttpStatus.SC_CONFLICT);
-        } else {
-            try {
-                registryPlatformRepository.delete(registryPlatform.getId());
-                log.info("Platform with id: " + registryPlatform.getId() + " removed !");
-
-                platformResponse.setStatus(HttpStatus.SC_OK);
-                platformResponse.setMessage("OK");
-                platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(registryPlatform));
-            } catch (Exception e) {
-                log.error("Error occurred during Platform removing from db", e);
-                platformResponse.setMessage("Error occurred during Platform removing from db");
-                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
         return platformResponse;
@@ -125,39 +89,39 @@ public class RepositoryManager {
      * If there is no Platform in database with ID same as given one, it returns 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
-     * @param registryPlatform Platform to remove - in JSON format
+     * @param platformToModify Platform to remove - in JSON format
      * @return PlatformResponse with Http status code and modified Platform object - in JSON format
      */
-    public PlatformResponse modifyPlatform(RegistryPlatform registryPlatform) {
-        PlatformResponse platformResponse = new PlatformResponse();
-        platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(registryPlatform));
+    public PlatformRegistryResponse modifyPlatform(Platform platformToModify) {
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
+        platformResponse.setPlatform(platformToModify);
 
-        normalizePlatfromsIinterworkingServicesUrls(registryPlatform);
+        normalizePlatfromsIinterworkingServicesUrls(platformToModify);
 
-        RegistryPlatform foundRegistryPlatform = null;
-        if (registryPlatform.getId() == null || registryPlatform.getId().isEmpty()) {
+        Platform foundPlatform = null;
+        if (platformToModify.getId() == null || platformToModify.getId().isEmpty()) {
             log.error("Given platform has empty PlatformId!");
             platformResponse.setMessage("Given platform has empty PlatformId!");
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            foundRegistryPlatform = registryPlatformRepository.findOne(registryPlatform.getId());
+            foundPlatform = platformRepository.findOne(platformToModify.getId());
         }
 
-        if (foundRegistryPlatform == null) {
+        if (foundPlatform == null) {
             log.error(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
             platformResponse.setMessage(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
             platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
-                RegistryPlatform modifiedRegistryPlatform = copyExistingPlatformData(registryPlatform, foundRegistryPlatform);
+                Platform modifiedRegistryPlatform = copyExistingPlatformData(platformToModify, foundPlatform);
 
-                registryPlatformRepository.save(modifiedRegistryPlatform);
+                platformRepository.save(modifiedRegistryPlatform);
                 log.info("Platform with id: " + modifiedRegistryPlatform.getId() + " modified !");
 
                 platformResponse.setStatus(HttpStatus.SC_OK);
                 platformResponse.setMessage("OK");
-                platformResponse.setPlatform(RegistryUtils.convertRegistryPlatformToRequestPlatform(modifiedRegistryPlatform));
+                platformResponse.setPlatform(modifiedRegistryPlatform);
             } catch (Exception e) {
                 log.error("Error occurred during Platform modifying in db", e);
                 platformResponse.setMessage("Error occurred during Platform modifying in db");
@@ -167,23 +131,61 @@ public class RepositoryManager {
         return platformResponse;
     }
 
-    //// TODO: 25.07.2017 test method!
-    private RegistryPlatform copyExistingPlatformData(RegistryPlatform registryPlatform, RegistryPlatform foundRegistryPlatform) {
-        if ((registryPlatform.getComments() == null || registryPlatform.getComments().isEmpty() || registryPlatform.getComments().get(0) == null)
-                && foundRegistryPlatform.getComments() != null)
-            registryPlatform.setComments(foundRegistryPlatform.getComments());
-        if (registryPlatform.getRdfFormat() == null && foundRegistryPlatform.getRdfFormat() != null)
-            registryPlatform.setRdfFormat(foundRegistryPlatform.getRdfFormat());
-        if ((registryPlatform.getLabels() == null || registryPlatform.getLabels().isEmpty() || registryPlatform.getLabels().get(0) == null)
-                && foundRegistryPlatform.getLabels() != null)
-            registryPlatform.setLabels(foundRegistryPlatform.getLabels());
-        if (registryPlatform.getBody() == null && foundRegistryPlatform.getBody() != null)
-            registryPlatform.setBody(foundRegistryPlatform.getBody());
-        if ((registryPlatform.getInterworkingServices() == null || registryPlatform.getInterworkingServices().isEmpty() ||
-                registryPlatform.getInterworkingServices().get(0).getUrl() == null) && foundRegistryPlatform.getInterworkingServices() != null)
-            registryPlatform.setInterworkingServices(foundRegistryPlatform.getInterworkingServices());
+    /**
+     * Removes given Platform from MongoDB. It triggers delete action in Platform Repository and if it ends successfully
+     * it returns http status '200' and removed Platform object.
+     * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
+     *
+     * @param platformToRemove Platform to remove - in JSON format
+     * @return PlatformResponse with Http status code and removed Platform object - in JSON format
+     */
+    public PlatformRegistryResponse removePlatform(Platform platformToRemove) {
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
+        platformResponse.setPlatform(platformToRemove);
 
-        return registryPlatform;
+        if (platformToRemove == null || platformToRemove.getId() == null || platformToRemove.getId().isEmpty()) {
+            log.error("Given platform is null or has empty PlatformId!");
+            platformResponse.setMessage("Given platform is null or has empty PlatformId!");
+            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else if (resourceRepository.findByInterworkingServiceURL(platformToRemove.getId()) != null
+                && !resourceRepository.findByInterworkingServiceURL(platformToRemove.getId()).isEmpty()) {
+            log.error("Given Platform has registered resources. Take care of resources first.");
+            platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
+            platformResponse.setStatus(HttpStatus.SC_CONFLICT);
+        } else {
+            try {
+                platformRepository.delete(platformToRemove.getId());
+                log.info("Platform with id: " + platformToRemove.getId() + " removed !");
+
+                platformResponse.setStatus(HttpStatus.SC_OK);
+                platformResponse.setMessage("OK");
+            } catch (Exception e) {
+                log.error("Error occurred during Platform removing from db", e);
+                platformResponse.setMessage("Error occurred during Platform removing from db");
+                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return platformResponse;
+    }
+
+    //// TODO: 25.07.2017 test method!
+    private Platform copyExistingPlatformData(Platform requestedPlatform, Platform foundPlatform) {
+        if ((requestedPlatform.getComments() == null || requestedPlatform.getComments().isEmpty() || requestedPlatform.getComments().get(0) == null)
+                && foundPlatform.getComments() != null)
+            requestedPlatform.setComments(foundPlatform.getComments());
+        if (requestedPlatform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
+            requestedPlatform.setRdfFormat(foundPlatform.getRdfFormat());
+        if ((requestedPlatform.getLabels() == null || requestedPlatform.getLabels().isEmpty() || requestedPlatform.getLabels().get(0) == null)
+                && foundPlatform.getLabels() != null)
+            requestedPlatform.setLabels(foundPlatform.getLabels());
+        if (requestedPlatform.getRdf() == null && foundPlatform.getRdf() != null)
+            requestedPlatform.setRdf(foundPlatform.getRdf());
+        if ((requestedPlatform.getInterworkingServices() == null || requestedPlatform.getInterworkingServices().isEmpty() ||
+                requestedPlatform.getInterworkingServices().get(0).getUrl() == null) && foundPlatform.getInterworkingServices() != null)
+            requestedPlatform.setInterworkingServices(foundPlatform.getInterworkingServices());
+
+        return requestedPlatform;
     }
 
     /**
@@ -316,7 +318,7 @@ public class RepositoryManager {
     }
 
     public List<CoreResource> getResourcesForPlatform(String platformId) {
-        RegistryPlatform platform = registryPlatformRepository.findOne(platformId);
+        Platform platform = platformRepository.findOne(platformId);
         List<CoreResource> coreResources = new ArrayList<>();
         for (InterworkingService interworkingService : platform.getInterworkingServices()) {
             coreResources.addAll(resourceRepository.findByInterworkingServiceURL(interworkingService.getUrl()));
@@ -332,7 +334,7 @@ public class RepositoryManager {
         }
     }
 
-    private void normalizePlatfromsIinterworkingServicesUrls(RegistryPlatform platform) {
+    private void normalizePlatfromsIinterworkingServicesUrls(Platform platform) {
         if (platform.getInterworkingServices() != null && !platform.getInterworkingServices().isEmpty()) {
             for (InterworkingService service : platform.getInterworkingServices()) {
                 if (service.getUrl().trim().charAt(service.getUrl().length() - 1) != "/".charAt(0)) {
