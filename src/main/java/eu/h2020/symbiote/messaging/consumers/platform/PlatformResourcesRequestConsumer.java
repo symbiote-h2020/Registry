@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.platform;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -11,6 +11,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.ResourceListResponse;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -27,9 +28,9 @@ import java.util.List;
 /**
  * Created by mateuszl on 12.06.2017.
  */
-public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
+public class PlatformResourcesRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformResourcesRequestedConsumer.class);
+    private static Log log = LogFactory.getLog(PlatformResourcesRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
@@ -42,10 +43,10 @@ public class PlatformResourcesRequestedConsumer extends DefaultConsumer {
      * @param channel       the channel to which this consumer is attached
      * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
-    public PlatformResourcesRequestedConsumer(Channel channel,
-                                              RepositoryManager repositoryManager,
-                                              RabbitManager rabbitManager,
-                                              AuthorizationManager authorizationManager) {
+    public PlatformResourcesRequestConsumer(Channel channel,
+                                            RepositoryManager repositoryManager,
+                                            RabbitManager rabbitManager,
+                                            AuthorizationManager authorizationManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;

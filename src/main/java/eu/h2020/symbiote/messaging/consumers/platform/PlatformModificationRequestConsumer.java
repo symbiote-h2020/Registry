@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.platform;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,9 +9,9 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.model.RegistryOperationType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -20,9 +20,9 @@ import java.io.IOException;
 /**
  * Created by mateuszl on 07.08.2017.
  */
-public class PlatformCreationRequestConsumer extends DefaultConsumer {
+public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformCreationRequestConsumer.class);
+    private static Log log = LogFactory.getLog(PlatformModificationRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -34,13 +34,14 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public PlatformCreationRequestConsumer(Channel channel,
-                                           RepositoryManager repositoryManager,
-                                           RabbitManager rabbitManager) {
+    public PlatformModificationRequestConsumer(Channel channel,
+                                                  RepositoryManager repositoryManager,
+                                                  RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
     }
+
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
@@ -61,34 +62,27 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String response;
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received requestPlatform to create: '" + message + "'");
+        log.info(" [x] Received platform to modify: '" + message + "'");
 
         Platform requestPlatform;
 
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            log.info("Platform converted to Platform: " + requestPlatform);
-
-            if (RegistryUtils.validateFields(requestPlatform)) {
-                platformResponse = this.repositoryManager.savePlatform(requestPlatform);
-                if (platformResponse.getStatus() == 200) {
-                    rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
-                            RegistryOperationType.CREATION);
-                }
-            } else {
-                log.error("Given Platform has some fields null or empty");
-                platformResponse.setMessage("Given Platform has some fields null or empty");
-                platformResponse.setStatus(400);
+            platformResponse = this.repositoryManager.modifyPlatform(requestPlatform);
+            if (platformResponse.getStatus() == 200) {
+                rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
+                        RegistryOperationType.MODIFICATION);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occured during Platform saving to db", e);
             platformResponse.setMessage("Error occured during Platform saving to db");
             platformResponse.setStatus(400);
         }
+
         response = mapper.writeValueAsString(platformResponse);
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);

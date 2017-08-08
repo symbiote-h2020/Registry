@@ -7,6 +7,14 @@ import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.platform.PlatformRemovalRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.platform.PlatformResourcesRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.resource.ResourceCreationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.resource.ResourceModificationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.resource.ResourceRemovalRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.resource.ResourceValidationResponseConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -263,7 +271,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Platform Resources Requests messages....");
 
-            Consumer consumer = new PlatformResourcesRequestedConsumer(channel, repositoryManager, this, authorizationManager);
+            Consumer consumer = new PlatformResourcesRequestConsumer(channel, repositoryManager, this, authorizationManager);
             channel.basicConsume(PLATFORM_RESOURCES_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);

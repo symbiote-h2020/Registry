@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.platform;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,9 +20,9 @@ import java.io.IOException;
 /**
  * Created by mateuszl on 07.08.2017.
  */
-public class PlatformModificationRequestConsumer extends DefaultConsumer {
+public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformModificationRequestConsumer.class);
+    private static Log log = LogFactory.getLog(PlatformRemovalRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
@@ -33,9 +34,9 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public PlatformModificationRequestConsumer(Channel channel,
-                                                  RepositoryManager repositoryManager,
-                                                  RabbitManager rabbitManager) {
+    public PlatformRemovalRequestConsumer(Channel channel,
+                                             RepositoryManager repositoryManager,
+                                             RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -61,9 +62,9 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String response;
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received platform to modify: '" + message + "'");
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
+        log.info(" [x] Received platform to remove: '" + message + "'");
 
         Platform requestPlatform;
 
@@ -71,14 +72,14 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            platformResponse = this.repositoryManager.modifyPlatform(requestPlatform);
+            platformResponse = this.repositoryManager.removePlatform(requestPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
-                        RegistryOperationType.MODIFICATION);
+                        RegistryOperationType.REMOVAL);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during Platform saving to db", e);
-            platformResponse.setMessage("Error occured during Platform saving to db");
+            log.error("Error occured during Platform deleting in db", e);
+            platformResponse.setMessage("Error occured during Platform deleting in db");
             platformResponse.setStatus(400);
         }
 
@@ -87,3 +88,4 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }
+

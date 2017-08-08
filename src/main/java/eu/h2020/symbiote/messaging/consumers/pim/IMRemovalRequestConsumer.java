@@ -1,0 +1,26 @@
+package eu.h2020.symbiote.messaging.consumers.pim;
+
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.DefaultConsumer;
+import com.rabbitmq.client.Envelope;
+
+import java.io.IOException;
+
+/**
+ * Created by mateuszl on 08.08.2017.
+ */
+public class IMRemovalRequestConsumer extends DefaultConsumer {
+
+    public IMRemovalRequestConsumer(Channel channel) {
+        super(channel);
+    }
+
+    @Override
+    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+        super.handleDelivery(consumerTag, envelope, properties, body);
+
+        //// TODO: 07.08.2017 IMPLEMENT!
+
+    }
+}
