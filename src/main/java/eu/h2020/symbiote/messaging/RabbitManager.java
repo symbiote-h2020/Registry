@@ -7,6 +7,9 @@ import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.messaging.consumers.pim.InformationModelsRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformRemovalRequestConsumer;
@@ -16,8 +19,6 @@ import eu.h2020.symbiote.messaging.consumers.resource.ResourceModificationReques
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceRemovalRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceValidationResponseConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,7 @@ public class RabbitManager {
     private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
     private static final String PLATFORM_RESOURCES_REQUESTED_QUEUE = "symbIoTe-Registry-platformResourcesRequestedQueue";
+    private static final String INFORMATION_MODELS_REQUESTED_QUEUE = "symbIoTe-Registry-informationModelsRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
     private static Log log = LogFactory.getLog(RabbitManager.class);
     private AuthorizationManager authorizationManager;
@@ -113,6 +115,32 @@ public class RabbitManager {
     private String resourceModificationRequestedRoutingKey;
     @Value("${rabbit.routingKey.resource.modified}")
     private String resourceModifiedRoutingKey;
+    @Value("${rabbit.routingKey.informationModel.allInformationModelsRequested}")
+    private String informationModelsRequestedRoutingKey;
+
+    @Value("${rabbit.exchange.informationModel.name}")
+    private String informationModelExchangeName;
+    @Value("${rabbit.exchange.informationModel.type}")
+    private String informationModelExchangeType;
+    @Value("${rabbit.exchange.informationModel.durable}")
+    private boolean informationModelExchangeDurable;
+    @Value("${rabbit.exchange.informationModel.autodelete}")
+    private boolean informationModelExchangeAutodelete;
+    @Value("${rabbit.exchange.informationModel.internal}")
+    private boolean informationModelExchangeInternal;
+    @Value("${rabbit.routingKey.informationModel.creationRequested}")
+    private String informationModelCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.informationModel.created}")
+    private String informationModelCreatedRoutingKey;
+    @Value("${rabbit.routingKey.informationModel.removalRequested}")
+    private String informationModelRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.informationModel.removed}")
+    private String informationModelRemovedRoutingKey;
+    @Value("${rabbit.routingKey.informationModel.modificationRequested}")
+    private String informationModelModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.informationModel.modified}")
+    private String informationModelModifiedRoutingKey;
+
     private Connection connection;
     @Value("${rabbit.routingKey.resource.instance.translationRequested}")
     private String jsonResourceTranslationRequestedRoutingKey; //dla JSONów
@@ -249,7 +277,81 @@ public class RabbitManager {
             startConsumerOfPlatformModificationMessages(repositoryManager, authorizationManager);
             startConsumerOfResourceModificationMessages(repositoryManager, authorizationManager);
             startConsumerOfPlatformResourcesRequestsMessages(repositoryManager, authorizationManager);
+            startConsumerOfListAllPlatformsRequestsMessages(repositoryManager, authorizationManager);
         } catch (InterruptedException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    public void startConsumerOfResourceCreationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Creation messages....");
+
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager);
+            channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    public void startConsumerOfResourceModificationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
+                    this.resourceModificationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Modification messages....");
+
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager);
+            channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
+     *
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    public void startConsumerOfResourceRemovalMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Resource Removal messages....");
+
+            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
             log.error(e);
         }
     }
@@ -304,30 +406,6 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    public void startConsumerOfPlatformRemovalMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Platform Removal messages....");
-
-            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
      *
      * @throws InterruptedException
@@ -352,23 +430,23 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
      *
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfResourceCreationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
+    public void startConsumerOfPlatformRemovalMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
+            channel.queueDeclare(PLATFORM_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Resource Creation messages....");
+            log.info("Receiver waiting for Platform Removal messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager);
-            channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
+            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -376,53 +454,27 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
      *
      * @throws InterruptedException
      * @throws IOException
      */
-    public void startConsumerOfResourceRemovalMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
+    public void startConsumerOfListAllPlatformsRequestsMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
         Channel channel;
         try {
             channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
+            channel.queueDeclare(INFORMATION_MODELS_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(INFORMATION_MODELS_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelsRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Resource Removal messages....");
+            log.info("Receiver waiting for List All Information Models Requests messages....");
 
-            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
-            channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
+            Consumer consumer = new InformationModelsRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            channel.basicConsume(INFORMATION_MODELS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
-
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    public void startConsumerOfResourceModificationMessages(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) throws InterruptedException {
-        Channel channel;
-        try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
-                    this.resourceModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
-            log.info("Receiver waiting for Resource Modification messages....");
-
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager);
-            channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
 
     /**
      * Triggers sending message containing Platform accordingly to Operation Type.

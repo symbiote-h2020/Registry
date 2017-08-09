@@ -326,6 +326,9 @@ public class RepositoryManager {
         return coreResources;
     }
 
+    public List<Platform> getAllPlatforms(){
+        return platformRepository.findAll();
+    }
 
     private void normalizeResourceInterworkingServiceUrl(CoreResource resource) {
         if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
