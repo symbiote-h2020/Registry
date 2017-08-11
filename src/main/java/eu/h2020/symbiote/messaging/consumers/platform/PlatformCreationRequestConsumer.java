@@ -58,12 +58,10 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
 
-        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
-
         ObjectMapper mapper = new ObjectMapper();
         String response;
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received requestPlatform to create: '" + message + "'");
+        log.info(" [x] Received Platform to create: '" + message + "'");
 
         Platform requestPlatform;
 
@@ -72,7 +70,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            log.info("Platform converted to Platform: " + requestPlatform);
+            //// TODO: 11.08.2017 should i check some informations given in platform?
 
             if (RegistryUtils.validateFields(requestPlatform)) {
                 platformResponse = this.repositoryManager.savePlatform(requestPlatform);

@@ -58,8 +58,6 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
 
-        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
-
         ObjectMapper mapper = new ObjectMapper();
         String response;
         PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
@@ -72,6 +70,8 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
+            //// TODO: 11.08.2017 should i check some informations given in platform?
+            
             platformResponse = this.repositoryManager.modifyPlatform(requestPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),

@@ -72,6 +72,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
+            //// TODO: 11.08.2017 should i check some informations given in platform?
+
             platformResponse = this.repositoryManager.removePlatform(requestPlatform);
             if (platformResponse.getStatus() == 200) {
                 rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),

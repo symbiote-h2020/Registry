@@ -6,10 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
+import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.messaging.consumers.pim.InformationModelsRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.pim.ListOfInformationModelsRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformRemovalRequestConsumer;
@@ -469,7 +470,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for List All Information Models Requests messages....");
 
-            Consumer consumer = new InformationModelsRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            Consumer consumer = new ListOfInformationModelsRequestConsumer(channel, repositoryManager, this, authorizationManager);
             channel.basicConsume(INFORMATION_MODELS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -723,5 +724,9 @@ public class RabbitManager {
         } catch (IOException | TimeoutException e) {
             log.error(e);
         }
+    }
+
+    public void sendInformationModelOperationMessage(InformationModel informationModel, RegistryOperationType operationType) {
+
     }
 }

@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.utils;
 
+import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
@@ -80,6 +81,41 @@ public class RegistryUtils {
             } else {
                 b = true;
             }
+        }
+        return b;
+    }
+
+    /**
+     * Checks if given informationModel has all of the needed fields (besides the id field) and that neither is empty.
+     *
+     * @param informationModel informationModel to check
+     * @return true if it has all the fields and neither is empty.
+     */
+    public static boolean validateFields(InformationModel informationModel) {
+        //todo extend validation to all fields?
+        boolean b;
+        if (informationModel == null) {
+            log.info("Given informationModel is null");
+            b = false;
+
+        } else {
+            /*
+            if (informationModel.getInterworkingServiceURL() == null
+                    || informationModel.getComments() == null
+                    || informationModel.getLabels() == null) {
+                log.info("Given informationModel has some null fields");
+                b = false;
+            } else if (informationModel.getInterworkingServiceURL().isEmpty()
+                    || informationModel.getComments().isEmpty()
+                    || informationModel.getLabels().isEmpty()) {
+                log.info("Given informationModel has some empty fields");
+                b = false;
+
+            } else {
+                b = true;
+            }
+            */
+            b=true; //// TODO: 11.08.2017 MOCKED!
         }
         return b;
     }

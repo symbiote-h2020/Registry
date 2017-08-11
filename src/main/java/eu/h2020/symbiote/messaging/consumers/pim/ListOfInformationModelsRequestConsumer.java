@@ -27,9 +27,9 @@ import java.util.List;
 /**
  * Created by mateuszl on 07.08.2017.
  */
-public class InformationModelsRequestConsumer extends DefaultConsumer {
+public class ListOfInformationModelsRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(InformationModelsRequestConsumer.class);
+    private static Log log = LogFactory.getLog(ListOfInformationModelsRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
@@ -42,10 +42,10 @@ public class InformationModelsRequestConsumer extends DefaultConsumer {
      * @param channel       the channel to which this consumer is attached
      * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
-    public InformationModelsRequestConsumer(Channel channel,
-                                            RepositoryManager repositoryManager,
-                                            RabbitManager rabbitManager,
-                                            AuthorizationManager authorizationManager) {
+    public ListOfInformationModelsRequestConsumer(Channel channel,
+                                                  RepositoryManager repositoryManager,
+                                                  RabbitManager rabbitManager,
+                                                  AuthorizationManager authorizationManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;
