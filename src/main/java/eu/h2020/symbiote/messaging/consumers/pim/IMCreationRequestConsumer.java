@@ -8,9 +8,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
-import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
@@ -74,7 +72,7 @@ public class IMCreationRequestConsumer extends DefaultConsumer {
             //// TODO: 11.08.2017 should i check some informations given in platform?
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
-                response = this.repositoryManager.sa(informationModelReceived);
+                response = this.repositoryManager.saveInformationModel(informationModelReceived);
                 if (response.getStatus() == 200) {
                     rabbitManager.sendInformationModelOperationMessage(response.getInformationModel(),
                             RegistryOperationType.CREATION);

@@ -1,21 +1,16 @@
 package eu.h2020.symbiote.messaging.consumers.pim;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.cci.PlatformRegistryRequest;
-import eu.h2020.symbiote.core.internal.PlatformListResponse;
-import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.internal.InformationModelListResponse;
+import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
-import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -56,56 +51,48 @@ public class ListOfInformationModelsRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
         super.handleDelivery(consumerTag, envelope, properties, body);
 
-        PlatformRegistryRequest request;
-        PlatformListResponse platformListResponse = new PlatformListResponse();
-        platformListResponse.setPlatforms(new ArrayList<>());
-        platformListResponse.setStatus(400);
-        List<Platform> platforms;
+        InformationModelListResponse informationModelListResponse = new InformationModelListResponse();
+        informationModelListResponse.setInformationModels(new ArrayList<>());
+        informationModelListResponse.setStatus(400);
+        List<InformationModel> informationModels;
         AuthorizationResult authorizationResult = null;
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received request to retrieve resources for platform: '" + message + "'");
+        log.info(" [x] Received request to retrieve list of existing Information Models: '" + message + "'");
 
-        try {
-            request = mapper.readValue(message, PlatformRegistryRequest.class);
-        } catch (JsonSyntaxException | JsonMappingException | JsonParseException e) {
-            log.error("Error occured during getting Request from Json", e);
-            platformListResponse.setMessage("Error occured during getting Request from Json");
-            sendRpcReplyMessage(envelope, properties, platformListResponse);
-            return;
-        }
-
-        if (request != null) {
+        /* Token verification in this internal communication is not used at this point
+        if (message != null) {
             try {
                 authorizationResult = authorizationManager.checkToken(request.getToken());
             } catch (NullArgumentException e) {
                 log.error(e);
-                platformListResponse.setMessage("Request invalid!");
-                sendRpcReplyMessage(envelope, properties, platformListResponse);
+                informationModelListResponse.setMessage("Request invalid!");
+                sendRpcReplyMessage(envelope, properties, informationModelListResponse);
                 return;
             }
         } else {
             log.error("Request is null!");
-            platformListResponse.setMessage("Request is null!");
-            sendRpcReplyMessage(envelope, properties, platformListResponse);
+            informationModelListResponse.setMessage("Request is null!");
+            sendRpcReplyMessage(envelope, properties, informationModelListResponse);
             return;
         }
 
         if (!authorizationResult.isValidated()) {
             log.error("Token invalid! " + authorizationResult.getMessage());
-            platformListResponse.setMessage(authorizationResult.getMessage());
-            sendRpcReplyMessage(envelope, properties, platformListResponse);
+            informationModelListResponse.setMessage(authorizationResult.getMessage());
+            sendRpcReplyMessage(envelope, properties, informationModelListResponse);
             return;
         }
+        */
 
-        platforms = repositoryManager.getAllPlatforms();
-        platformListResponse.setStatus(HttpStatus.SC_OK);
-        platformListResponse.setMessage("OK. " + platforms.size() + " platforms found!");
-        platformListResponse.setPlatforms(platforms);
-        sendRpcReplyMessage(envelope, properties, platformListResponse);
+        informationModels = repositoryManager.getAllInformationModels();
+        informationModelListResponse.setStatus(HttpStatus.SC_OK);
+        informationModelListResponse.setMessage("OK. " + informationModels.size() + " Information Models found!");
+        informationModelListResponse.setInformationModels(informationModels);
+        sendRpcReplyMessage(envelope, properties, informationModelListResponse);
     }
 
     private void sendRpcReplyMessage(Envelope envelope, AMQP.BasicProperties properties,
-                                     PlatformListResponse platformListResponse) throws IOException {
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(platformListResponse));
+                                     InformationModelListResponse informationModelListResponse) throws IOException {
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(informationModelListResponse));
     }
 }

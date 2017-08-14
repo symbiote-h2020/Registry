@@ -99,6 +99,12 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 switch (request.getDescriptionType()) {
                     case RDF:
                         log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
+
+                        //add Interworking Service inforamtions mapper (find Information Model id for Interworking Service from Body and add it to new Body for SM)
+
+
+
+
                         //sending RDF content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
                                 message, request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);

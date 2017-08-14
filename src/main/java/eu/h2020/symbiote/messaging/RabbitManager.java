@@ -727,6 +727,6 @@ public class RabbitManager {
     }
 
     public void sendInformationModelOperationMessage(InformationModel informationModel, RegistryOperationType operationType) {
-
+        //// TODO: 14.08.2017 implement!
     }
 }

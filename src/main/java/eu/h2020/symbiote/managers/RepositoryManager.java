@@ -1,11 +1,14 @@
 package eu.h2020.symbiote.managers;
 
+import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
+import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -31,11 +34,15 @@ public class RepositoryManager {
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
+    private InformationModelRepository informationModelRepository;
 
     @Autowired
-    public RepositoryManager(PlatformRepository platformRepository, ResourceRepository resourceRepository) {
+    public RepositoryManager(PlatformRepository platformRepository,
+                             ResourceRepository resourceRepository,
+                             InformationModelRepository informationModelRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
+        this.informationModelRepository = informationModelRepository;
     }
 
     /**
@@ -326,8 +333,8 @@ public class RepositoryManager {
         return coreResources;
     }
 
-    public List<Platform> getAllPlatforms(){
-        return platformRepository.findAll();
+    public List<InformationModel> getAllInformationModels() {
+        return informationModelRepository.findAll();
     }
 
     private void normalizeResourceInterworkingServiceUrl(CoreResource resource) {
@@ -345,5 +352,10 @@ public class RepositoryManager {
                 }
             }
         }
+    }
+
+    public InformationModelResponse saveInformationModel(InformationModel informationModelReceived) {
+        //// TODO: 14.08.2017 IMPLEMENT!
+        return null;
     }
 }
