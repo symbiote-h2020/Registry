@@ -103,7 +103,7 @@ public class RepositoryManager {
         PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
         platformResponse.setPlatform(platformToModify);
 
-        normalizePlatfromsIinterworkingServicesUrls(platformToModify);
+        normalizePlatformsInterworkingServicesUrls(platformToModify);
 
         Platform foundPlatform = null;
         if (platformToModify.getId() == null || platformToModify.getId().isEmpty()) {
@@ -234,42 +234,6 @@ public class RepositoryManager {
     }
 
     /**
-     * Deletes resource from MongoDB
-     *
-     * @param resource Resource with given properties in JSON format
-     * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
-     */
-    public ResourcePersistenceResult removeResource(Resource resource) {
-        ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
-
-        if (resource == null || resource.getId() == null || resource.getId().isEmpty()) {
-            log.error("Given resource is null or it has null or empty ID!");
-            resourceRemovalResult.setMessage("Given resource is null or it has null or empty ID!");
-            resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else {
-            resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
-            try {
-                CoreResource foundResource = resourceRepository.findOne(resource.getId());
-                if (foundResource != null) {
-                    resourceRepository.delete(resource.getId());
-                    resourceRemovalResult.setStatus(HttpStatus.SC_OK);
-                    resourceRemovalResult.setMessage("OK");
-                    log.info("Resource with id: " + resource.getId() + " removed !");
-                } else {
-                    log.error("Given resource does not exist in database");
-                    resourceRemovalResult.setMessage("Given resource does not exist in database");
-                    resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-                }
-            } catch (Exception e) {
-                log.error("Error occurred during Resource deleting from db", e);
-                resourceRemovalResult.setMessage("Error occurred during Resource deleting from db");
-                resourceRemovalResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            }
-        }
-        return resourceRemovalResult;
-    }
-
-    /**
      * Modifies given resource in MongoDB. If given resource does not consist some of the fields, empty ones are
      * fulfilled with data from the database.
      *
@@ -324,6 +288,52 @@ public class RepositoryManager {
         return resourceSavingResult;
     }
 
+    /**
+     * Deletes resource from MongoDB
+     *
+     * @param resource Resource with given properties in JSON format
+     * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
+     */
+    public ResourcePersistenceResult removeResource(Resource resource) {
+        ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
+
+        if (resource == null || resource.getId() == null || resource.getId().isEmpty()) {
+            log.error("Given resource is null or it has null or empty ID!");
+            resourceRemovalResult.setMessage("Given resource is null or it has null or empty ID!");
+            resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
+            try {
+                CoreResource foundResource = resourceRepository.findOne(resource.getId());
+                if (foundResource != null) {
+                    resourceRepository.delete(resource.getId());
+                    resourceRemovalResult.setStatus(HttpStatus.SC_OK);
+                    resourceRemovalResult.setMessage("OK");
+                    log.info("Resource with id: " + resource.getId() + " removed !");
+                } else {
+                    log.error("Given resource does not exist in database");
+                    resourceRemovalResult.setMessage("Given resource does not exist in database");
+                    resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                }
+            } catch (Exception e) {
+                log.error("Error occurred during Resource deleting from db", e);
+                resourceRemovalResult.setMessage("Error occurred during Resource deleting from db");
+                resourceRemovalResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return resourceRemovalResult;
+    }
+
+    public InformationModelResponse saveInformationModel(InformationModel informationModelReceived) {
+        //// TODO: 14.08.2017 IMPLEMENT!
+        return null;
+    }
+
+    public InformationModelResponse modifyInformationModel(InformationModel informationModelReceived) {
+        //// TODO: 14.08.2017 IMPLEMENT!
+        return null;
+    }
+
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         Platform platform = platformRepository.findOne(platformId);
         List<CoreResource> coreResources = new ArrayList<>();
@@ -333,10 +343,6 @@ public class RepositoryManager {
         return coreResources;
     }
 
-    public List<InformationModel> getAllInformationModels() {
-        return informationModelRepository.findAll();
-    }
-
     private void normalizeResourceInterworkingServiceUrl(CoreResource resource) {
         if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
                 != "/".charAt(0)) {
@@ -344,7 +350,7 @@ public class RepositoryManager {
         }
     }
 
-    private void normalizePlatfromsIinterworkingServicesUrls(Platform platform) {
+    private void normalizePlatformsInterworkingServicesUrls(Platform platform) {
         if (platform.getInterworkingServices() != null && !platform.getInterworkingServices().isEmpty()) {
             for (InterworkingService service : platform.getInterworkingServices()) {
                 if (service.getUrl().trim().charAt(service.getUrl().length() - 1) != "/".charAt(0)) {
@@ -354,8 +360,20 @@ public class RepositoryManager {
         }
     }
 
-    public InformationModelResponse saveInformationModel(InformationModel informationModelReceived) {
-        //// TODO: 14.08.2017 IMPLEMENT!
-        return null;
+    public List<InformationModel> getAllInformationModels() {
+        return informationModelRepository.findAll();
+    }
+
+    public String getInformationModelIdByInterworkingServiceUrl(String platformId, String requestedInterworkingServiceUrl) {
+        String id = null;
+        Platform platform = platformRepository.findOne(platformId);
+
+        for (InterworkingService interworkingService : platform.getInterworkingServices()){
+            if (interworkingService.getUrl().equals(requestedInterworkingServiceUrl)){
+                id = interworkingService.getInformationModelId();
+            }
+        }
+
+        return id;
     }
 }

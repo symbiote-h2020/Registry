@@ -7,6 +7,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.managers.RepositoryManager;
@@ -62,31 +63,43 @@ public class IMCreationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received Information Model to create: '" + message + "'");
 
+        InformationModelRequest informationModelRequest;
         InformationModel informationModelReceived;
         InformationModelResponse response = new InformationModelResponse();
 
         try {
-            informationModelReceived = mapper.readValue(message, InformationModel.class);
+            informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
+            informationModelReceived = informationModelRequest.getInformationModel();
             response.setInformationModel(informationModelReceived);
 
             //// TODO: 11.08.2017 should i check some informations given in platform?
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
-                response = this.repositoryManager.saveInformationModel(informationModelReceived);
+
+
+
+                log.info("Message to Semantic Manager Sent. Request: " + informationModelRequest);
+                //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
+                        mapper.writeValueAsString(informationModelReceived),
+                        RegistryOperationType.CREATION); //authorizationManager needed?
+
+
                 if (response.getStatus() == 200) {
                     rabbitManager.sendInformationModelOperationMessage(response.getInformationModel(),
                             RegistryOperationType.CREATION);
                 }
             } else {
-                log.error("Given Platform has some fields null or empty");
-                response.setMessage("Given Platform has some fields null or empty");
+                log.error("Given IM has some fields null or empty");
+                response.setMessage("Given IM has some fields null or empty");
                 response.setStatus(400);
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during Platform saving to db", e);
-            response.setMessage("Error occured during Platform saving to db");
+            log.error("Error occured during IM saving to db", e);
+            response.setMessage("Error occured during IM saving to db");
             response.setStatus(400);
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
 }

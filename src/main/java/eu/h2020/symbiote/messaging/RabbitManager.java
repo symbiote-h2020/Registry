@@ -10,6 +10,7 @@ import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.messaging.consumers.pim.IMCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.pim.ListOfInformationModelsRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
@@ -301,7 +302,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Creation messages....");
 
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager);
+            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager, repositoryManager);
             channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -326,7 +327,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Resource Modification messages....");
 
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager);
+            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager, repositoryManager);
             channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -728,5 +729,11 @@ public class RabbitManager {
 
     public void sendInformationModelOperationMessage(InformationModel informationModel, RegistryOperationType operationType) {
         //// TODO: 14.08.2017 implement!
+    }
+
+    public void sendInformationModelValidationRpcMessage(IMCreationRequestConsumer imCreationRequestConsumer,
+                                                         BasicProperties properties, Envelope envelope, String s,
+                                                         RegistryOperationType creation) {
+        //// TODO: 16.08.2017 implement!
     }
 }

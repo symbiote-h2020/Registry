@@ -8,10 +8,13 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.core.internal.ResourceInstanceValidationRequest;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
@@ -36,6 +39,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
+    private RepositoryManager repositoryManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -46,10 +50,12 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      */
     public ResourceCreationRequestConsumer(Channel channel,
                                            RabbitManager rabbitManager,
-                                           AuthorizationManager authorizationManager) {
+                                           AuthorizationManager authorizationManager,
+                                           RepositoryManager repositoryManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
+        this.repositoryManager = repositoryManager;
         this.mapper = new ObjectMapper();
     }
 
@@ -85,7 +91,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         if (request != null) {
             //checking access by token verification
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
-            if (!tokenAuthorizationResult.isValidated()){
+            if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 registryResponse.setStatus(400);
                 registryResponse.setMessage("Error: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -100,14 +106,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                     case RDF:
                         log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
 
-                        //add Interworking Service inforamtions mapper (find Information Model id for Interworking Service from Body and add it to new Body for SM)
+                        createAndSendValidationRequest(envelope, properties, request, registryResponse);
 
-
-
-
-                        //sending RDF content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                                message, request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
                         break;
                     case BASIC:
                         if (checkIfResourcesHaveNullOrEmptyId(request)) {
@@ -132,6 +132,35 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                         mapper.writeValueAsString(registryResponse));
             }
 
+        }
+    }
+
+    private void createAndSendValidationRequest(Envelope envelope, AMQP.BasicProperties properties,
+                                                CoreResourceRegistryRequest request,
+                                                CoreResourceRegistryResponse registryResponse) throws IOException {
+        RDFResourceRegistryRequest rdfResourceRegistryRequest = mapper.readValue(request.getBody(), RDFResourceRegistryRequest.class);
+
+        String requestedInterworkingServiceUrl = rdfResourceRegistryRequest.getInterworkingServiceUrl();
+
+        String informationModelIdByInterworkingServiceUrl =
+                repositoryManager.getInformationModelIdByInterworkingServiceUrl(request.getPlatformId(), requestedInterworkingServiceUrl);
+
+        if (informationModelIdByInterworkingServiceUrl == null) {
+            log.error("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
+            registryResponse.setStatus(400);
+            registryResponse.setMessage("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                    mapper.writeValueAsString(registryResponse));
+        } else {
+            ResourceInstanceValidationRequest resourceInstanceValidationRequest = new ResourceInstanceValidationRequest();
+            resourceInstanceValidationRequest.setRdf(rdfResourceRegistryRequest.getRdfInfo().getRdf());
+            resourceInstanceValidationRequest.setRdfFormat(rdfResourceRegistryRequest.getRdfInfo().getRdfFormat());
+            resourceInstanceValidationRequest.setInformationModelId(informationModelIdByInterworkingServiceUrl);
+
+            //sending RDF content to Semantic Manager and passing responsibility to another consumer
+            rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
+                    mapper.writeValueAsString(resourceInstanceValidationRequest),
+                    request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
         }
     }
 
@@ -188,5 +217,4 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         }
         return true;
     }
-
 }

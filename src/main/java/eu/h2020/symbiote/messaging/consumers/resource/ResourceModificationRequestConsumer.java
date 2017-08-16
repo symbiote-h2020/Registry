@@ -9,6 +9,7 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
@@ -29,6 +30,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     private static Log log = LogFactory.getLog(ResourceModificationRequestConsumer.class);
     private AuthorizationManager authorizationManager;
     private RabbitManager rabbitManager;
+    private RepositoryManager repositoryManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -39,10 +41,12 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
      */
     public ResourceModificationRequestConsumer(Channel channel,
                                                RabbitManager rabbitManager,
-                                               AuthorizationManager authorizationManager) {
+                                               AuthorizationManager authorizationManager,
+                                               RepositoryManager repositoryManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
+        this.repositoryManager = repositoryManager;
     }
 
     /**
@@ -63,6 +67,8 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
+
+        //// TODO: 16.08.2017 UPDATE to Interworking Service checking similiar to CREATION!
 
         log.info(" [x] Received resources to modify (CoreResourceRegistryRequest):'" + message + "'");
 
