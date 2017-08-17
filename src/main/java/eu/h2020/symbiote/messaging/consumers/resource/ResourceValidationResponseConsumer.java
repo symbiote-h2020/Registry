@@ -128,8 +128,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
 
             if (authorizationResult.isValidated()) {
-                Map<String, ResourcePersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
-                prepareContentOfMessage(persistenceOperationResultsList);
+                Map<String, ResourcePersistenceResult> stringResourcePersistenceResultMap = makePersistenceOperations(coreResources);
+                prepareContentOfMessage(stringResourcePersistenceResultMap);
             } else {
                 registryResponse.setStatus(400);
                 registryResponse.setMessage(authorizationResult.getMessage());

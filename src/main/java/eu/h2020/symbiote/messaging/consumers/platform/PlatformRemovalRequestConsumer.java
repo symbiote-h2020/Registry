@@ -35,8 +35,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public PlatformRemovalRequestConsumer(Channel channel,
-                                             RepositoryManager repositoryManager,
-                                             RabbitManager rabbitManager) {
+                                          RepositoryManager repositoryManager,
+                                          RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;

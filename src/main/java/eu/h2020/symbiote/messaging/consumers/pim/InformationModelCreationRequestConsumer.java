@@ -10,7 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -22,11 +22,11 @@ import java.io.IOException;
 /**
  * Created by mateuszl on 08.08.2017.
  */
-public class IMCreationRequestConsumer extends DefaultConsumer {
+public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(IMCreationRequestConsumer.class);
-    private RepositoryManager repositoryManager;
+    private static Log log = LogFactory.getLog(InformationModelCreationRequestConsumer.class);
     private RabbitManager rabbitManager;
+    private AuthorizationManager authorizationManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -34,14 +34,13 @@ public class IMCreationRequestConsumer extends DefaultConsumer {
      *
      * @param channel           the channel to which this consumer is attached
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
-     * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public IMCreationRequestConsumer(Channel channel,
-                                           RepositoryManager repositoryManager,
-                                           RabbitManager rabbitManager) {
+    public InformationModelCreationRequestConsumer(Channel channel,
+                                                   RabbitManager rabbitManager,
+                                                   AuthorizationManager authorizationManager) {
         super(channel);
-        this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        this.authorizationManager = authorizationManager;
     }
 
     /**
