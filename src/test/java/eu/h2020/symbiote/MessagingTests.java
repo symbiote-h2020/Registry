@@ -138,8 +138,8 @@ public class MessagingTests {
 
     @Test
     public void resourceCreationRequestConsumerAndValidationConsumerIntegrationTest() throws InterruptedException, IOException, TimeoutException {
-        rabbitManager.startConsumerOfResourceCreationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfResourceCreationMessages();
+        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
         Resource resource2 = generateResource();
@@ -203,13 +203,18 @@ public class MessagingTests {
         verify(mockedRepository, timeout(500).times(2)).saveResource(any());
     }
 
+    private void setRabbitManagerMockedManagers() {
+        ReflectionTestUtils.setField(rabbitManager, "repositoryManager", mockedRepository);
+        ReflectionTestUtils.setField(rabbitManager, "authorizationManager", mockedAuthorizationManager);
+    }
+
 
     @Test
     public void resourceModificationRequestConsumerTest() throws InterruptedException, IOException {
         // FIXME: 17.07.2017
 
-        rabbitManager.startConsumerOfResourceModificationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfResourceModificationMessages();
+        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
         Resource resource2 = generateResource();
@@ -246,8 +251,8 @@ public class MessagingTests {
     @Test
     public void resourceRemovalRequestConsumerTest() throws IOException, InterruptedException {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfResourceRemovalMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfResourceRemovalMessages();
+        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
         addIdToResource(resource1);
@@ -280,8 +285,8 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerTest() throws Exception {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
 
         eu.h2020.symbiote.core.model.Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -310,8 +315,8 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerNullNameFailTest() throws Exception {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         requestPlatform.setLabels(Arrays.asList(null));
@@ -328,8 +333,8 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerJsonFailTest() throws Exception {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfPlatformCreationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -344,8 +349,8 @@ public class MessagingTests {
     @Test
     public void platformModificationRequestConsumerHappyPathTest() throws IOException, InterruptedException {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformModificationMessages();
+        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -371,8 +376,8 @@ public class MessagingTests {
 
     @Test
     public void platformModificationRequestConsumerMongoFailTest() throws IOException, InterruptedException, TimeoutException {
-        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformModificationMessages();
+        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -409,8 +414,8 @@ public class MessagingTests {
     @Test
     public void platformModificationRequestConsumerJsonFailTest() throws Exception {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfPlatformModificationMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformModificationMessages();
+        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -425,8 +430,8 @@ public class MessagingTests {
     @Test
     public void platformRemovalRequestConsumerTest() throws IOException, InterruptedException {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformRemovalMessages();
+        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -449,8 +454,8 @@ public class MessagingTests {
 
     @Test
     public void platformRemovalRequestConsumerJsonFailTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformRemovalMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformRemovalMessages();
+        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -464,8 +469,8 @@ public class MessagingTests {
 
     @Test
     public void platformResourcesRequestedConsumerTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
+        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
         addIdToResource(resource1);
@@ -507,8 +512,8 @@ public class MessagingTests {
 
     @Test
     public void platformResourcesRequestedConsumerJsonFailTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
+        setRabbitManagerMockedManagers();
 
         String message = "[]"; //// FIXME: 18.07.2017 core Resource Registry Request with error
 
@@ -542,8 +547,8 @@ public class MessagingTests {
 
     @Test
     public void platformResourcesRequestedConsumerNullTokenFailTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedRepository, mockedAuthorizationManager);
-        //fixme set these fields by reflection or some Mockito tool
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
+        setRabbitManagerMockedManagers();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest();
         coreResourceRegistryRequest.setToken(null);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
