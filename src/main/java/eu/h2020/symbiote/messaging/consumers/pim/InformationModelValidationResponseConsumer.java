@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.messaging.consumers.pim;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
@@ -10,34 +9,22 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
-import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
-import eu.h2020.symbiote.core.internal.DescriptionType;
-import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.internal.InformationModelValidationResult;
+import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.ResourcePersistenceResult;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by mateuszl on 16.08.2017.
  */
 public class InformationModelValidationResponseConsumer extends DefaultConsumer {
-
-
-    //MOCKED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     private static Log log = LogFactory.getLog(InformationModelValidationResponseConsumer.class);
     private InformationModelResponse informationModelResponse;
@@ -47,9 +34,8 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private RegistryOperationType operationType;
-    private boolean bulkRequestSuccess = true;
+    private boolean requestSuccess = true;
     private ObjectMapper mapper;
-    private String response;
     private AuthorizationManager authorizationManager;
 
     /**
@@ -61,13 +47,13 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public InformationModelValidationResponseConsumer(DefaultConsumer rpcConsumer,
-                                              AMQP.BasicProperties rpcProperties,
-                                              Envelope rpcEnvelope,
-                                              Channel channel,
-                                              RepositoryManager repositoryManager,
-                                              RabbitManager rabbitManager,
-                                              RegistryOperationType operationType,
-                                              AuthorizationManager authorizationManager) {
+                                                      AMQP.BasicProperties rpcProperties,
+                                                      Envelope rpcEnvelope,
+                                                      Channel channel,
+                                                      RepositoryManager repositoryManager,
+                                                      RabbitManager rabbitManager,
+                                                      RegistryOperationType operationType,
+                                                      AuthorizationManager authorizationManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -78,10 +64,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         this.authorizationManager = authorizationManager;
         this.mapper = new ObjectMapper();
         this.informationModelResponse = new InformationModelResponse();
-        response = "";
     }
-
-    //fixme when creating resources, reply could include original list of resources with added IDs instead of list with new resources
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
@@ -97,118 +80,97 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-
         String message = new String(body, "UTF-8");
-        ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
-        Map<String, CoreResource> coreResources;
+        InformationModelValidationResult informationModelValidationResult = new InformationModelValidationResult();
+        InformationModel informationModel;
 
         log.info("[x] Received validation result: '" + message + "'");
 
         try {
             //receive and read message from Semantic Manager
-            resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
+            informationModelValidationResult = mapper.readValue(message, InformationModelValidationResult.class);
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Unable to get resource validation result from Message body!", e);
+            log.error("Unable to get Information Model validation result from Message body!", e);
             informationModelResponse.setStatus(500);
             informationModelResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
         }
 
-        if (resourceInstanceValidationResult.isSuccess()) {
-            coreResources = resourceInstanceValidationResult.getObjectDescription();
-            log.info("CoreResources received from SM! Content: " + coreResources);
+        if (informationModelValidationResult.isSuccess()) {
 
             /* for future Security updates
             AuthorizationResult authorizationResult = authorizationManager.checkToken(token);
 
             if (authorizationResult.isValidated()) {
-                Map<String, ResourcePersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
-                prepareContentOfMessage(persistenceOperationResultsList);
+                Map<String, ResourcePersistenceResult> persistenceOperationResultsList = makePersistenceOperations(informationModel);
+                prepareContentOfRPCResponse(persistenceOperationResultsList);
             } else {
                 informationModelResponse.setStatus(400);
                 informationModelResponse.setMessage(authorizationResult.getMessage());
             }
             */
 
-            Map<String, ResourcePersistenceResult> stringResourcePersistenceResultMap = makePersistenceOperations(coreResources);
+
+            informationModel = informationModelValidationResult.getObjectDescription();
+            log.info("CoreResources received from SM! Content: " + informationModel);
+
+            InformationModelPersistenceResult informationModelPersistenceResult = makePersistenceOperations(informationModel);
+            prepareContentOfRPCResponse(informationModelPersistenceResult);
 
         } else {
             informationModelResponse.setStatus(500);
             informationModelResponse.setMessage("Validation Error. Semantic Manager message: "
-                    + resourceInstanceValidationResult.getMessage());
+                    + informationModelValidationResult.getMessage());
         }
+
         sendRpcResponse();
     }
 
     /**
      * Performing persistence operations accordingly - saving or modyfying resources in Mongo DB.
      *
-     * @param coreResources
+     * @param informationModel
      */
-    private Map<String, ResourcePersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
-        Map<String, ResourcePersistenceResult> persistenceOperationResultsMap = new HashMap<>();
+    private InformationModelPersistenceResult makePersistenceOperations(InformationModel informationModel) {
+        InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult() {
+        };
         switch (operationType) {
             case CREATION:
-                for (String key : coreResources.keySet()) {
-                    ResourcePersistenceResult resourceSavingResult =
-                            this.repositoryManager.saveResource(coreResources.get(key));
-                    persistenceOperationResultsMap.put(key, resourceSavingResult);
-                }
+                informationModelPersistenceResult = this.repositoryManager.saveInformationModel(informationModel);
                 break;
             case MODIFICATION:
-                for (String key : coreResources.keySet()) {
-                    ResourcePersistenceResult resourceModificationResult =
-                            this.repositoryManager.modifyResource(coreResources.get(key));
-                    persistenceOperationResultsMap.put(key, resourceModificationResult);
-                }
+                informationModelPersistenceResult = this.repositoryManager.modifyInformationModel(informationModel);
                 break;
         }
-        for (String key : persistenceOperationResultsMap.keySet()) {
-            if (persistenceOperationResultsMap.get(key).getStatus() != 200) {
-                this.bulkRequestSuccess = false;
-                log.error("One (or more) of resources could not be processed. " +
-                        "Check list of response objects for details.");
-                informationModelResponse.setStatus(500);
-                informationModelResponse.setMessage("One (or more) of resources could not be processed. " +
-                        "Check list of response objects for details.");
-            }
+        if (informationModelPersistenceResult.getStatus() != 200) {
+            this.requestSuccess = false;
+            log.error("Information Model could not be processed. Check response object for details.");
+            informationModelResponse.setStatus(500);
+            informationModelResponse.setMessage("Information Model could not be processed. Check response object for details.");
         }
-        return persistenceOperationResultsMap;
+        return informationModelPersistenceResult;
     }
 
     /**
      * prepares content of message with bulk save result
      */
-    private void prepareContentOfMessage(Map<String, ResourcePersistenceResult> persistenceOperationResultsMap) {
-        List<CoreResource> savedCoreResourcesList = new ArrayList<>();
-        Map<String, Resource> savedResourcesMap = new HashMap<>();
-        if (bulkRequestSuccess) {
-            for (String key : persistenceOperationResultsMap.keySet()) {
-                ResourcePersistenceResult resourcePersistenceResult = persistenceOperationResultsMap.get(key);
-                savedCoreResourcesList.add(resourcePersistenceResult.getResource());
-                savedResourcesMap.put(key, RegistryUtils.convertCoreResourceToResource(resourcePersistenceResult.getResource()));
-            }
-            sendFanoutMessage(savedCoreResourcesList);
+    private void prepareContentOfRPCResponse(InformationModelPersistenceResult informationModelPersistenceResult) {
+        InformationModel informationModel = informationModelPersistenceResult.getInformationModel();
+        if (informationModelPersistenceResult.getStatus() == 200) {
 
-            log.info("Bulk operation successful! (" + this.operationType.toString() + ")");
+            rabbitManager.sendInformationModelOperationMessage(informationModel,
+                    operationType);
+
+            log.info("IM operation successful! (" + this.operationType.toString() + ")");
             informationModelResponse.setStatus(200);
-            informationModelResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
-
-            try {
-                informationModelResponse.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
-                }).writeValueAsString(savedResourcesMap));
-            } catch (JsonProcessingException e) {
-                log.error("Could not map list of resource to JSON", e);
-            }
+            informationModelResponse.setMessage("IM operation successful! (" + this.operationType.toString() + ")");
+            informationModelResponse.setInformationModel(informationModel);
 
         } else {
-            for (String key : persistenceOperationResultsMap.keySet()) {
-                if (persistenceOperationResultsMap.get(key).getStatus() == 200) {
-                    rollback(persistenceOperationResultsMap.get(key).getResource());
-                }
-            }
-            log.error("Bulk request ERROR");
+            rollback(informationModel);
+
+            log.error("IM operation request ERROR");
             informationModelResponse.setStatus(500);
-            informationModelResponse.setMessage("Bulk request ERROR");
+            informationModelResponse.setMessage("IM operation request ERROR");
         }
     }
 
@@ -217,6 +179,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
      * //odeslanie na RPC core response (z listą resourców z ID'kami jesli zapis sie powiódł)
      */
     private void sendRpcResponse() {
+        String response = "error";
         try {
             response = mapper.writeValueAsString(informationModelResponse);
         } catch (JsonProcessingException e) {
@@ -233,25 +196,15 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
     }
 
     /**
-     * Sends a Fanout message with payload constisting of modified resources list and its Platform Id.
-     */
-    private void sendFanoutMessage(List<CoreResource> savedCoreResourcesList) {
-        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
-        payload.setResources(savedCoreResourcesList);
-        payload.setPlatformId(resourcesPlatformId);
-        rabbitManager.sendResourceOperationMessage(payload, operationType);
-    }
-
-    /**
      * Type of transaction rollback used for bulk registration, triggered for all successfully saved objects when
      * any of given objects in list did not save successfully in database.
      *
-     * @param resource
+     * @param informationModel
      */
-    private void rollback(CoreResource resource) {
+    private void rollback(InformationModel informationModel) {
         switch (operationType) {
             case CREATION:
-                repositoryManager.removeResource(resource);
+                repositoryManager.removeInformationModel(informationModel);
                 break;
             case MODIFICATION:
                 log.error("ROLLBACK NOT IMPLEMENTED!");
@@ -259,6 +212,4 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
                 break;
         }
     }
-
-    //MOCKED !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }

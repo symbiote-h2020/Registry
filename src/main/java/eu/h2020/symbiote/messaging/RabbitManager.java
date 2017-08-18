@@ -621,6 +621,28 @@ public class RabbitManager {
         }
     }
 
+    public void sendInformationModelOperationMessage(InformationModel payload,
+                                                     RegistryOperationType operationType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(payload);
+
+            switch (operationType) {
+                case CREATION:
+                    sendMessage(this.informationModelExchangeName, this.informationModelCreatedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    break;
+                case MODIFICATION:
+                    sendMessage(this.informationModelExchangeName, this.informationModelModifiedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    break;
+            }
+            log.info("- information model operation (" + operationType + ") message sent (fanout). Contents:\n" + message);
+        } catch (JsonProcessingException e) {
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
+        }
+    }
+
     public void sendResourcesRemovalMessage(List<String> resourcesIds) {
         ObjectMapper mapper = new ObjectMapper();
         String message = "";
@@ -814,11 +836,7 @@ public class RabbitManager {
         }
     }
 
-    public void sendInformationModelOperationMessage(InformationModel informationModel, RegistryOperationType operationType) {
-        //// TODO: 14.08.2017 implement!
-    }
-
-    public void sendInformationModelValidationRpcMessage(InformationModelCreationRequestConsumer rpcConsumer,
+    public void sendInformationModelValidationRpcMessage(DefaultConsumer rpcConsumer,
                                                          AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
                                                          String message, RegistryOperationType operationType) {
         try {

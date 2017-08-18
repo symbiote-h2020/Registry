@@ -1,12 +1,12 @@
 package eu.h2020.symbiote.managers;
 
-import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
@@ -324,16 +324,31 @@ public class RepositoryManager {
         return resourceRemovalResult;
     }
 
-    public InformationModelResponse saveInformationModel(InformationModel informationModelReceived) {
+    public InformationModelPersistenceResult saveInformationModel(InformationModel informationModelReceived) {
         //// TODO: 14.08.2017 IMPLEMENT!
         return null;
     }
 
-    public InformationModelResponse modifyInformationModel(InformationModel informationModelReceived) {
+    public InformationModelPersistenceResult modifyInformationModel(InformationModel informationModelReceived) {
         //// TODO: 14.08.2017 IMPLEMENT!
         return null;
     }
 
+    public InformationModelPersistenceResult removeInformationModel(InformationModel informationModelReceived) {
+        InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
+        informationModelPersistenceResult.setInformationModel(informationModelReceived);
+        try {
+            informationModelRepository.delete(informationModelReceived);
+            informationModelPersistenceResult.setStatus(200);
+            informationModelPersistenceResult.setMessage("ok");
+        } catch (IllegalArgumentException e) {
+            log.info("Given IM does not exist in database!");
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            informationModelPersistenceResult.setMessage("Given IM does not exist in database!");
+        }
+
+        return informationModelPersistenceResult;
+    }
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         Platform platform = platformRepository.findOne(platformId);
         List<CoreResource> coreResources = new ArrayList<>();
@@ -376,4 +391,5 @@ public class RepositoryManager {
 
         return id;
     }
+
 }

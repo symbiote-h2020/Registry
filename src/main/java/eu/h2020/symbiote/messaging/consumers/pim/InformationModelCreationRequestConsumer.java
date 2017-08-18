@@ -32,8 +32,8 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
      *
-     * @param channel           the channel to which this consumer is attached
-     * @param rabbitManager     rabbit manager bean passed for access to messages manager
+     * @param channel       the channel to which this consumer is attached
+     * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
     public InformationModelCreationRequestConsumer(Channel channel,
                                                    RabbitManager rabbitManager,
@@ -72,22 +72,16 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             response.setInformationModel(informationModelReceived);
 
             //// TODO: 11.08.2017 should i check some informations given in platform?
+            // TODO: 18.08.2017 authorization check!
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
-
-
 
                 log.info("Message to Semantic Manager Sent. Request: " + informationModelRequest);
                 //sending JSON content to Semantic Manager and passing responsibility to another consumer
                 rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
                         mapper.writeValueAsString(informationModelReceived),
-                        RegistryOperationType.CREATION); //authorizationManager needed?
+                        RegistryOperationType.CREATION);
 
-
-                if (response.getStatus() == 200) {
-                    rabbitManager.sendInformationModelOperationMessage(response.getInformationModel(),
-                            RegistryOperationType.CREATION);
-                }
             } else {
                 log.error("Given IM has some fields null or empty");
                 response.setMessage("Given IM has some fields null or empty");
