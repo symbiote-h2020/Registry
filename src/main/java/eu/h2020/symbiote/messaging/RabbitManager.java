@@ -621,25 +621,30 @@ public class RabbitManager {
         }
     }
 
-    public void sendInformationModelOperationMessage(InformationModel payload,
+    public void sendInformationModelOperationMessage(InformationModel informationModel,
                                                      RegistryOperationType operationType) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(payload);
+            String message = mapper.writeValueAsString(informationModel);
 
             switch (operationType) {
                 case CREATION:
                     sendMessage(this.informationModelExchangeName, this.informationModelCreatedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
+                            informationModel.getClass().getCanonicalName());
                     break;
                 case MODIFICATION:
                     sendMessage(this.informationModelExchangeName, this.informationModelModifiedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
+                            informationModel.getClass().getCanonicalName());
+                    break;
+                case REMOVAL:
+                    sendMessage(this.informationModelExchangeName, this.informationModelRemovedRoutingKey, message,
+                            informationModel.getClass().getCanonicalName());
+                    log.info("- platform removed message sent");
                     break;
             }
             log.info("- information model operation (" + operationType + ") message sent (fanout). Contents:\n" + message);
         } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + informationModel, e);
         }
     }
 

@@ -346,9 +346,9 @@ public class RepositoryManager {
             informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             informationModelPersistenceResult.setMessage("Given IM does not exist in database!");
         }
-
         return informationModelPersistenceResult;
     }
+
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         Platform platform = platformRepository.findOne(platformId);
         List<CoreResource> coreResources = new ArrayList<>();
