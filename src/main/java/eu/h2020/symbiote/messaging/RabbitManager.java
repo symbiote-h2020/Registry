@@ -46,10 +46,6 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
 @Component
 public class RabbitManager {
 
-    //// TODO: 09.05.2017 REFACTOR
-
-    //// TODO for release 3.: 27.03.2017 prepare and start Information Model queues and Consumers
-
     private static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
     private static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
     private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
@@ -259,6 +255,10 @@ public class RabbitManager {
                 channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODELS_REQUESTED_QUEUE);
                 channel.queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
                 channel.queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
@@ -495,9 +495,6 @@ public class RabbitManager {
      * @throws IOException
      */
     public void startConsumerOfInformationModelModificationMessages() throws InterruptedException {
-
-        //// TODO: 17.08.2017 MOCKED! CHANGE!
-
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -505,7 +502,7 @@ public class RabbitManager {
             channel.queueBind(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelModificationRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Platform Modification messages....");
+            log.info("Receiver waiting for Information Model Modification messages....");
 
             Consumer consumer = new InformationModelModificationRequestConsumer(channel, this, authorizationManager);
             channel.basicConsume(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE, false, consumer);
@@ -522,9 +519,6 @@ public class RabbitManager {
      * @throws IOException
      */
     public void startConsumerOfInformationModelRemovalMessages() throws InterruptedException {
-
-        //// TODO: 17.08.2017 MOCKED! CHANGE!
-
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -532,7 +526,7 @@ public class RabbitManager {
             channel.queueBind(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelRemovalRequestedRoutingKey);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
 
-            log.info("Receiver waiting for Platform Removal messages....");
+            log.info("Receiver waiting for Information Model Removal messages....");
 
             Consumer consumer = new InformationModelRemovalRequestConsumer(channel, this, authorizationManager, repositoryManager);
             channel.basicConsume(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE, false, consumer);

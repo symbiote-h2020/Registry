@@ -68,7 +68,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
 
-        //// TODO: 16.08.2017 UPDATE to Interworking Service checking similiar to CREATION!
+        //// TODO: 16.08.2017 UPDATE to Interworking Service checking similar to CREATION!
 
         log.info(" [x] Received resources to modify (CoreResourceRegistryRequest):'" + message + "'");
 

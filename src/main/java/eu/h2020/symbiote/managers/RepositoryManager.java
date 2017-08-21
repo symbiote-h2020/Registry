@@ -30,6 +30,7 @@ import java.util.List;
 public class RepositoryManager {
 
     private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID!";
+    private static final String IM_HAS_NULL_OR_EMPTY_ID = "Information Model has null or empty ID!";
     private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
@@ -245,8 +246,6 @@ public class RepositoryManager {
         CoreResource foundResource;
         resourceSavingResult.setResource(resource);
 
-        //todo
-
         if (resource.getId() == null || resource.getId().isEmpty()) {
             log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
@@ -264,7 +263,6 @@ public class RepositoryManager {
         normalizeResourceInterworkingServiceUrl(resource);
 
         foundResource = resourceRepository.findOne(resource.getId());
-
 
         if (foundResource == null) {
             log.error("Given resource does not exist in database!");
@@ -324,14 +322,72 @@ public class RepositoryManager {
         return resourceRemovalResult;
     }
 
-    public InformationModelPersistenceResult saveInformationModel(InformationModel informationModelReceived) {
-        //// TODO: 14.08.2017 IMPLEMENT!
-        return null;
+    public InformationModelPersistenceResult saveInformationModel(InformationModel informationModel) {
+
+        InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
+        informationModelPersistenceResult.setInformationModel(informationModel);
+
+        if (informationModel.getId() == null || informationModel.getId().isEmpty()) {
+            log.error(IM_HAS_NULL_OR_EMPTY_ID);
+            informationModelPersistenceResult.setMessage(IM_HAS_NULL_OR_EMPTY_ID);
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                log.info("Saving Information Model: " + informationModel.toString());
+
+                InformationModel savedIM = informationModelRepository.save(informationModel);
+                log.info("Information Model with id: " + savedIM.getId() + " saved !");
+
+                informationModelPersistenceResult.setStatus(HttpStatus.SC_OK);
+                informationModelPersistenceResult.setMessage("OK");
+                informationModelPersistenceResult.setInformationModel(savedIM);
+            } catch (Exception e) {
+                log.error("Error occurred during Information Model saving in db", e);
+                informationModelPersistenceResult.setMessage("Error occurred during Information Model saving in db");
+                informationModelPersistenceResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return informationModelPersistenceResult;
     }
 
-    public InformationModelPersistenceResult modifyInformationModel(InformationModel informationModelReceived) {
-        //// TODO: 14.08.2017 IMPLEMENT!
-        return null;
+    public InformationModelPersistenceResult modifyInformationModel(InformationModel informationModel) {
+        InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
+        InformationModel foundInformationModel;
+        informationModelPersistenceResult.setInformationModel(informationModel);
+
+        if (informationModel.getId() == null || informationModel.getId().isEmpty()) {
+            log.error(IM_HAS_NULL_OR_EMPTY_ID);
+            informationModelPersistenceResult.setMessage(IM_HAS_NULL_OR_EMPTY_ID);
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            return informationModelPersistenceResult;
+        }
+
+        //todo?? normalizeResourceInterworkingServiceUrl(informationModel);
+
+        foundInformationModel = informationModelRepository.findOne(informationModel.getId());
+
+        if (foundInformationModel == null) {
+            log.error("Given informationModel does not exist in database!");
+            informationModelPersistenceResult.setMessage("Given informationModel does not exist in database!");
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            return informationModelPersistenceResult;
+        }
+
+        try {
+            InformationModel savedInformationModel = informationModelRepository.save(informationModel);
+            log.info("informationModel with id: " + informationModel.getId() + " modified !");
+
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_OK);
+            informationModelPersistenceResult.setMessage("OK");
+            informationModelPersistenceResult.setInformationModel(savedInformationModel);
+        } catch (Exception e) {
+            log.error("Error occurred during informationModel modifying in db", e);
+            informationModelPersistenceResult.setMessage("Error occurred during informationModel modifying in db");
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        }
+
+        //todo ?? rollback ??
+        return informationModelPersistenceResult;
     }
 
     public InformationModelPersistenceResult removeInformationModel(InformationModel informationModelReceived) {

@@ -183,7 +183,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     }
 
     private boolean checkIds(List<Resource> resources) {
-        //mocked !! // TODO: 08.08.2017 // FIXME: 08.08.2017
+        //mocked !! // TODO: 08.08.2017 // FIXME: 08.08.2017 Update to new RESOURCES types
         /*
         try {
             for (Resource resource : resources) {
