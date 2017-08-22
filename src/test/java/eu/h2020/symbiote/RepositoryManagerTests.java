@@ -5,6 +5,7 @@ import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
 import org.apache.http.HttpStatus;
@@ -30,12 +31,13 @@ public class RepositoryManagerTests {
     RepositoryManager repositoryManager;
     PlatformRepository registryPlatformRepository;
     ResourceRepository resourceRepository;
+    InformationModelRepository informationModelRepository;
 
     @Before
     public void setup() {
         registryPlatformRepository = Mockito.mock(PlatformRepository.class);
         resourceRepository = Mockito.mock(ResourceRepository.class);
-        repositoryManager = new RepositoryManager(registryPlatformRepository, resourceRepository);
+        repositoryManager = new RepositoryManager(registryPlatformRepository, resourceRepository, informationModelRepository);
     }
 
     @After

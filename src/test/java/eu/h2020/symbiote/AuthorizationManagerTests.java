@@ -1,11 +1,11 @@
 package eu.h2020.symbiote;
 
+import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.Platform;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.InternalSecurityHandler;
 import eu.h2020.symbiote.security.enums.ValidationStatus;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
