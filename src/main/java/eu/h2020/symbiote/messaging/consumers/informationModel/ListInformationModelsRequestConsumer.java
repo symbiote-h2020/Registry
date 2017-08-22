@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.messaging.consumers.pim;
+package eu.h2020.symbiote.messaging.consumers.informationModel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.AMQP;
@@ -62,11 +62,6 @@ public class ListInformationModelsRequestConsumer extends DefaultConsumer {
         informationModelListResponse.setStatus(HttpStatus.SC_OK);
         informationModelListResponse.setMessage("OK. " + informationModels.size() + " Information Models found!");
         informationModelListResponse.setInformationModels(informationModels);
-        sendRpcReplyMessage(envelope, properties, informationModelListResponse);
-    }
-
-    private void sendRpcReplyMessage(Envelope envelope, AMQP.BasicProperties properties,
-                                     InformationModelListResponse informationModelListResponse) throws IOException {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(informationModelListResponse));
     }
 }

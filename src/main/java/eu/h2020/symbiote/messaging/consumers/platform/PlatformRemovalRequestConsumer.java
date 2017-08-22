@@ -11,6 +11,7 @@ import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,6 +30,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
+     * RPC reply body: PlatformRegistryResponse (mapped to JSON).
      *
      * @param channel           the channel to which this consumer is attached
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
@@ -41,7 +43,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
     }
-
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
@@ -58,8 +59,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
 
-        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
-
         ObjectMapper mapper = new ObjectMapper();
         String response;
         String message = new String(body, "UTF-8");
@@ -69,15 +68,23 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         Platform requestPlatform;
 
         try {
+            //// TODO: 22.08.2017 change to PlatformRegistryRequest
+
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 
-            //// TODO: 11.08.2017 should i check some informations given in platform?
+            //// TODO: 11.08.2017 should i check some information given in platform?
 
-            platformResponse = this.repositoryManager.removePlatform(requestPlatform);
-            if (platformResponse.getStatus() == 200) {
-                rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
+            PlatformPersistenceResult platformPersistenceResult = this.repositoryManager.removePlatform(requestPlatform);
+            if (platformPersistenceResult.getStatus() == 200) {
+                rabbitManager.sendPlatformOperationMessage(platformPersistenceResult.getPlatform(),
                         RegistryOperationType.REMOVAL);
+            } else {
+                log.error("Error occurred during Platform removing from db, due to: " +
+                        platformPersistenceResult.getMessage());
+                platformResponse.setMessage("Error occurred during Platform removing from db, due to: " +
+                        platformPersistenceResult.getMessage());
+                platformResponse.setStatus(500);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occurred during Platform deleting in db", e);

@@ -58,7 +58,7 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
      * Waiting for message containing CoreResourceRegistryRequest with Token and Platform Id fields only.
-     * Replies with List of Resources. It can be an empty list.
+     * RPC reply body: List of Resources (mapped to JSON). It can be an empty list.
      *
      * @param consumerTag the <i>consumer tag</i> associated with the consumer
      * @param envelope    packaging data for the message

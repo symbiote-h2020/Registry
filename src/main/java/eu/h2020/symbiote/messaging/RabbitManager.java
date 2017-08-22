@@ -6,11 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
+import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.messaging.consumers.pim.*;
+import eu.h2020.symbiote.messaging.consumers.informationModel.*;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformRemovalRequestConsumer;
@@ -286,6 +287,8 @@ public class RabbitManager {
             startConsumerOfInformationModelCreationMessages();
             startConsumerOfInformationModelModificationMessages();
             startConsumerOfInformationModelRemovalMessages();
+
+            //// TODO: 22.08.2017 Start Federation Consumers!
 
             startConsumerOfPlatformResourcesRequestsMessages();
             startConsumerOfListAllInformationModelsRequestsMessages();
@@ -867,5 +870,9 @@ public class RabbitManager {
         } catch (IOException e) {
             log.error(e);
         }
+    }
+
+    public void sendFederationOperationMessage(Federation federation, RegistryOperationType operationType) {
+        //// TODO: 22.08.2017 IMPLEMENT!
     }
 }

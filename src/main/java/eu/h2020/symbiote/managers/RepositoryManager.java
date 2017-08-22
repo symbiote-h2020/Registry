@@ -1,12 +1,14 @@
 package eu.h2020.symbiote.managers;
 
-import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
+import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.model.FederationPersistenceResult;
 import eu.h2020.symbiote.model.InformationModelPersistenceResult;
+import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
@@ -56,35 +58,35 @@ public class RepositoryManager {
      * @param platformToSave Platform to save - in JSON format
      * @return PlatformRegistryResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
      */
-    public PlatformRegistryResponse savePlatform(Platform platformToSave) {
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
+    public PlatformPersistenceResult savePlatform(Platform platformToSave) {
+        PlatformPersistenceResult platformSavingResult = new PlatformPersistenceResult();
         Platform savedPlatform;
-        platformResponse.setPlatform(platformToSave);
+        platformSavingResult.setPlatform(platformToSave);
 
         log.info("Received platform to save: " + platformToSave);
 
         if (platformToSave.getId() == null || platformToSave.getId().isEmpty()) {
             log.error("Given platform has null or empty id!");
-            platformResponse.setMessage("Given platform has null or empty id!");
-            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            platformSavingResult.setMessage("Given platform has null or empty id!");
+            platformSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            if (platformResponse.getStatus() != HttpStatus.SC_BAD_REQUEST) {
+            if (platformSavingResult.getStatus() != HttpStatus.SC_BAD_REQUEST) {
                 try {
                     log.info("Saving platform: " + platformToSave.getId());
 
                     savedPlatform = platformRepository.save(platformToSave);
                     log.info("Platform \"" + savedPlatform + "\" saved !");
-                    platformResponse.setStatus(HttpStatus.SC_OK);
-                    platformResponse.setMessage("OK");
-                    platformResponse.setPlatform(savedPlatform);
+                    platformSavingResult.setStatus(HttpStatus.SC_OK);
+                    platformSavingResult.setMessage("OK");
+                    platformSavingResult.setPlatform(savedPlatform);
                 } catch (Exception e) {
                     log.error("Error occurred during Platform saving to db", e);
-                    platformResponse.setMessage("Error occurred during Platform saving to db");
-                    platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                    platformSavingResult.setMessage("Error occurred during Platform saving to db");
+                    platformSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
                 }
             }
         }
-        return platformResponse;
+        return platformSavingResult;
     }
 
     /**
@@ -100,25 +102,25 @@ public class RepositoryManager {
      * @param platformToModify Platform to remove - in JSON format
      * @return PlatformRegistryResponse with Http status code and modified Platform object - in JSON format
      */
-    public PlatformRegistryResponse modifyPlatform(Platform platformToModify) {
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
-        platformResponse.setPlatform(platformToModify);
+    public PlatformPersistenceResult modifyPlatform(Platform platformToModify) {
+        PlatformPersistenceResult platformModifyingResult = new PlatformPersistenceResult();
+        platformModifyingResult.setPlatform(platformToModify);
 
         normalizePlatformsInterworkingServicesUrls(platformToModify);
 
         Platform foundPlatform = null;
         if (platformToModify.getId() == null || platformToModify.getId().isEmpty()) {
             log.error("Given platform has empty PlatformId!");
-            platformResponse.setMessage("Given platform has empty PlatformId!");
-            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            platformModifyingResult.setMessage("Given platform has empty PlatformId!");
+            platformModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             foundPlatform = platformRepository.findOne(platformToModify.getId());
         }
 
         if (foundPlatform == null) {
             log.error(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
-            platformResponse.setMessage(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
-            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            platformModifyingResult.setMessage(GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE);
+            platformModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
                 //fulfilment of empty Platform fields before saving
@@ -127,16 +129,16 @@ public class RepositoryManager {
                 platformRepository.save(modifiedPlatform);
                 log.info("Platform with id: " + modifiedPlatform.getId() + " modified !");
 
-                platformResponse.setStatus(HttpStatus.SC_OK);
-                platformResponse.setMessage("OK");
-                platformResponse.setPlatform(modifiedPlatform);
+                platformModifyingResult.setStatus(HttpStatus.SC_OK);
+                platformModifyingResult.setMessage("OK");
+                platformModifyingResult.setPlatform(modifiedPlatform);
             } catch (Exception e) {
                 log.error("Error occurred during Platform modifying in db", e);
-                platformResponse.setMessage("Error occurred during Platform modifying in db");
-                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                platformModifyingResult.setMessage("Error occurred during Platform modifying in db");
+                platformModifyingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-        return platformResponse;
+        return platformModifyingResult;
     }
 
     /**
@@ -148,33 +150,33 @@ public class RepositoryManager {
      * @param platformToRemove Platform to remove - in JSON format
      * @return PlatformRegistryResponse with Http status code and removed Platform object - in JSON format
      */
-    public PlatformRegistryResponse removePlatform(Platform platformToRemove) {
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
-        platformResponse.setPlatform(platformToRemove);
+    public PlatformPersistenceResult removePlatform(Platform platformToRemove) {
+        PlatformPersistenceResult platformRemovingResult = new PlatformPersistenceResult();
+        platformRemovingResult.setPlatform(platformToRemove);
 
         if (platformToRemove == null || platformToRemove.getId() == null || platformToRemove.getId().isEmpty()) {
             log.error("Given platform is null or has empty PlatformId!");
-            platformResponse.setMessage("Given platform is null or has empty PlatformId!");
-            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            platformRemovingResult.setMessage("Given platform is null or has empty PlatformId!");
+            platformRemovingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else if (resourceRepository.findByInterworkingServiceURL(platformToRemove.getId()) != null
                 && !resourceRepository.findByInterworkingServiceURL(platformToRemove.getId()).isEmpty()) {
             log.error("Given Platform has registered resources. Take care of resources first.");
-            platformResponse.setMessage("Given Platform has registered resources. Take care of resources first.");
-            platformResponse.setStatus(HttpStatus.SC_CONFLICT);
+            platformRemovingResult.setMessage("Given Platform has registered resources. Take care of resources first.");
+            platformRemovingResult.setStatus(HttpStatus.SC_CONFLICT);
         } else {
             try {
                 platformRepository.delete(platformToRemove.getId());
                 log.info("Platform with id: " + platformToRemove.getId() + " removed !");
 
-                platformResponse.setStatus(HttpStatus.SC_OK);
-                platformResponse.setMessage("OK");
+                platformRemovingResult.setStatus(HttpStatus.SC_OK);
+                platformRemovingResult.setMessage("OK");
             } catch (Exception e) {
                 log.error("Error occurred during Platform removing from db", e);
-                platformResponse.setMessage("Error occurred during Platform removing from db");
-                platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                platformRemovingResult.setMessage("Error occurred during Platform removing from db");
+                platformRemovingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             }
         }
-        return platformResponse;
+        return platformRemovingResult;
     }
 
     //// TODO: 25.07.2017 test method!
@@ -405,6 +407,21 @@ public class RepositoryManager {
         return informationModelPersistenceResult;
     }
 
+    public FederationPersistenceResult saveFederation(Federation federation){
+        return null;
+        //// TODO: 22.08.2017 implement!
+    }
+
+    public FederationPersistenceResult modifyFederation(Federation federation){
+        return null;
+        //// TODO: 22.08.2017 implement!
+    }
+
+    public FederationPersistenceResult removeFederation(Federation federation){
+        return null;
+        //// TODO: 22.08.2017 implement!
+    }
+
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         Platform platform = platformRepository.findOne(platformId);
         List<CoreResource> coreResources = new ArrayList<>();
@@ -448,4 +465,13 @@ public class RepositoryManager {
         return id;
     }
 
+    public List<Federation> getFederationsForPlatform() {
+        return null;
+        //// TODO: 22.08.2017 implement!
+    }
+
+    public List<Federation> getAllFederations() {
+        return null;
+        //// TODO: 22.08.2017 implement!
+    }
 }

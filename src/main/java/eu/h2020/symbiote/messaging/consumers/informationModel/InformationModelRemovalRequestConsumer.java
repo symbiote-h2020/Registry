@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.messaging.consumers.pim;
+package eu.h2020.symbiote.messaging.consumers.informationModel;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

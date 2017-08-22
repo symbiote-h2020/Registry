@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.utils;
 
+import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
@@ -202,6 +203,11 @@ public class RegistryUtils {
             type = CoreResourceType.STATIONARY_SENSOR;
         }
         return type;
+    }
+
+    public static boolean validateFields(Federation requestFederation) {
+        return true;
+        //// TODO: 22.08.2017 mocked, implement!
     }
 
     /* Deprecated ////////////////////
