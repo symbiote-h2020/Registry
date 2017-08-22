@@ -82,8 +82,8 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException | JsonMappingException | JsonParseException e) {
-            log.error("Error occured during getting Request from Json", e);
-            resourceRegistryResponse.setMessage("Error occured during getting Request from Json");
+            log.error("Error occurred during getting Request from Json", e);
+            resourceRegistryResponse.setMessage("Error occurred during getting Request from Json");
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
             return;
         }

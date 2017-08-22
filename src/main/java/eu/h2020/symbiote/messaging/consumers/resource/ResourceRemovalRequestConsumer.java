@@ -91,9 +91,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during getting Operation Request from Json", e);
+            log.error("Error occurred during getting Operation Request from Json", e);
             response.setStatus(400);
-            response.setMessage("Error occured during getting Operation Request from Json");
+            response.setMessage("Error occurred during getting Operation Request from Json");
         }
 
         if (request != null) {
@@ -118,9 +118,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
             });
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during getting Resources from Json", e);
+            log.error("Error occurred during getting Resources from Json", e);
             response.setStatus(400);
-            response.setMessage("Error occured during getting Resources from Json");
+            response.setMessage("Error occurred during getting Resources from Json");
         }
 
         AuthorizationResult resourcesAccessAuthorizationResult =

@@ -99,25 +99,26 @@ public class RegistryUtils {
             b = false;
 
         } else {
-            /*
-            if (informationModel.getInterworkingServiceURL() == null
-                    || informationModel.getComments() == null
-                    || informationModel.getLabels() == null) {
+            if (informationModel.getName() == null
+                    || informationModel.getOwner() == null
+                    || informationModel.getUri() == null) {
                 log.info("Given informationModel has some null fields");
                 b = false;
-            } else if (informationModel.getInterworkingServiceURL().isEmpty()
-                    || informationModel.getComments().isEmpty()
-                    || informationModel.getLabels().isEmpty()) {
+            } else if (informationModel.getName().isEmpty()
+                    || informationModel.getOwner().isEmpty()
+                    || informationModel.getUri().isEmpty()) {
                 log.info("Given informationModel has some empty fields");
                 b = false;
-
             } else {
                 b = true;
             }
-            */
-            b=true; //// TODO: 11.08.2017 MOCKED!
         }
         return b;
+    }
+
+    public static boolean validateNullOrEmptyId(InformationModel informationModel){
+        if (informationModel.getId() == null || informationModel.getId().isEmpty()) return true;
+        return false;
     }
 
     /**

@@ -34,7 +34,6 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private RegistryOperationType operationType;
-    private boolean requestSuccess = true;
     private ObjectMapper mapper;
     private AuthorizationManager authorizationManager;
 
@@ -142,7 +141,6 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
                 break;
         }
         if (informationModelPersistenceResult.getStatus() != 200) {
-            this.requestSuccess = false;
             log.error("Information Model could not be processed. Check response object for details.");
             informationModelResponse.setStatus(500);
             informationModelResponse.setMessage("Information Model could not be processed. Check response object for details.");
@@ -157,8 +155,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         InformationModel informationModel = informationModelPersistenceResult.getInformationModel();
         if (informationModelPersistenceResult.getStatus() == 200) {
 
-            rabbitManager.sendInformationModelOperationMessage(informationModel,
-                    operationType);
+            rabbitManager.sendInformationModelOperationMessage(informationModel, operationType);
 
             log.info("IM operation successful! (" + this.operationType.toString() + ")");
             informationModelResponse.setStatus(200);

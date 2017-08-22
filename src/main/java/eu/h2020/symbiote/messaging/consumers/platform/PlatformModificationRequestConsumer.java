@@ -78,8 +78,8 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
                         RegistryOperationType.MODIFICATION);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during Platform saving to db", e);
-            platformResponse.setMessage("Error occured during Platform saving to db");
+            log.error("Error occurred during Platform saving to db", e);
+            platformResponse.setMessage("Error occurred during Platform saving to db");
             platformResponse.setStatus(400);
         }
 

@@ -84,8 +84,8 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
                 platformResponse.setStatus(400);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during Platform saving to db", e);
-            platformResponse.setMessage("Error occured during Platform saving to db");
+            log.error("Error occurred during Platform saving to db", e);
+            platformResponse.setMessage("Error occurred during Platform saving to db");
             platformResponse.setStatus(400);
         }
         response = mapper.writeValueAsString(platformResponse);

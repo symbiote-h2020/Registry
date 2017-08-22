@@ -71,26 +71,30 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             informationModelReceived = informationModelRequest.getInformationModel();
             response.setInformationModel(informationModelReceived);
 
-            //// TODO: 11.08.2017 should i check some informations given in platform?
             // TODO: 18.08.2017 authorization check!
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
-
-                log.info("Message to Semantic Manager Sent. Request: " + informationModelRequest);
-                //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
-                        mapper.writeValueAsString(informationModelReceived),
-                        RegistryOperationType.CREATION);
-
+                if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
+                    log.info("Message to Semantic Manager Sent. Validation request: " + informationModelRequest);
+                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                    rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
+                            mapper.writeValueAsString(informationModelReceived),
+                            RegistryOperationType.CREATION);
+                } else {
+                    log.error("Given Information Model has an ID! It should not have an ID!");
+                    response.setMessage("Given Information Model has an ID! It should not have an ID!");
+                    response.setStatus(400);
+                    rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                }
             } else {
-                log.error("Given IM has some fields null or empty");
-                response.setMessage("Given IM has some fields null or empty");
+                log.error("Given Information Model has some fields null or empty");
+                response.setMessage("Given Information Model has some fields null or empty");
                 response.setStatus(400);
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during IM saving to db", e);
-            response.setMessage("Error occured during IM saving to db");
+            log.error("Error occurred during Information Model retrieving from message", e);
+            response.setMessage("Error occurred during Information Model retrieving from message");
             response.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }

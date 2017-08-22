@@ -552,7 +552,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for List All Information Models Requests messages....");
 
-            Consumer consumer = new ListOfInformationModelsRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            Consumer consumer = new ListInformationModelsRequestConsumer(channel, repositoryManager, this, authorizationManager);
             channel.basicConsume(INFORMATION_MODELS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -633,7 +633,6 @@ public class RabbitManager {
                 case REMOVAL:
                     sendMessage(this.informationModelExchangeName, this.informationModelRemovedRoutingKey, message,
                             informationModel.getClass().getCanonicalName());
-                    log.info("- platform removed message sent");
                     break;
             }
             log.info("- information model operation (" + operationType + ") message sent (fanout). Contents:\n" + message);

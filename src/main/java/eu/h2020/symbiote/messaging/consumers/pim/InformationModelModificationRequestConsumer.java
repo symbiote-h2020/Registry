@@ -65,17 +65,21 @@ public class InformationModelModificationRequestConsumer extends DefaultConsumer
             informationModelReceived = informationModelRequest.getInformationModel();
             response.setInformationModel(informationModelReceived);
 
-            //// TODO: 11.08.2017 should i check some informations given in platform?
             // TODO: 18.08.2017 authorization check!
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
-
-                log.info("Message to Semantic Manager Sent. Request: " + informationModelRequest);
-                //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
-                        mapper.writeValueAsString(informationModelReceived),
-                        RegistryOperationType.MODIFICATION);
-
+                if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
+                    log.error("Given Information Model has not ID! It should have an ID!");
+                    response.setMessage("Given Information Model has no ID! It should  have an ID!");
+                    response.setStatus(400);
+                    rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                } else {
+                    log.info("Message to Semantic Manager Sent. Request: " + informationModelRequest);
+                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                    rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
+                            mapper.writeValueAsString(informationModelReceived),
+                            RegistryOperationType.MODIFICATION);
+                }
             } else {
                 log.error("Given IM has some fields null or empty");
                 response.setMessage("Given IM has some fields null or empty");
@@ -83,8 +87,8 @@ public class InformationModelModificationRequestConsumer extends DefaultConsumer
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during IM modification in db", e);
-            response.setMessage("Error occured during IM modification in db");
+            log.error("Error occurred during IM modification in db", e);
+            response.setMessage("Error occurred during IM modification in db");
             response.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }

@@ -80,8 +80,8 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
                         RegistryOperationType.REMOVAL);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occured during Platform deleting in db", e);
-            platformResponse.setMessage("Error occured during Platform deleting in db");
+            log.error("Error occurred during Platform deleting in db", e);
+            platformResponse.setMessage("Error occurred during Platform deleting in db");
             platformResponse.setStatus(400);
         }
 
