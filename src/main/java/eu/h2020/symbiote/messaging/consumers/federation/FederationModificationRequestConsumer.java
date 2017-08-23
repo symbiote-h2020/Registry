@@ -13,6 +13,7 @@ import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.FederationPersistenceResult;
 import eu.h2020.symbiote.model.FederationRegistryResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -60,40 +61,38 @@ public class FederationModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-
         ObjectMapper mapper = new ObjectMapper();
-        String response;
         FederationRegistryResponse federationResponse = new FederationRegistryResponse();
         String message = new String(body, "UTF-8");
         log.info(" [x] Received Federation to modify: '" + message + "'");
 
-        Federation federation;
-
         try {
-            federation = mapper.readValue(message, Federation.class);
+            Federation federation = mapper.readValue(message, Federation.class);
             federationResponse.setFederation(federation);
 
-            //// TODO: 11.08.2017 should i check some information given in platform?
-
-            FederationPersistenceResult federationPersistenceResult = this.repositoryManager.modifyFederation(federation);
-            if (federationPersistenceResult.getStatus() == 200) {
-                rabbitManager.sendFederationOperationMessage(federationPersistenceResult.getFederation(),
-                        RegistryOperationType.MODIFICATION);
+            if (RegistryUtils.validateFields(federation)) {
+                FederationPersistenceResult federationPersistenceResult = this.repositoryManager.modifyFederation(federation);
+                if (federationPersistenceResult.getStatus() == 200) {
+                    rabbitManager.sendFederationOperationMessage(federationPersistenceResult.getFederation(),
+                            RegistryOperationType.MODIFICATION);
+                } else {
+                    log.error("Error occurred during Federation modifying in db, due to: " +
+                            federationPersistenceResult.getMessage());
+                    federationResponse.setMessage("Error occurred during Federation modifying in db, due to: " +
+                            federationPersistenceResult.getMessage());
+                    federationResponse.setStatus(500);
+                }
             } else {
-                log.error("Error occurred during Federation modifying in db, due to: " +
-                        federationPersistenceResult.getMessage());
-                federationResponse.setMessage("Error occurred during Federation modifying in db, due to: " +
-                        federationPersistenceResult.getMessage());
-                federationResponse.setStatus(500);
+                log.error("Given Federation has some fields null or empty");
+                federationResponse.setMessage("Given Federation has some fields null or empty");
+                federationResponse.setStatus(400);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occurred during Federation retrieving from message", e);
             federationResponse.setMessage("Error occurred during Federation retrieving from message");
             federationResponse.setStatus(400);
         }
-
-        response = mapper.writeValueAsString(federationResponse);
-
+        String response = mapper.writeValueAsString(federationResponse);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

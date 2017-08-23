@@ -10,6 +10,7 @@ import eu.h2020.symbiote.model.FederationPersistenceResult;
 import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
@@ -33,19 +34,23 @@ public class RepositoryManager {
 
     private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID!";
     private static final String IM_HAS_NULL_OR_EMPTY_ID = "Information Model has null or empty ID!";
+    private static final String FEDERATION_HAS_NULL_OR_EMPTY_ID = "Federation has null or empty ID!";
     private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
     private InformationModelRepository informationModelRepository;
+    private FederationRepository federationRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
                              ResourceRepository resourceRepository,
-                             InformationModelRepository informationModelRepository) {
+                             InformationModelRepository informationModelRepository,
+                             FederationRepository federationRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
         this.informationModelRepository = informationModelRepository;
+        this.federationRepository = federationRepository;
     }
 
     /**
@@ -354,7 +359,6 @@ public class RepositoryManager {
 
     public InformationModelPersistenceResult modifyInformationModel(InformationModel informationModel) {
         InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
-        InformationModel foundInformationModel;
         informationModelPersistenceResult.setInformationModel(informationModel);
 
         if (informationModel.getId() == null || informationModel.getId().isEmpty()) {
@@ -366,7 +370,7 @@ public class RepositoryManager {
 
         //todo?? normalizeResourceInterworkingServiceUrl(informationModel);
 
-        foundInformationModel = informationModelRepository.findOne(informationModel.getId());
+        InformationModel foundInformationModel = informationModelRepository.findOne(informationModel.getId());
 
         if (foundInformationModel == null) {
             log.error("Given informationModel does not exist in database!");
@@ -395,11 +399,19 @@ public class RepositoryManager {
     public InformationModelPersistenceResult removeInformationModel(InformationModel informationModelReceived) {
         InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
         informationModelPersistenceResult.setInformationModel(informationModelReceived);
-        try {
-            informationModelRepository.delete(informationModelReceived);
-            informationModelPersistenceResult.setStatus(200);
-            informationModelPersistenceResult.setMessage("ok");
-        } catch (IllegalArgumentException e) {
+
+        InformationModel foundInformationModel = informationModelRepository.findOne(informationModelReceived.getId());
+        if (foundInformationModel != null) {
+            try {
+                informationModelRepository.delete(informationModelReceived);
+                informationModelPersistenceResult.setStatus(200);
+                informationModelPersistenceResult.setMessage("ok");
+            } catch (IllegalArgumentException e) {
+                log.error(e);
+                informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                informationModelPersistenceResult.setMessage(e.toString());
+            }
+        } else {
             log.info("Given IM does not exist in database!");
             informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             informationModelPersistenceResult.setMessage("Given IM does not exist in database!");
@@ -407,19 +419,89 @@ public class RepositoryManager {
         return informationModelPersistenceResult;
     }
 
-    public FederationPersistenceResult saveFederation(Federation federation){
-        return null;
-        //// TODO: 22.08.2017 implement!
+    public FederationPersistenceResult saveFederation(Federation federation) {
+        FederationPersistenceResult federationPersistenceResult = new FederationPersistenceResult();
+        federationPersistenceResult.setFederation(federation);
+
+        if (federation.getId() == null || federation.getId().isEmpty()) {
+            log.error(FEDERATION_HAS_NULL_OR_EMPTY_ID);
+            federationPersistenceResult.setMessage(FEDERATION_HAS_NULL_OR_EMPTY_ID);
+            federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                log.info("Saving Federation: " + federation.toString());
+
+                Federation savedFederation = federationRepository.save(federation);
+                log.info("Federation with id: " + savedFederation.getId() + " saved !");
+
+                federationPersistenceResult.setStatus(HttpStatus.SC_OK);
+                federationPersistenceResult.setMessage("OK");
+                federationPersistenceResult.setFederation(savedFederation);
+            } catch (Exception e) {
+                log.error("Error occurred during Federation saving in db", e);
+                federationPersistenceResult.setMessage("Error occurred during Federation saving in db");
+                federationPersistenceResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return federationPersistenceResult;
     }
 
-    public FederationPersistenceResult modifyFederation(Federation federation){
-        return null;
-        //// TODO: 22.08.2017 implement!
+    public FederationPersistenceResult modifyFederation(Federation federation) {
+        FederationPersistenceResult federationPersistenceResult = new FederationPersistenceResult();
+        Federation federationFound;
+        federationPersistenceResult.setFederation(federation);
+
+        if (federation.getId() == null || federation.getId().isEmpty()) {
+            log.error(FEDERATION_HAS_NULL_OR_EMPTY_ID);
+            federationPersistenceResult.setMessage(FEDERATION_HAS_NULL_OR_EMPTY_ID);
+            federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        }
+
+        federationFound = federationRepository.findOne(federation.getId());
+
+        if (federationFound == null) {
+            log.error("Given federation does not exist in database!");
+            federationPersistenceResult.setMessage("Given federation does not exist in database!");
+            federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            return federationPersistenceResult;
+        }
+
+        try {
+            Federation savedFederation = federationRepository.save(federation);
+            log.info("federation with id: " + federation.getId() + " modified !");
+            federationPersistenceResult.setStatus(HttpStatus.SC_OK);
+            federationPersistenceResult.setMessage("OK");
+            federationPersistenceResult.setFederation(savedFederation);
+        } catch (Exception e) {
+            log.error("Error occurred during federation modifying in db", e);
+            federationPersistenceResult.setMessage("Error occurred during federation modifying in db");
+            federationPersistenceResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        }
+
+        //todo ?? rollback ??
+        return federationPersistenceResult;
     }
 
-    public FederationPersistenceResult removeFederation(Federation federation){
-        return null;
-        //// TODO: 22.08.2017 implement!
+    public FederationPersistenceResult removeFederation(Federation federation) {
+        FederationPersistenceResult informationModelPersistenceResult = new FederationPersistenceResult();
+        informationModelPersistenceResult.setFederation(federation);
+        Federation foundFederation = federationRepository.findOne(federation.getId());
+        if (foundFederation != null) {
+            try {
+                federationRepository.delete(federation);
+                informationModelPersistenceResult.setStatus(200);
+                informationModelPersistenceResult.setMessage("ok");
+            } catch (Exception e) {
+                log.error(e);
+                informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                informationModelPersistenceResult.setMessage(e.toString());
+            }
+        } else {
+            log.info("Given Federation does not exist in database!");
+            informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            informationModelPersistenceResult.setMessage("Given Federation does not exist in database!");
+        }
+        return informationModelPersistenceResult;
     }
 
     public List<CoreResource> getResourcesForPlatform(String platformId) {
@@ -456,8 +538,8 @@ public class RepositoryManager {
         String id = null;
         Platform platform = platformRepository.findOne(platformId);
 
-        for (InterworkingService interworkingService : platform.getInterworkingServices()){
-            if (interworkingService.getUrl().equals(requestedInterworkingServiceUrl)){
+        for (InterworkingService interworkingService : platform.getInterworkingServices()) {
+            if (interworkingService.getUrl().equals(requestedInterworkingServiceUrl)) {
                 id = interworkingService.getInformationModelId();
             }
         }

@@ -205,9 +205,11 @@ public class RegistryUtils {
         return type;
     }
 
-    public static boolean validateFields(Federation requestFederation) {
+    public static boolean validateFields(Federation federation) {
+        //// TODO: 23.08.2017 should i check some more information?
+        if (federation.getId() == null || federation.getId().isEmpty()) return false;
+        if (federation.getName() == null || federation.getName().isEmpty()) return false;
         return true;
-        //// TODO: 22.08.2017 mocked, implement!
     }
 
     /* Deprecated ////////////////////

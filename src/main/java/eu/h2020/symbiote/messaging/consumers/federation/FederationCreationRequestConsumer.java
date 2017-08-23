@@ -60,20 +60,14 @@ public class FederationCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-
         ObjectMapper mapper = new ObjectMapper();
-        String response;
         String message = new String(body, "UTF-8");
         log.info(" [x] Received Federation to create: '" + message + "'");
-
-        Federation requestFederation;
-
         FederationRegistryResponse federationResponse = new FederationRegistryResponse();
-        try {
-            requestFederation = mapper.readValue(message, Federation.class);
-            federationResponse.setFederation(requestFederation);
 
-            //// TODO: 11.08.2017 should i check some information given in platform?
+        try {
+            Federation requestFederation = mapper.readValue(message, Federation.class);
+            federationResponse.setFederation(requestFederation);
 
             if (RegistryUtils.validateFields(requestFederation)) {
                 FederationPersistenceResult federationPersistenceResult = this.repositoryManager.saveFederation(requestFederation);
@@ -97,8 +91,7 @@ public class FederationCreationRequestConsumer extends DefaultConsumer {
             federationResponse.setMessage("Error occurred during Federation retrieving from message");
             federationResponse.setStatus(400);
         }
-        response = mapper.writeValueAsString(federationResponse);
-
+        String response = mapper.writeValueAsString(federationResponse);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }

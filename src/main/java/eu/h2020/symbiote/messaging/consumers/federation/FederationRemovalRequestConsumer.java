@@ -13,6 +13,7 @@ import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.FederationPersistenceResult;
 import eu.h2020.symbiote.model.FederationRegistryResponse;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -61,42 +62,38 @@ public class FederationRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-
-        //// TODO: 07.08.2017 CHANGE TO NEW MODEL!!
-
         ObjectMapper mapper = new ObjectMapper();
-        String response;
         String message = new String(body, "UTF-8");
         FederationRegistryResponse federationResponse = new FederationRegistryResponse();
         log.info(" [x] Received Federation to remove: '" + message + "'");
 
-        Federation requestFederation;
-
         try {
-            requestFederation = mapper.readValue(message, Federation.class);
+            Federation requestFederation = mapper.readValue(message, Federation.class);
             federationResponse.setFederation(requestFederation);
 
-            //// TODO: 11.08.2017 should i check some information given in platform?
-
-            FederationPersistenceResult federationPersistenceResult = this.repositoryManager.removeFederation(requestFederation);
-            if (federationPersistenceResult.getStatus() == 200) {
-                rabbitManager.sendFederationOperationMessage(federationPersistenceResult.getFederation(),
-                        RegistryOperationType.REMOVAL);
+            if (RegistryUtils.validateFields(requestFederation)) {
+                FederationPersistenceResult federationPersistenceResult = this.repositoryManager.removeFederation(requestFederation);
+                if (federationPersistenceResult.getStatus() == 200) {
+                    rabbitManager.sendFederationOperationMessage(federationPersistenceResult.getFederation(),
+                            RegistryOperationType.REMOVAL);
+                } else {
+                    log.error("Error occurred during Federation removing from db, due to: " +
+                            federationPersistenceResult.getMessage());
+                    federationResponse.setMessage("Error occurred during Federation removing from db, due to: " +
+                            federationPersistenceResult.getMessage());
+                    federationResponse.setStatus(500);
+                }
             } else {
-                log.error("Error occurred during Federation removing from db, due to: " +
-                        federationPersistenceResult.getMessage());
-                federationResponse.setMessage("Error occurred during Federation removing from db, due to: " +
-                        federationPersistenceResult.getMessage());
-                federationResponse.setStatus(500);
+                log.error("Given Federation has some fields null or empty");
+                federationResponse.setMessage("Given Federation has some fields null or empty");
+                federationResponse.setStatus(400);
             }
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occurred during Federation retrieving from message", e);
             federationResponse.setMessage("Error occurred during Federation retrieving from message");
             federationResponse.setStatus(400);
         }
-
-        response = mapper.writeValueAsString(federationResponse);
-
+        String response = mapper.writeValueAsString(federationResponse);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }
