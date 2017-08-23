@@ -547,13 +547,16 @@ public class RepositoryManager {
         return id;
     }
 
-    public List<Federation> getFederationsForPlatform() {
-        return null;
-        //// TODO: 22.08.2017 implement!
+    public List<Federation> getFederationsForPlatform(Platform platform) {
+        List<Federation> federations;
+
+        federations = federationRepository.findByMemberPlatform(platform);
+
+        return federations;
+        //// TODO: 23.08.2017 implement with new Federations Member model!!
     }
 
     public List<Federation> getAllFederations() {
-        return null;
-        //// TODO: 22.08.2017 implement!
+        return federationRepository.findAll();
     }
 }

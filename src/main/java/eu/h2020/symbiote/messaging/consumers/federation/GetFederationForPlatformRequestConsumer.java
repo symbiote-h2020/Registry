@@ -78,16 +78,17 @@ public class GetFederationForPlatformRequestConsumer extends DefaultConsumer {
 
         try {
             request = mapper.readValue(message, PlatformRegistryRequest.class);
+
+            federations = repositoryManager.getFederationsForPlatform(request.getPlatform());
+            federationResponse.setStatus(HttpStatus.SC_OK);
+            federationResponse.setMessage("OK. " + federations.size() + " federations found!");
+            federationResponse.setFederations(federations);
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occurred during Federation retrieving from message", e);
             federationResponse.setMessage("Error occurred during Federation retrieving from message");
             federationResponse.setStatus(400);
         }
 
-        federations = repositoryManager.getFederationsForPlatform();
-        federationResponse.setStatus(HttpStatus.SC_OK);
-        federationResponse.setMessage("OK. " + federations.size() + " federations found!");
-        federationResponse.setFederations(federations);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(federationResponse));
     }
 }
