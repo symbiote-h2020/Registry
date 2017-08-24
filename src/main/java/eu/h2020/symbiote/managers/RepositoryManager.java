@@ -549,11 +549,8 @@ public class RepositoryManager {
 
     public List<Federation> getFederationsForPlatform(Platform platform) {
         List<Federation> federations;
-
-        federations = federationRepository.findByMemberPlatform(platform);
-
+        federations = federationRepository.findByMemberPlatformId(platform.getId());
         return federations;
-        //// TODO: 23.08.2017 implement with new Federations Member model!!
     }
 
     public List<Federation> getAllFederations() {

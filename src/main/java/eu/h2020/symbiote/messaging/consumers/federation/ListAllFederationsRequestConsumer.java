@@ -5,12 +5,11 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.internal.FederationListResponse;
 import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.model.FederationListResponse;
-import eu.h2020.symbiote.model.FederationRegistryRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -68,7 +67,6 @@ public class ListAllFederationsRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        FederationRegistryRequest request;
         FederationListResponse federationResponse = new FederationListResponse();
         federationResponse.setFederations(new ArrayList<>());
         List<Federation> federations;
