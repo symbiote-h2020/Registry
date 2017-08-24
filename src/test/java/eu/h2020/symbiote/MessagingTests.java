@@ -14,6 +14,7 @@ import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.messaging.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
@@ -291,12 +292,9 @@ public class MessagingTests {
         eu.h2020.symbiote.core.model.Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
-        platformResponse.setStatus(200);
-        platformResponse.setMessage("ok");
-        platformResponse.setPlatform(requestPlatform);
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
 
-        when(mockedRepository.savePlatform(any())).thenReturn(platformResponse);
+        when(mockedRepository.savePlatform(any())).thenReturn(platformPersistenceResult);
 
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
@@ -355,12 +353,9 @@ public class MessagingTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
-        platformResponse.setStatus(200);
-        platformResponse.setMessage("ok");
-        platformResponse.setPlatform(requestPlatform);
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
 
-        when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
+        when(mockedRepository.modifyPlatform(any())).thenReturn(platformPersistenceResult);
 
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
@@ -382,12 +377,9 @@ public class MessagingTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
-        platformResponse.setStatus(400);
-        platformResponse.setMessage("mongo fail");
-        platformResponse.setPlatform(requestPlatform);
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(400, "mongo fail mock", requestPlatform);
 
-        when(mockedRepository.modifyPlatform(any())).thenReturn(platformResponse);
+        when(mockedRepository.modifyPlatform(any())).thenReturn(platformPersistenceResult);
 
         rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message,
                 new DefaultConsumer(this.channel) {
@@ -436,12 +428,9 @@ public class MessagingTests {
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
-        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
-        platformResponse.setStatus(200);
-        platformResponse.setMessage("ok");
-        platformResponse.setPlatform(requestPlatform);
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
 
-        when(mockedRepository.removePlatform(any())).thenReturn(platformResponse);
+        when(mockedRepository.removePlatform(any())).thenReturn(platformPersistenceResult);
 
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message, Platform.class.getCanonicalName());
 

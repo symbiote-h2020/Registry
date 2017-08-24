@@ -5,6 +5,7 @@ import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
@@ -29,15 +30,18 @@ import static org.mockito.Mockito.*;
 public class RepositoryManagerTests {
 
     RepositoryManager repositoryManager;
-    PlatformRepository registryPlatformRepository;
+    PlatformRepository platformRepository;
     ResourceRepository resourceRepository;
     InformationModelRepository informationModelRepository;
+    FederationRepository federationRepository;
 
     @Before
     public void setup() {
-        registryPlatformRepository = Mockito.mock(PlatformRepository.class);
+        platformRepository = Mockito.mock(PlatformRepository.class);
         resourceRepository = Mockito.mock(ResourceRepository.class);
-        repositoryManager = new RepositoryManager(registryPlatformRepository, resourceRepository, informationModelRepository);
+        informationModelRepository = Mockito.mock(InformationModelRepository.class);
+        federationRepository = Mockito.mock(FederationRepository.class);
+        repositoryManager = new RepositoryManager(platformRepository, resourceRepository, informationModelRepository, federationRepository);
     }
 
     @After
@@ -183,7 +187,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSavePlatformTriggersRepository() {
         Platform platform = generatePlatformB();
-        when(registryPlatformRepository.save(platform)).thenReturn(platform);
+        when(platformRepository.save(platform)).thenReturn(platform);
 
         repositoryManager.savePlatform(platform);
         try {
@@ -191,14 +195,14 @@ public class RepositoryManagerTests {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        verify(registryPlatformRepository).save(platform);
+        verify(platformRepository).save(platform);
     }
 
     @Test
     public void testModifyPlatformTriggersRepository() {
         Platform platform = generatePlatformB();
-        when(registryPlatformRepository.save(platform)).thenReturn(platform);
-        when(registryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
+        when(platformRepository.save(platform)).thenReturn(platform);
+        when(platformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
         repositoryManager.modifyPlatform(platform);
         try {
@@ -206,13 +210,13 @@ public class RepositoryManagerTests {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        verify(registryPlatformRepository).save(platform);
+        verify(platformRepository).save(platform);
     }
 
     @Test
     public void testRemovePlatformTriggersRepository() {
         Platform platform = generatePlatformB();
-        when(registryPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
+        when(platformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 
         repositoryManager.removePlatform(platform);
         try {
@@ -220,13 +224,13 @@ public class RepositoryManagerTests {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        verify(registryPlatformRepository).delete(PLATFORM_B_ID);
+        verify(platformRepository).delete(PLATFORM_B_ID);
     }
 
     @Test
     public void testSavePlatformReturnsStatus200() throws Exception {
         Platform platform = generatePlatformB();
-        when(registryPlatformRepository.save(platform)).thenReturn(platform);
+        when(platformRepository.save(platform)).thenReturn(platform);
 
         Assert.assertEquals(200,repositoryManager.savePlatform(platform).getStatus());
     }
@@ -240,7 +244,7 @@ public class RepositoryManagerTests {
     @Test
     public void testSavePlatformMongoError(){
         Platform platform = generatePlatformB();
-        when(registryPlatformRepository.save(platform)).thenThrow(new MongoException("FAKE MONGO ERROR"));
+        when(platformRepository.save(platform)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
     }
 
@@ -259,7 +263,7 @@ public class RepositoryManagerTests {
     @Test
     public void testmodifyPlatformMongoError(){
         Platform platform = generatePlatformB();
-        doThrow(new MongoException("FAKE MONGO Exception")).when(registryPlatformRepository).save(platform);
+        doThrow(new MongoException("FAKE MONGO Exception")).when(platformRepository).save(platform);
         Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
     }
     @Test
@@ -272,7 +276,7 @@ public class RepositoryManagerTests {
     @Test
     public void testRemovePlatformMongoError(){
         Platform platform = generatePlatformB();
-        doThrow(new MongoException("FAKE MONGO Exception")).when(registryPlatformRepository).delete(platform.getId());
+        doThrow(new MongoException("FAKE MONGO Exception")).when(platformRepository).delete(platform.getId());
         Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
     }
 
@@ -281,7 +285,7 @@ public class RepositoryManagerTests {
         Platform platform = generatePlatformB();
         CoreResource coreResource = generateCoreResource();
 
-        when(registryPlatformRepository.findOne(platform.getId())).thenReturn(platform);
+        when(platformRepository.findOne(platform.getId())).thenReturn(platform);
         when(resourceRepository.findByInterworkingServiceURL(platform.getInterworkingServices().get(0).getUrl())).
                 thenReturn(Arrays.asList(coreResource));
 
