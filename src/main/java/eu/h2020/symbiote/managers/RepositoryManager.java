@@ -548,8 +548,8 @@ public class RepositoryManager {
     }
 
     public List<Federation> getFederationsForPlatform(Platform platform) {
-        List<Federation> federations;
-        federations = federationRepository.findByMemberPlatformId(platform.getId());
+        List<Federation> federations = new ArrayList<>();
+        // todo federations = federationRepository.findByMemberPlatformId(platform.getId());
         return federations;
     }
 
