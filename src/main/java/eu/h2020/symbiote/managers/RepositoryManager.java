@@ -549,7 +549,7 @@ public class RepositoryManager {
 
     public List<Federation> getFederationsForPlatform(Platform platform) {
         List<Federation> federations = new ArrayList<>();
-        // todo federations = federationRepository.findByMemberPlatformId(platform.getId());
+        federations = federationRepository.findByMembersPlatformId(platform.getId()); //// TODO: 28.08.2017 check!
         return federations;
     }
 

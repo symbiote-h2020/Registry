@@ -163,20 +163,15 @@ public class RegistryUtilsTests {
     public void testResourceTypeChecker(){
         Resource resource = new Actuator();
         Assert.assertEquals(CoreResourceType.ACTUATOR, RegistryUtils.getTypeForResource(resource));
-        resource = new ActuatingService();
-        Assert.assertEquals(CoreResourceType.ACTUATING_SERVICE, RegistryUtils.getTypeForResource(resource));
         resource = new Service();
         Assert.assertEquals(CoreResourceType.SERVICE, RegistryUtils.getTypeForResource(resource));
-        resource = new MobileDevice();
-        Assert.assertEquals(CoreResourceType.MOBILE_DEVICE, RegistryUtils.getTypeForResource(resource));
-        resource = new MobileSensor();
-        Assert.assertEquals(CoreResourceType.MOBILE_SENSOR, RegistryUtils.getTypeForResource(resource));
-        resource = new StationaryDevice();
-        Assert.assertEquals(CoreResourceType.STATIONARY_DEVICE, RegistryUtils.getTypeForResource(resource));
+        resource = new Device();
+        Assert.assertEquals(CoreResourceType.DEVICE, RegistryUtils.getTypeForResource(resource));
+//        Resource resource1 = new MobileSensor(); //todo update
+//        Assert.assertEquals(CoreResourceType.MOBILE_SENSOR, RegistryUtils.getTypeForResource(resource1));
         resource = new StationarySensor();
         Assert.assertEquals(CoreResourceType.STATIONARY_SENSOR, RegistryUtils.getTypeForResource(resource));
 
-        Assert.assertNotEquals(CoreResourceType.STATIONARY_DEVICE, RegistryUtils.getTypeForResource(resource));
-
+        Assert.assertNotEquals(CoreResourceType.MOBILE_SENSOR, RegistryUtils.getTypeForResource(resource));
     }
 }

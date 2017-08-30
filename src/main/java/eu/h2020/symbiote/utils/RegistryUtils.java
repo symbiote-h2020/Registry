@@ -185,20 +185,17 @@ public class RegistryUtils {
         return coreResource;
     }
 
-    public static CoreResourceType getTypeForResource(eu.h2020.symbiote.core.model.resources.Resource resource) {
+
+    public static CoreResourceType getTypeForResource(Resource resource) {
         CoreResourceType type = null;
         if (resource instanceof Actuator) {
             type = CoreResourceType.ACTUATOR;
-        } else if (resource instanceof ActuatingService) {
-            type = CoreResourceType.ACTUATING_SERVICE;
         } else if (resource instanceof Service) {
             type = CoreResourceType.SERVICE;
-        } else if (resource instanceof MobileDevice) {
-            type = CoreResourceType.MOBILE_DEVICE;
-        } else if (resource instanceof MobileSensor) {
-            type = CoreResourceType.MOBILE_SENSOR;
-        } else if (resource instanceof StationaryDevice) {
-            type = CoreResourceType.STATIONARY_DEVICE;
+        } else if (resource instanceof Device) {
+            type = CoreResourceType.DEVICE;
+//        } else if (resource instanceof MobileSensor) {
+//            type = CoreResourceType.MOBILE_SENSOR; //todo check why?
         } else if (resource instanceof StationarySensor) {
             type = CoreResourceType.STATIONARY_SENSOR;
         }
