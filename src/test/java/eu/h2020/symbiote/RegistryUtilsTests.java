@@ -81,40 +81,12 @@ public class RegistryUtilsTests {
         Assert.assertTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()));
     }
 
-    //todo refactor tests !!
-    /*
-    @Test
-    public void testConverterRequestPlatformToPlatform() {
-        Platform requestPlatform = generateSymbiotePlatformA();
-        Platform registryPlatform = RegistryUtils.convertRequestPlatformToPlatform(requestPlatform);
-
-        Assert.assertTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()));
-        Assert.assertTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()));
-        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getUrl().equals(requestPlatform.getUrl()));
-        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getInformationModelId().
-                equals(requestPlatform.getInformationModelId()));
-        Assert.assertNotNull(registryPlatform.getBody());
-        Assert.assertNotNull(registryPlatform.getRdfFormat());
-    }
-
-    @Test
-    public void testConverterPlatformToRequestPlatform() {
-        Platform registryPlatform = generatePlatformB();
-        Platform requestPlatform = RegistryUtils.convertPlatformToRequestPlatform(registryPlatform);
-
-        Assert.assertTrue(registryPlatform.getComments().get(0).equals(requestPlatform.getDescription()));
-        Assert.assertTrue(registryPlatform.getLabels().get(0).equals(requestPlatform.getName()));
-        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getUrl().equals(requestPlatform.getUrl()));
-        Assert.assertTrue(registryPlatform.getInterworkingServices().get(0).getInformationModelId().
-                equals(requestPlatform.getInformationModelId()));
-    }
-
     @Test
     public void testPlatformFieldsValidation() {
         Platform platform = generatePlatformB();
         Assert.assertTrue(RegistryUtils.validateFields(platform));
     }
-*/
+
     @Test
     public void testPlatformFieldsValidationFail() {
         Platform platform = null;

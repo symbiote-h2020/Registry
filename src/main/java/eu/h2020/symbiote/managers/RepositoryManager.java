@@ -308,22 +308,23 @@ public class RepositoryManager {
             resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
-            try {
-                CoreResource foundResource = resourceRepository.findOne(resource.getId());
-                if (foundResource != null) {
+
+            CoreResource foundResource = resourceRepository.findOne(resource.getId());
+            if (foundResource != null) {
+                try {
                     resourceRepository.delete(resource.getId());
                     resourceRemovalResult.setStatus(HttpStatus.SC_OK);
                     resourceRemovalResult.setMessage("OK");
                     log.info("Resource with id: " + resource.getId() + " removed !");
-                } else {
-                    log.error("Given resource does not exist in database");
-                    resourceRemovalResult.setMessage("Given resource does not exist in database");
-                    resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                } catch (Exception e) {
+                    log.error("Error occurred during Resource deleting from db", e);
+                    resourceRemovalResult.setMessage("Error occurred during Resource deleting from db");
+                    resourceRemovalResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
                 }
-            } catch (Exception e) {
-                log.error("Error occurred during Resource deleting from db", e);
-                resourceRemovalResult.setMessage("Error occurred during Resource deleting from db");
-                resourceRemovalResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            } else {
+                log.error("Given resource does not exist in database");
+                resourceRemovalResult.setMessage("Given resource does not exist in database");
+                resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             }
         }
         return resourceRemovalResult;
@@ -406,9 +407,9 @@ public class RepositoryManager {
                 informationModelRepository.delete(informationModelReceived);
                 informationModelPersistenceResult.setStatus(200);
                 informationModelPersistenceResult.setMessage("ok");
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 log.error(e);
-                informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                informationModelPersistenceResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
                 informationModelPersistenceResult.setMessage(e.toString());
             }
         } else {
@@ -483,25 +484,31 @@ public class RepositoryManager {
     }
 
     public FederationPersistenceResult removeFederation(Federation federation) {
-        FederationPersistenceResult informationModelPersistenceResult = new FederationPersistenceResult();
-        informationModelPersistenceResult.setFederation(federation);
-        Federation foundFederation = federationRepository.findOne(federation.getId());
-        if (foundFederation != null) {
-            try {
-                federationRepository.delete(federation);
-                informationModelPersistenceResult.setStatus(200);
-                informationModelPersistenceResult.setMessage("ok");
-            } catch (Exception e) {
-                log.error(e);
-                informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-                informationModelPersistenceResult.setMessage(e.toString());
-            }
+        FederationPersistenceResult federationPersistenceResult = new FederationPersistenceResult();
+        federationPersistenceResult.setFederation(federation);
+        if (federation == null || federation.getId() == null || federation.getId().isEmpty()) {
+            log.error("Given resource is null or it has null or empty ID!");
+            federationPersistenceResult.setMessage("Given resource is null or it has null or empty ID!");
+            federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
-            log.info("Given Federation does not exist in database!");
-            informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            informationModelPersistenceResult.setMessage("Given Federation does not exist in database!");
+            Federation foundFederation = federationRepository.findOne(federation.getId());
+            if (foundFederation != null) {
+                try {
+                    federationRepository.delete(federation);
+                    federationPersistenceResult.setStatus(200);
+                    federationPersistenceResult.setMessage("ok");
+                } catch (Exception e) {
+                    log.error(e);
+                    federationPersistenceResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                    federationPersistenceResult.setMessage(e.toString());
+                }
+            } else {
+                log.info("Given Federation does not exist in database!");
+                federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+                federationPersistenceResult.setMessage("Given Federation does not exist in database!");
+            }
         }
-        return informationModelPersistenceResult;
+        return federationPersistenceResult;
     }
 
     public List<CoreResource> getResourcesForPlatform(String platformId) {

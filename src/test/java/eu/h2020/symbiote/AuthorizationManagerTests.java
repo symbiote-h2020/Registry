@@ -111,5 +111,4 @@ public class AuthorizationManagerTests {
 
         Assert.assertFalse(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID).isValidated());
     }
-
 }

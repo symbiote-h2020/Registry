@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.DescriptionType;
+import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.RDFFormat;
@@ -187,7 +188,6 @@ public class TestSetupConfig {
         return coreResourceRegistryRequest;
     }
 
-
     public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest()
             throws JsonProcessingException {
 
@@ -211,5 +211,41 @@ public class TestSetupConfig {
         coreResourceRegistryRequest.setBody(resources);
 
         return coreResourceRegistryRequest;
+    }
+
+    private static Federation.FederationMember generateMemberA() {
+        Federation.FederationMember federationMember = new Federation.FederationMember();
+        federationMember.setPlatformId(PLATFORM_A_ID);
+        federationMember.setInterworkingServiceURL(INTERWORKING_SERVICE_URL_A);
+        return federationMember;
+    }
+
+    private static Federation.FederationMember generateMemberB() {
+        Federation.FederationMember federationMember = new Federation.FederationMember();
+        federationMember.setPlatformId(PLATFORM_B_ID);
+        federationMember.setInterworkingServiceURL(INTERWORKING_SERVICE_URL_B);
+        return federationMember;
+    }
+
+    public static Federation generateFederationA() {
+        Federation federation = new Federation();
+
+        federation.setName("FederationA");
+        federation.setId("A");
+        federation.setPublic(true);
+        federation.setSlaDefinition("defA");
+        federation.setMembers(Arrays.asList(generateMemberA()));
+
+        return federation;
+    }
+
+    public static Federation generateFederationB() {
+        Federation federation = new Federation();
+        federation.setName("FederationB");
+        federation.setId("B");
+        federation.setPublic(false);
+        federation.setSlaDefinition("defB");
+        federation.setMembers(Arrays.asList(generateMemberB()));
+        return federation;
     }
 }

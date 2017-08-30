@@ -55,5 +55,4 @@ public class RegistryTests {
     @ComponentScan(basePackages = {"eu.h2020.symbiote"})
     static class ContextConfiguration {
     }
-
 }

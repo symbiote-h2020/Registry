@@ -1,7 +1,6 @@
 package eu.h2020.symbiote;
 
 import com.mongodb.MongoException;
-import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.RepositoryManager;
@@ -18,16 +17,17 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-
-import static eu.h2020.symbiote.TestSetupConfig.*;
-import static org.mockito.Mockito.*;
+import static eu.h2020.symbiote.TestSetupConfig.addIdToCoreResource;
+import static eu.h2020.symbiote.TestSetupConfig.generateCoreResource;
+import static eu.h2020.symbiote.TestSetupConfig.generateResource;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
- * Created by mateuszl on 17.05.2017.
+ * Created by mateuszl on 30.08.2017.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class RepositoryManagerTests {
+public class ResourceRepositoryManagerTests {
 
     RepositoryManager repositoryManager;
     PlatformRepository platformRepository;
@@ -92,7 +92,6 @@ public class RepositoryManagerTests {
         }
         verify(resourceRepository).delete("101");
     }
-
 
     @Test
     public void testSaveResourceReturnsStatus200() throws Exception {
@@ -174,122 +173,4 @@ public class RepositoryManagerTests {
         when(resourceRepository.findOne(resource.getId())).thenReturn(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
     }
-
-
-    @Test
-    public void testRemoveResourceMongoException() throws Exception {
-        Resource resource = generateResource();
-        resource.setId("1234");
-        when(resourceRepository.findOne(resource.getId())).thenThrow(new MongoException("FAKE MONGO ERROR"));
-        Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR,repositoryManager.removeResource(resource).getStatus());
-    }
-
-    @Test
-    public void testSavePlatformTriggersRepository() {
-        Platform platform = generatePlatformB();
-        when(platformRepository.save(platform)).thenReturn(platform);
-
-        repositoryManager.savePlatform(platform);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        verify(platformRepository).save(platform);
-    }
-
-    @Test
-    public void testModifyPlatformTriggersRepository() {
-        Platform platform = generatePlatformB();
-        when(platformRepository.save(platform)).thenReturn(platform);
-        when(platformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
-
-        repositoryManager.modifyPlatform(platform);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        verify(platformRepository).save(platform);
-    }
-
-    @Test
-    public void testRemovePlatformTriggersRepository() {
-        Platform platform = generatePlatformB();
-        when(platformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
-
-        repositoryManager.removePlatform(platform);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        verify(platformRepository).delete(PLATFORM_B_ID);
-    }
-
-    @Test
-    public void testSavePlatformReturnsStatus200() throws Exception {
-        Platform platform = generatePlatformB();
-        when(platformRepository.save(platform)).thenReturn(platform);
-
-        Assert.assertEquals(200,repositoryManager.savePlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testSavePlatformWithWrongId() throws Exception {
-        Platform platform = new Platform();
-        Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testSavePlatformMongoError(){
-        Platform platform = generatePlatformB();
-        when(platformRepository.save(platform)).thenThrow(new MongoException("FAKE MONGO ERROR"));
-        Assert.assertNotEquals(200,repositoryManager.savePlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testRemovePlatformWithWrongId() throws Exception {
-        Platform platform = new Platform();
-        Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testModifyPlatformWithWrongId() throws Exception {
-        Platform platform = new Platform();
-        Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testmodifyPlatformMongoError(){
-        Platform platform = generatePlatformB();
-        doThrow(new MongoException("FAKE MONGO Exception")).when(platformRepository).save(platform);
-        Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());
-    }
-    @Test
-    public void testRemovePlatformWithResourcesFail(){
-        Platform platform = generatePlatformB();
-        when(resourceRepository.findByInterworkingServiceURL(platform.getId())).thenReturn(Arrays.asList(new CoreResource()));
-        Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testRemovePlatformMongoError(){
-        Platform platform = generatePlatformB();
-        doThrow(new MongoException("FAKE MONGO Exception")).when(platformRepository).delete(platform.getId());
-        Assert.assertNotEquals(200,repositoryManager.removePlatform(platform).getStatus());
-    }
-
-    @Test
-    public void testGetResourcesForPlatform(){
-        Platform platform = generatePlatformB();
-        CoreResource coreResource = generateCoreResource();
-
-        when(platformRepository.findOne(platform.getId())).thenReturn(platform);
-        when(resourceRepository.findByInterworkingServiceURL(platform.getInterworkingServices().get(0).getUrl())).
-                thenReturn(Arrays.asList(coreResource));
-
-        Assert.assertEquals(repositoryManager.getResourcesForPlatform(platform.getId()),Arrays.asList(coreResource));
-    }
 }
-
