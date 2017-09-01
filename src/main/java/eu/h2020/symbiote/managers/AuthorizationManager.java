@@ -5,26 +5,25 @@ import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.PlatformRepository;
-import eu.h2020.symbiote.security.InternalSecurityHandler;
-import eu.h2020.symbiote.security.enums.CoreAttributes;
-import eu.h2020.symbiote.security.enums.IssuingAuthorityType;
-import eu.h2020.symbiote.security.enums.UserRole;
-import eu.h2020.symbiote.security.enums.ValidationStatus;
-import eu.h2020.symbiote.security.exceptions.aam.MalformedJWTException;
-import eu.h2020.symbiote.security.exceptions.aam.TokenValidationException;
-import eu.h2020.symbiote.security.token.Token;
-import eu.h2020.symbiote.security.token.jwt.JWTClaims;
-import eu.h2020.symbiote.security.token.jwt.JWTEngine;
+import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
+import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
+import eu.h2020.symbiote.security.accesspolicies.SingleLocalHomeTokenIdentityBasedTokenAccessPolicy;
+import eu.h2020.symbiote.security.commons.SecurityConstants;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
+import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
+import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
+import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static eu.h2020.symbiote.security.enums.ValidationStatus.VALID;
 
 /**
  * Component responsible for dealing with Symbiote Tokens and checking access right for requests.
@@ -35,47 +34,121 @@ import static eu.h2020.symbiote.security.enums.ValidationStatus.VALID;
 public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
-    private InternalSecurityHandler securityHandler;
+    private static IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
 
     @Autowired
-    public AuthorizationManager(InternalSecurityHandler securityHandler, PlatformRepository platformRepository) {
-        this.securityHandler = securityHandler;
+    public AuthorizationManager(PlatformRepository platformRepository) {
         this.platformRepository = platformRepository;
+        try {
+            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler("", "", "", "ID", "", false, "user", "pass");
+        } catch (SecurityHandlerException e) {
+            log.error(e);
+        }
     }
 
-    public AuthorizationResult checkResourceOperationAccess(String tokenString, String platformId) {
-        log.info("Received Token to verification: (" + tokenString + ")");
+    public AuthorizationResult checkResourceOperationAccess(SecurityRequest securityRequest, String platformId) {
+        log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
         if (platformRepository.findOne(platformId) == null) {
             return new AuthorizationResult("Given platform does not exist in database", false);
         }
 
-        if (tokenString == null) {
-            return new AuthorizationResult("Token is null", false);
+        if (securityRequest == null) {
+            return new AuthorizationResult("SecurityRequest is null", false);
         }
         if (platformId == null) {
             return new AuthorizationResult("Platform Id is null", false);
         }
 
-        AuthorizationResult authorizationResult = checkToken(tokenString);
-        if (!authorizationResult.isValidated()) return authorizationResult;
-
-        return getAuthorizationResult(tokenString, platformId);
+        return checkSecurityRequest(securityRequest);
     }
 
+    public AuthorizationResult checkSecurityRequest(SecurityRequest securityRequest) {
+        AuthorizationResult authorizationResult = new AuthorizationResult("MOCKED", true);
+
+        //// TODO: 31.08.2017 implement!
+
+
+        return authorizationResult;
+    }
+
+    public AuthorizationResult checkResourceOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
+
+        //todo check and finish !!
+
+        if (platformIds.size() == checkPolicies(securityRequest).size()) {
+            return new AuthorizationResult("ok", true);
+        } else {
+            return new AuthorizationResult("not authorized", false);
+        }
+
+    }
+
+    public Set<String> checkPolicies(SecurityRequest securityRequest) {
+
+        //todo check and finish !!
+
+        Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
+
+        Map<String, String> platformsAndOwnersMap = getOwnersOfPlatformsFromAAM();
+
+        for (String platformId : platformsAndOwnersMap.keySet()) {
+            try {
+                accessPoliciesMap.put(
+                        platformId,
+                        new SingleLocalHomeTokenIdentityBasedTokenAccessPolicy(
+                                SecurityConstants.AAM_CORE_AAM_INSTANCE_ID,
+                                platformsAndOwnersMap.get(platformId),
+                                null));
+            } catch (InvalidArgumentsException e) {
+                log.error(e);
+            }
+        }
+
+
+        Set<String> satisfiedPoliciesIdentifiers =
+                componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+
+        return satisfiedPoliciesIdentifiers;
+    }
+
+    private Map<String, String> getOwnersOfPlatformsFromAAM() {
+
+        return null; //todo implement rabbit magic !!
+        
+    }
+
+    public String getServiceResponse() {
+        String serviceResponse = "";
+        try {
+            serviceResponse = componentSecurityHandler.generateServiceResponse();
+        } catch (SecurityHandlerException e) {
+            log.error(e);
+        }
+        return serviceResponse;
+    }
+
+    public SecurityRequest getSecurityRequest() {
+        SecurityRequest securityRequest = null;
+        try {
+            securityRequest = componentSecurityHandler.generateSecurityRequestUsingCoreCredentials();
+        } catch (Exception e) {
+            log.error(e);
+        }
+        return securityRequest;
+    }
+
+
+    /*
     public AuthorizationResult checkToken(String tokenString) {
         Token token = getToken(tokenString);
         if (token == null) {
-            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token invalid! Token could not be verified", false);
         }
 
-        ValidationStatus validationStatus = securityHandler.verifyHomeToken(token);
-
         if (validationStatus != VALID) {
             log.error("Token failed verification due to " + validationStatus);
-            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
         }
         return new AuthorizationResult("", true);
@@ -99,14 +172,12 @@ public class AuthorizationManager {
             claims = JWTEngine.getClaimsFromToken(tokenString);
         } catch (MalformedJWTException e) {
             log.error("Could not get the claims for token!", e);
-            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token invalid! Could not get the claims for token!", false);
         }
 
         // verify if there is a right token issuer in claims
         if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) {
             log.error("Presented token was not issued by CoreAAM!");
-            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token invalid! Presented token was not issued by CoreAAM!", false);
         }
 
@@ -116,18 +187,18 @@ public class AuthorizationManager {
         // PO role
         if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) {
             log.error("Wrong role claim in token!");
-            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token invalid! Wrong role claim in token!", false);
         }
 
         // owned platform identifier
         if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) {
             log.error("Platform owner does not match with requested operation!");
-            //todo dont pass Token Verification Fail details
             return new AuthorizationResult("Token invalid! Platform owner does not match with requested operation!", false);
         }
         return new AuthorizationResult("Authorization check successful!", true);
     }
+
+    */
 
     public AuthorizationResult checkIfResourcesBelongToPlatform(Map<String, Resource> resources, String platformId) {
         Platform registryPlatform = platformRepository.findOne(platformId);
