@@ -151,7 +151,7 @@ public class MessagingTests {
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+        when(mockedAuthorizationManager.checkOperationAccess(coreResourceRegistryRequest.getToken(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
         when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
@@ -220,7 +220,7 @@ public class MessagingTests {
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+        when(mockedAuthorizationManager.checkOperationAccess(coreResourceRegistryRequest.getToken(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
@@ -267,7 +267,7 @@ public class MessagingTests {
         resourcePersistenceResult1.setResource(RegistryUtils.convertResourceToCoreResource(resource1));
 
         when(mockedRepository.removeResource(any())).thenReturn(resourcePersistenceResult1);
-        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+        when(mockedAuthorizationManager.checkOperationAccess(coreResourceRegistryRequest.getToken(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
@@ -467,7 +467,7 @@ public class MessagingTests {
 
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getToken(),
+        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getSecurityRequest(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
@@ -537,7 +537,7 @@ public class MessagingTests {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
         setRabbitManagerMockedManagers();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest();
-        coreResourceRegistryRequest.setToken(null);
+        coreResourceRegistryRequest.setSecurityRequest(null);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
         when(mockedAuthorizationManager.checkResourceOperationAccess(any(),any())).thenReturn(new AuthorizationResult("null token", false));

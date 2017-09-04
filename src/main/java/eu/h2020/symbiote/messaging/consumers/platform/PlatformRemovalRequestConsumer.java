@@ -68,8 +68,6 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
         Platform requestPlatform;
 
         try {
-            //// TODO: 22.08.2017 change to PlatformRegistryRequest
-
             requestPlatform = mapper.readValue(message, Platform.class);
             platformResponse.setPlatform(requestPlatform);
 

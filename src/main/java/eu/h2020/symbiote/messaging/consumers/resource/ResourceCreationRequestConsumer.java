@@ -90,7 +90,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             //checking access by token verification
-            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getSecurityRequest(), request.getPlatformId());
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 registryResponse.setStatus(400);

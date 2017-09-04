@@ -12,6 +12,7 @@ import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,8 +23,8 @@ import java.util.Map;
  */
 public class TestSetupConfig {
 
-    public static final String MOCKED_TOKEN = "eyJhbGciOiJFUzI1NiJ9.eyJTWU1CSU9URV9Pd25lZFBsYXRmb3JtIjoidGVzdDFQbGF0IiwiU1lNQklPVEVfUm9sZSI6IlBMQVRGT1JNX09XTkVSIiwidHR5cCI6IkNPUkUiLCJzdWIiOiJUZXN0MSIsImlwayI6Ik1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRXI2OXZEV0pzT3duYW9CM0FDRVJPdnRETWtmNjh5aUd6c3lmR1duOWZnSnJHT2ZoTGJkM2Q5NEMxay9TUW1hRWdTakVOUWI4ZEljME9FYWRSRzFtWGR3PT0iLCJpc3MiOiJTeW1iSW9UZV9Db3JlX0FBTSIsImV4cCI6MTQ5NTExNTExMiwiaWF0IjoxNDk1MTExNTEyLCJqdGkiOiI0ODY1MTQ2NTIiLCJzcGsiOiJNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV5RVJnYXhnQUUzSmUwand6RDBMdjluby9wQVQyUjV0Njc0MzJrcTQxaHNGTWZRSXdyQ212RVRZbW9lekgxYWU2WSsyV0ZCQVdiMHhiMGVUd1ozeWZZdz09In0.M7fIyUsr0GfUN7IyaKMG9T41dabvkFS_UNGeq3RCzzyzA-ttEdHnDNV3oImX7eMS_vvp-prBlnSsVl0dhL131Q";
-
+    public static final SecurityRequest SECURITY_REQUEST = null; //// TODO: 04.09.2017
+            
     public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
     public static final String PLATFORM_CREATION_REQUESTED_RK = "symbIoTe.platform.creationRequested";
     public static final String PLATFORM_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.modificationRequested";
@@ -181,7 +182,7 @@ public class TestSetupConfig {
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
         coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
-        coreResourceRegistryRequest.setToken(MOCKED_TOKEN);
+        coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);
 
@@ -206,7 +207,7 @@ public class TestSetupConfig {
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
         coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
-        coreResourceRegistryRequest.setToken(MOCKED_TOKEN);
+        coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);
 

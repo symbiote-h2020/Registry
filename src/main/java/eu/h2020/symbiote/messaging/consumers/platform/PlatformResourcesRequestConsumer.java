@@ -90,7 +90,7 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             try {
-                authorizationResult = authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId());
+                authorizationResult = authorizationManager.checkResourceOperationAccess(request.getSecurityRequest(), request.getPlatformId());
             } catch (NullArgumentException e) {
                 log.error(e);
                 resourceRegistryResponse.setMessage("Request invalid!");

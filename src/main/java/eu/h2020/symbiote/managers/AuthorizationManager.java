@@ -18,10 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -47,7 +44,7 @@ public class AuthorizationManager {
         }
     }
 
-    public AuthorizationResult checkResourceOperationAccess(SecurityRequest securityRequest, String platformId) {
+    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, String platformId) {
         log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
         if (platformRepository.findOne(platformId) == null) {
@@ -73,14 +70,21 @@ public class AuthorizationManager {
         return authorizationResult;
     }
 
-    public AuthorizationResult checkResourceOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
+    public AuthorizationResult checkResourceOperationAccess(SecurityRequest securityRequest, String platformIds) {
+        Set<String> ids = new HashSet<>();
+        ids.add(platformIds);
+        return checkOperationAccess(securityRequest, ids);
+    }
+
+    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
 
         //todo check and finish !!
+        Set<String> checkedPolicies = checkPolicies(securityRequest);
 
-        if (platformIds.size() == checkPolicies(securityRequest).size()) {
+        if (platformIds.size() == checkedPolicies.size()) {
             return new AuthorizationResult("ok", true);
         } else {
-            return new AuthorizationResult("not authorized", false);
+            return new AuthorizationResult("Provided Policies does not match with needed to perform operation.", false);
         }
 
     }
@@ -116,7 +120,7 @@ public class AuthorizationManager {
     private Map<String, String> getOwnersOfPlatformsFromAAM() {
 
         return null; //todo implement rabbit magic !!
-        
+
     }
 
     public String getServiceResponse() {

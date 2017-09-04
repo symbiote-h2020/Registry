@@ -1,7 +1,6 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.messaging.RabbitManager;
-import eu.h2020.symbiote.security.InternalSecurityHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,9 +30,6 @@ public class RegistryTests {
     @Autowired
     protected RabbitManager rabbitManager;
 
-    @Autowired
-    protected InternalSecurityHandler securityHandler;
-
     @Before
     public void setUp() throws Exception {
 
@@ -47,7 +43,6 @@ public class RegistryTests {
     @Test
     public void startupTest() {
         Assert.assertNotNull(rabbitManager);
-        Assert.assertNotNull(securityHandler);
         Assert.assertNotNull(rabbitTemplate);
     }
 
