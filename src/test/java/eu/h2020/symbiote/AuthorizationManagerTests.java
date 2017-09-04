@@ -3,6 +3,7 @@ package eu.h2020.symbiote;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import org.junit.After;
 import org.junit.Assert;
@@ -29,7 +30,8 @@ public class AuthorizationManagerTests {
     @Before
     public void setup() throws IOException, TimeoutException {
         mockedPlatformRepository = Mockito.mock(PlatformRepository.class);
-        authorizationManager = new AuthorizationManager(mockedPlatformRepository);
+        RabbitManager rabbitManager = Mockito.mock(RabbitManager.class);
+        authorizationManager = new AuthorizationManager(mockedPlatformRepository, rabbitManager);
     }
 
     @After
