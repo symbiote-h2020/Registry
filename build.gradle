@@ -84,6 +84,7 @@ dependencies {
     compile('org.springframework.cloud:spring-cloud-starter-zipkin')
     compile('org.springframework.boot:spring-boot-starter-amqp')
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
+    compile('commons-io:commons-io:2.5')
 
     // tests only
     testCompile('junit:junit:4.+')
