@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -155,7 +156,7 @@ public class RabbitManager {
     private String aamGetPlatformOwners;
 
     @Autowired
-    public RabbitManager(RepositoryManager repositoryManager, AuthorizationManager authorizationManager) {
+    public RabbitManager(RepositoryManager repositoryManager,@Lazy AuthorizationManager authorizationManager) {
         this.repositoryManager = repositoryManager;
         this.authorizationManager = authorizationManager;
     }

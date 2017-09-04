@@ -37,8 +37,8 @@ public class AuthorizationManager {
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     ObjectMapper mapper = new ObjectMapper();
     private IComponentSecurityHandler componentSecurityHandler;
-    private RabbitManager rabbitManager;
     private PlatformRepository platformRepository;
+    private RabbitManager rabbitManager;
 
     @Autowired
     public AuthorizationManager(PlatformRepository platformRepository, RabbitManager rabbitManager) {
