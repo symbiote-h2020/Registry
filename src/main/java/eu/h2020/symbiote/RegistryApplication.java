@@ -1,6 +1,6 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class RegistryApplication {
 
         @Override
         public void run(String... args) throws Exception {
-//
+// // TODO: 04.09.2017 If not exists, create BIM
             //message retrieval - start rabbit exchange and consumers
             this.rabbitManager.init();
             this.rabbitManager.startConsumers();

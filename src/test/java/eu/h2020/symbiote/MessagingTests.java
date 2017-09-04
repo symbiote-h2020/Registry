@@ -11,7 +11,7 @@ import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -467,7 +467,7 @@ public class MessagingTests {
 
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkResourceOperationAccess(coreResourceRegistryRequest.getSecurityRequest(),
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(coreResourceRegistryRequest.getSecurityRequest(),
                 coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
@@ -540,7 +540,7 @@ public class MessagingTests {
         coreResourceRegistryRequest.setSecurityRequest(null);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkResourceOperationAccess(any(),any())).thenReturn(new AuthorizationResult("null token", false));
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(),any())).thenReturn(new AuthorizationResult("null token", false));
 
         rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
                 new DefaultConsumer(this.channel) {

@@ -11,7 +11,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.ResourceListResponse;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -90,7 +90,7 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             try {
-                authorizationResult = authorizationManager.checkResourceOperationAccess(request.getSecurityRequest(), request.getPlatformId());
+                authorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
             } catch (NullArgumentException e) {
                 log.error(e);
                 resourceRegistryResponse.setMessage("Request invalid!");

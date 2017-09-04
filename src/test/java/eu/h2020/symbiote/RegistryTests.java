@@ -1,6 +1,6 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

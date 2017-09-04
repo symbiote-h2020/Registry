@@ -9,7 +9,7 @@ import eu.h2020.symbiote.core.internal.FederationListResponse;
 import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;

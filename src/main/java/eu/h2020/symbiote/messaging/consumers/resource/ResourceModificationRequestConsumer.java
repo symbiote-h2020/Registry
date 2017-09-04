@@ -10,7 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -84,7 +84,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getSecurityRequest(), request.getPlatformId());
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
             if (!tokenAuthorizationResult.isValidated()){
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);

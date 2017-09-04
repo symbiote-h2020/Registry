@@ -1,5 +1,8 @@
 package eu.h2020.symbiote.managers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -18,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,11 +35,14 @@ import java.util.stream.Collectors;
 public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
-    private static IComponentSecurityHandler componentSecurityHandler;
+    ObjectMapper mapper = new ObjectMapper();
+    private IComponentSecurityHandler componentSecurityHandler;
+    private RabbitManager rabbitManager;
     private PlatformRepository platformRepository;
 
     @Autowired
-    public AuthorizationManager(PlatformRepository platformRepository) {
+    public AuthorizationManager(PlatformRepository platformRepository, RabbitManager rabbitManager) {
+        this.rabbitManager = rabbitManager;
         this.platformRepository = platformRepository;
         try {
             componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler("", "", "", "ID", "", false, "user", "pass");
@@ -44,86 +51,77 @@ public class AuthorizationManager {
         }
     }
 
-    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, String platformId) {
-        log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
-
-        if (platformRepository.findOne(platformId) == null) {
-            return new AuthorizationResult("Given platform does not exist in database", false);
-        }
-
-        if (securityRequest == null) {
-            return new AuthorizationResult("SecurityRequest is null", false);
-        }
-        if (platformId == null) {
-            return new AuthorizationResult("Platform Id is null", false);
-        }
-
-        return checkSecurityRequest(securityRequest);
-    }
-
-    public AuthorizationResult checkSecurityRequest(SecurityRequest securityRequest) {
-        AuthorizationResult authorizationResult = new AuthorizationResult("MOCKED", true);
-
-        //// TODO: 31.08.2017 implement!
-
-
-        return authorizationResult;
-    }
-
-    public AuthorizationResult checkResourceOperationAccess(SecurityRequest securityRequest, String platformIds) {
+    public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {
         Set<String> ids = new HashSet<>();
-        ids.add(platformIds);
+        ids.add(platformId);
+        return checkOperationAccess(securityRequest, ids);
+    }
+
+    public AuthorizationResult checkSMultiplePlatformOperationAccess(SecurityRequest securityRequest, List<String> platformIds) {
+        Set<String> ids = new HashSet<>();
+        ids.addAll(platformIds);
         return checkOperationAccess(securityRequest, ids);
     }
 
     public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
 
-        //todo check and finish !!
-        Set<String> checkedPolicies = checkPolicies(securityRequest);
+        log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
+
+        if (securityRequest == null) {
+            return new AuthorizationResult("SecurityRequest is null", false);
+        }
+        if (platformIds == null) {
+            return new AuthorizationResult("Platform Ids is null", false);
+        }
+
+        Set<String> checkedPolicies = checkPolicies(securityRequest, platformIds);
 
         if (platformIds.size() == checkedPolicies.size()) {
             return new AuthorizationResult("ok", true);
         } else {
             return new AuthorizationResult("Provided Policies does not match with needed to perform operation.", false);
         }
-
     }
 
-    public Set<String> checkPolicies(SecurityRequest securityRequest) {
-
-        //todo check and finish !!
+    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
 
-        Map<String, String> platformsAndOwnersMap = getOwnersOfPlatformsFromAAM();
+        Map<String, String> platformsAndOwnersMap = getOwnersOfPlatformsFromAAM(platformIds);
 
-        for (String platformId : platformsAndOwnersMap.keySet()) {
-            try {
-                accessPoliciesMap.put(
-                        platformId,
-                        new SingleLocalHomeTokenIdentityBasedTokenAccessPolicy(
-                                SecurityConstants.AAM_CORE_AAM_INSTANCE_ID,
-                                platformsAndOwnersMap.get(platformId),
-                                null));
-            } catch (InvalidArgumentsException e) {
-                log.error(e);
+        if (platformsAndOwnersMap != null) {
+            for (String platformId : platformsAndOwnersMap.keySet()) {
+                try {
+                    accessPoliciesMap.put(
+                            platformId,
+                            new SingleLocalHomeTokenIdentityBasedTokenAccessPolicy(
+                                    SecurityConstants.AAM_CORE_AAM_INSTANCE_ID,
+                                    platformsAndOwnersMap.get(platformId),
+                                    null));
+                } catch (InvalidArgumentsException e) {
+                    log.error(e);
+                }
             }
+            return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+        } else {
+            return new HashSet<>();
         }
-
-
-        Set<String> satisfiedPoliciesIdentifiers =
-                componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
-
-        return satisfiedPoliciesIdentifiers;
     }
 
-    private Map<String, String> getOwnersOfPlatformsFromAAM() {
-
-        return null; //todo implement rabbit magic !!
-
+    private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
+        try {
+            String ownersOfPlatformsFromAAM = rabbitManager.getOwnersOfPlatformsFromAAM(mapper.writeValueAsString(platformIds));
+            return mapper.readValue(ownersOfPlatformsFromAAM, new TypeReference<Map<String, String>>(){}); //// TODO: 04.09.2017 check!
+        } catch (JsonProcessingException e) {
+            log.error(e);
+            return null;
+        } catch (IOException e) {
+            log.error(e);
+            return null;
+        }
     }
 
-    public String getServiceResponse() {
+    public String generateServiceResponse() {
         String serviceResponse = "";
         try {
             serviceResponse = componentSecurityHandler.generateServiceResponse();
@@ -133,7 +131,7 @@ public class AuthorizationManager {
         return serviceResponse;
     }
 
-    public SecurityRequest getSecurityRequest() {
+    public SecurityRequest generateSecurityRequest() {
         SecurityRequest securityRequest = null;
         try {
             securityRequest = componentSecurityHandler.generateSecurityRequestUsingCoreCredentials();

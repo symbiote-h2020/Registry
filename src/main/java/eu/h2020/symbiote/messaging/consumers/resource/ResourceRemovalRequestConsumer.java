@@ -13,7 +13,7 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.messaging.RabbitManager;
+import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.managers.RepositoryManager;
@@ -97,7 +97,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
-            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkResourceOperationAccess(request.getSecurityRequest(), request.getPlatformId());
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
             if (!tokenAuthorizationResult.isValidated()){
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);

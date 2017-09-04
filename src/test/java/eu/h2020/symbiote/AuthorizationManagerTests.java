@@ -61,26 +61,26 @@ public class AuthorizationManagerTests {
 //    public void testResourceOperationAccessFailWithInvalidStatus() {
 //        when(mockedPlatformRepository.findOne("test1Plat")).thenReturn(generatePlatformB());
 //        when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.INVALID);
-//        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(SECURITY_REQUEST, "test1Plat").isValidated());
+//        Assert.assertFalse("Access test passed!", authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "test1Plat").isValidated());
 //    }
 //
 //    @Test
 //    public void testResourceOperationAccessFailWithWrongPlatformOwner() {
 //        when(mockedPlatformRepository.findOne("wrongOwner")).thenReturn(generatePlatformB());
 //        when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
-//        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(SECURITY_REQUEST, "wrongOwner").isValidated());
+//        Assert.assertFalse("Access test passed!", authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "wrongOwner").isValidated());
 //    }
 //
 //    @Test
 //    public void testResourceOperationAccessFailWithWrongPlatformId() {
 //        when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
-//        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(SECURITY_REQUEST, "wrongPlatformId").isValidated());
+//        Assert.assertFalse("Access test passed!", authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "wrongPlatformId").isValidated());
 //    }
 //
 //    @Test
 //    public void testResourceOperationAccessFailWithWrongIssuer() {
 //        when(mockedSecurityHandler.verifyHomeToken(any())).thenReturn(ValidationStatus.VALID);
-//        Assert.assertFalse("Access test passed!", authorizationManager.checkResourceOperationAccess(SECURITY_REQUEST, "wrongIssuer").isValidated());
+//        Assert.assertFalse("Access test passed!", authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "wrongIssuer").isValidated());
 //    }
 
     @Test
