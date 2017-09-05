@@ -34,6 +34,14 @@ public class TestSetupConfig {
     public static final String RESOURCE_MODIFICATION_REQUESTED_RK = "symbIoTe.resource.modificationRequested";
     public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
 
+    public static final String FEDERATION_EXCHANGE_NAME = "symbIoTe.federation";
+
+    public static final String FEDERATION_CREATION_REQUESTED_RK = "symbIoTe.federation.creationRequested";
+    public static final String FEDERATION_MODIFICATION_REQUESTED_RK = "symbIoTe.federation.modificationRequested";
+    public static final String FEDERATION_REMOVAL_REQUESTED_RK = "symbIoTe.federation.removalRequested";
+
+
+
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
     public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";
     public static final String PLATFORM_REMOVED_ROUTING_KEY = "symbIoTe.platform.deleted";

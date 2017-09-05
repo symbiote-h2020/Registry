@@ -71,6 +71,12 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceExchangeAutodelete", false);
         ReflectionTestUtils.setField(rabbitManager, "resourceExchangeInternal", false);
 
+        ReflectionTestUtils.setField(rabbitManager, "federationExchangeName", FEDERATION_EXCHANGE_NAME);
+        ReflectionTestUtils.setField(rabbitManager, "federationExchangeType", "topic");
+        ReflectionTestUtils.setField(rabbitManager, "federationExchangeDurable", true);
+        ReflectionTestUtils.setField(rabbitManager, "federationExchangeAutodelete", false);
+        ReflectionTestUtils.setField(rabbitManager, "federationExchangeInternal", false);
+
         ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED_RK);
@@ -78,13 +84,14 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED_RK);
 
-
         ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovedRoutingKey", PLATFORM_REMOVED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "platformModifiedRoutingKey", PLATFORM_MODIFIED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "resourceCreatedRoutingKey", RESOURCE_CREATED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovedRoutingKey", RESOURCE_REMOVED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "resourceModifiedRoutingKey", RESOURCE_MODIFIED_ROUTING_KEY);
+
+        //todo add IM and FED fields setters!
 
         ReflectionTestUtils.setField(rabbitManager, "platformResourcesRequestedRoutingKey", RESOURCES_FOR_PLATFORM_REQUESTED_RK);
 
