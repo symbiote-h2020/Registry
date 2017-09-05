@@ -19,6 +19,7 @@ import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -36,6 +37,15 @@ public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     ObjectMapper mapper = new ObjectMapper();
+    //@Value("${aam.environment.coreInterfaceAddress}")
+    String aamAddress = "https://localhost:8443";
+    String clientId = "registry@" + SecurityConstants.AAM_CORE_AAM_INSTANCE_ID;
+    String keystoreName = "RegistyKeystrore.jks";
+    String keystorePass = "password";
+    @Value("${aam.deployment.owner.username}")
+    String componentOwnerName;
+    @Value("${aam.deployment.owner.password}")
+    String componentOwnerPassword;
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
     private RabbitManager rabbitManager;
@@ -45,7 +55,14 @@ public class AuthorizationManager {
         this.rabbitManager = rabbitManager;
         this.platformRepository = platformRepository;
         try {
-            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler("", "", "", "ID", "", false, "user", "pass");
+            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
+                    keystoreName,
+                    keystorePass,
+                    clientId,
+                    aamAddress,
+                    false,
+                    componentOwnerName,
+                    componentOwnerPassword);
         } catch (SecurityHandlerException e) {
             log.error(e);
         }
@@ -111,7 +128,8 @@ public class AuthorizationManager {
     private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
         try {
             String ownersOfPlatformsFromAAM = rabbitManager.getOwnersOfPlatformsFromAAM(mapper.writeValueAsString(platformIds));
-            return mapper.readValue(ownersOfPlatformsFromAAM, new TypeReference<Map<String, String>>(){}); //// TODO: 04.09.2017 check!
+            return mapper.readValue(ownersOfPlatformsFromAAM, new TypeReference<Map<String, String>>() {
+            }); //// TODO: 04.09.2017 check!
         } catch (JsonProcessingException e) {
             log.error(e);
             return null;
