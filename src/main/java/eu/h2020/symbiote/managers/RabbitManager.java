@@ -182,9 +182,9 @@ public class RabbitManager {
     private String federationModificationRequestedRoutingKey;
     @Value("${rabbit.routingKey.federation.modified}")
     private String federationModifiedRoutingKey;
-    @Value("${rabbit.routingKey.federation.federationRequested}")
+    @Value("${rabbit.routingKey.federation.getFederationForPlatform}")
     private String federationRequestedRoutingKey;
-    @Value("${rabbit.routingKey.federation.allFederationsRequested}")
+    @Value("${rabbit.routingKey.federation.getAllFederations}")
     private String federationsRequestedRoutingKey;
 
     @Value("${rabbit.exchange.aam.name}")
