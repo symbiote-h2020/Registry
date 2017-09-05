@@ -7,9 +7,8 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.InformationModelListResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -26,7 +25,6 @@ public class ListInformationModelsRequestConsumer extends DefaultConsumer {
     private static Log log = LogFactory.getLog(ListInformationModelsRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
-    private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
 
     /**
@@ -38,12 +36,10 @@ public class ListInformationModelsRequestConsumer extends DefaultConsumer {
      */
     public ListInformationModelsRequestConsumer(Channel channel,
                                                 RepositoryManager repositoryManager,
-                                                RabbitManager rabbitManager,
-                                                AuthorizationManager authorizationManager) {
+                                                RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;
-        this.authorizationManager = authorizationManager;
         this.mapper = new ObjectMapper();
     }
 

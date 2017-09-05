@@ -10,7 +10,6 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -26,7 +25,6 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(InformationModelCreationRequestConsumer.class);
     private RabbitManager rabbitManager;
-    private AuthorizationManager authorizationManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -36,11 +34,9 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
      * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
     public InformationModelCreationRequestConsumer(Channel channel,
-                                                   RabbitManager rabbitManager,
-                                                   AuthorizationManager authorizationManager) {
+                                                   RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
-        this.authorizationManager = authorizationManager;
     }
 
     /**
@@ -70,8 +66,6 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
             informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
             informationModelReceived = informationModelRequest.getInformationModel();
             response.setInformationModel(informationModelReceived);
-
-            // TODO: 18.08.2017 authorization check!
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
                 if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {

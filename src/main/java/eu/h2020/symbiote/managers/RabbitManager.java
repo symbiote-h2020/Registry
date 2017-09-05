@@ -9,6 +9,7 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.messaging.consumers.federation.*;
 import eu.h2020.symbiote.messaging.consumers.informationModel.*;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
@@ -28,7 +29,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import static eu.h2020.symbiote.core.internal.DescriptionType.BASIC;
@@ -56,6 +60,11 @@ public class RabbitManager {
     private static final String INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-informationModelRemovalRequestedQueue";
     private static final String PLATFORM_RESOURCES_REQUESTED_QUEUE = "symbIoTe-Registry-platformResourcesRequestedQueue";
     private static final String INFORMATION_MODELS_REQUESTED_QUEUE = "symbIoTe-Registry-informationModelsRequestedQueue";
+    private static final String FEDERATION_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-federationCreationRequestedQueue";
+    private static final String FEDERATION_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-federationModificationRequestedQueue";
+    private static final String FEDERATION_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-federationRemovalRequestedQueue";
+    private static final String FEDERATION_REQUESTED_QUEUE = "symbIoTe-Registry-federationRequestedQueue";
+    private static final String FEDERATIONS_REQUESTED_QUEUE = "symbIoTe-Registry-federationsRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
@@ -150,13 +159,41 @@ public class RabbitManager {
     @Value("${rabbit.routingKey.platform.model.validationRequested}")
     private String rdfInformationModelValidationRequestedRoutingKey;
 
+    @Value("${rabbit.exchange.federation.name}")
+    private String federationExchangeName;
+    @Value("${rabbit.exchange.federation.type}")
+    private String federationExchangeType;
+    @Value("${rabbit.exchange.federation.durable}")
+    private boolean federationExchangeDurable;
+    @Value("${rabbit.exchange.federation.autodelete}")
+    private boolean federationExchangeAutodelete;
+    @Value("${rabbit.exchange.federation.internal}")
+    private boolean federationExchangeInternal;
+
+    @Value("${rabbit.routingKey.federation.creationRequested}")
+    private String federationCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.created}")
+    private String federationCreatedRoutingKey;
+    @Value("${rabbit.routingKey.federation.removalRequested}")
+    private String federationRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.removed}")
+    private String federationRemovedRoutingKey;
+    @Value("${rabbit.routingKey.federation.modificationRequested}")
+    private String federationModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.modified}")
+    private String federationModifiedRoutingKey;
+    @Value("${rabbit.routingKey.federation.federationRequested}")
+    private String federationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.allFederationsRequested}")
+    private String federationsRequestedRoutingKey;
+
     @Value("${rabbit.exchange.aam.name}")
     private String aamExchangeName;
     @Value("${rabbit.routingKey.get.platform.owners.names}")
     private String aamGetPlatformOwners;
 
     @Autowired
-    public RabbitManager(RepositoryManager repositoryManager,@Lazy AuthorizationManager authorizationManager) {
+    public RabbitManager(RepositoryManager repositoryManager, @Lazy AuthorizationManager authorizationManager) {
         this.repositoryManager = repositoryManager;
         this.authorizationManager = authorizationManager;
     }
@@ -214,6 +251,13 @@ public class RabbitManager {
                         this.resourceExchangeAutodelete,
                         this.resourceExchangeInternal,
                         null);
+
+                channel.exchangeDeclare(this.federationExchangeName,
+                        this.federationExchangeType,
+                        this.federationExchangeDurable,
+                        this.federationExchangeAutodelete,
+                        this.federationExchangeInternal,
+                        null);
             } catch (IOException e) {
                 log.error(e);
             } finally {
@@ -265,6 +309,11 @@ public class RabbitManager {
                 channel.queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
                 channel.queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
+                channel.queueDelete(FEDERATION_REQUESTED_QUEUE);
+                channel.queueDelete(FEDERATIONS_REQUESTED_QUEUE);
+                channel.queueDelete(FEDERATION_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(FEDERATION_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(FEDERATION_REMOVAL_REQUESTED_QUEUE);
                 closeChannel(channel);
                 this.connection.close();
             }
@@ -277,36 +326,33 @@ public class RabbitManager {
      * Method gathers all of the rabbit consumer starter methods
      */
     public void startConsumers() {
-        try {
-            startConsumerOfResourceCreationMessages();
-            startConsumerOfResourceModificationMessages();
-            startConsumerOfResourceRemovalMessages();
+        startConsumerOfResourceCreationMessages();
+        startConsumerOfResourceModificationMessages();
+        startConsumerOfResourceRemovalMessages();
 
-            startConsumerOfPlatformCreationMessages();
-            startConsumerOfPlatformModificationMessages();
-            startConsumerOfPlatformRemovalMessages();
+        startConsumerOfPlatformCreationMessages();
+        startConsumerOfPlatformModificationMessages();
+        startConsumerOfPlatformRemovalMessages();
 
-            startConsumerOfInformationModelCreationMessages();
-            startConsumerOfInformationModelModificationMessages();
-            startConsumerOfInformationModelRemovalMessages();
+        startConsumerOfInformationModelCreationMessages();
+        startConsumerOfInformationModelModificationMessages();
+        startConsumerOfInformationModelRemovalMessages();
 
-            //// TODO: 22.08.2017 Start Federation Consumers!
+        startConsumerOfFederationCreationMessages();
+        startConsumerOfFederationModificationMessages();
+        startConsumerOfFederationRemovalMessages();
+        startConsumerOfGetFederationForPlatformMessages();
+        startConsumerOfGetAllFederationsMessages();
 
-            startConsumerOfPlatformResourcesRequestsMessages();
-            startConsumerOfListAllInformationModelsRequestsMessages();
-        } catch (InterruptedException e) {
-            log.error(e);
-        }
+        startConsumerOfPlatformResourcesRequestsMessages();
+        startConsumerOfListAllInformationModelsRequestsMessages();
     }
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfResourceCreationMessages() throws InterruptedException {
+    public void startConsumerOfResourceCreationMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -326,11 +372,8 @@ public class RabbitManager {
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfResourceModificationMessages() throws InterruptedException {
+    public void startConsumerOfResourceModificationMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -351,11 +394,8 @@ public class RabbitManager {
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfResourceRemovalMessages() throws InterruptedException {
+    public void startConsumerOfResourceRemovalMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -374,12 +414,9 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
+     * It also creates a consumer for messages incoming to this queue, regarding to Platforms Resources requests.
      */
-    public void startConsumerOfPlatformResourcesRequestsMessages() throws InterruptedException {
+    public void startConsumerOfPlatformResourcesRequestsMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -399,11 +436,8 @@ public class RabbitManager {
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfPlatformCreationMessages() throws InterruptedException {
+    public void startConsumerOfPlatformCreationMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -423,11 +457,8 @@ public class RabbitManager {
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfPlatformModificationMessages() throws InterruptedException {
+    public void startConsumerOfPlatformModificationMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -447,11 +478,8 @@ public class RabbitManager {
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfPlatformRemovalMessages() throws InterruptedException {
+    public void startConsumerOfPlatformRemovalMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -471,11 +499,8 @@ public class RabbitManager {
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
      */
-    public void startConsumerOfInformationModelCreationMessages() throws InterruptedException {
+    public void startConsumerOfInformationModelCreationMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -485,7 +510,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Information Model Creation messages....");
 
-            Consumer consumer = new InformationModelCreationRequestConsumer(channel, this, authorizationManager);
+            Consumer consumer = new InformationModelCreationRequestConsumer(channel, this);
             channel.basicConsume(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -494,12 +519,9 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
+     * It also creates a consumer for messages incoming to this queue, regarding to Information Model modification requests.
      */
-    public void startConsumerOfInformationModelModificationMessages() throws InterruptedException {
+    public void startConsumerOfInformationModelModificationMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -509,7 +531,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Information Model Modification messages....");
 
-            Consumer consumer = new InformationModelModificationRequestConsumer(channel, this, authorizationManager);
+            Consumer consumer = new InformationModelModificationRequestConsumer(channel, this);
             channel.basicConsume(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -518,12 +540,9 @@ public class RabbitManager {
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
+     * It also creates a consumer for messages incoming to this queue, regarding to Information Model removal requests.
      */
-    public void startConsumerOfInformationModelRemovalMessages() throws InterruptedException {
+    public void startConsumerOfInformationModelRemovalMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -533,21 +552,14 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Information Model Removal messages....");
 
-            Consumer consumer = new InformationModelRemovalRequestConsumer(channel, this, authorizationManager, repositoryManager);
+            Consumer consumer = new InformationModelRemovalRequestConsumer(channel, this, repositoryManager);
             channel.basicConsume(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
-    /**
-     * Method creates queue and binds it globally available exchange and adequate Routing Key.
-     * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
-     *
-     * @throws InterruptedException
-     * @throws IOException
-     */
-    public void startConsumerOfListAllInformationModelsRequestsMessages() throws InterruptedException {
+    public void startConsumerOfListAllInformationModelsRequestsMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -557,8 +569,93 @@ public class RabbitManager {
 
             log.info("Receiver waiting for List All Information Models Requests messages....");
 
-            Consumer consumer = new ListInformationModelsRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            Consumer consumer = new ListInformationModelsRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(INFORMATION_MODELS_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    private void startConsumerOfFederationCreationMessages() {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(FEDERATION_CREATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(FEDERATION_CREATION_REQUESTED_QUEUE, this.federationExchangeName, this.federationCreationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Federation Creation messages....");
+
+            Consumer consumer = new FederationCreationRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(FEDERATION_CREATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    private void startConsumerOfFederationModificationMessages() {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(FEDERATION_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(FEDERATION_MODIFICATION_REQUESTED_QUEUE, this.federationExchangeName, this.federationModificationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Federation Modification messages....");
+
+            Consumer consumer = new FederationModificationRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(FEDERATION_MODIFICATION_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    private void startConsumerOfFederationRemovalMessages() {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(FEDERATION_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(FEDERATION_REMOVAL_REQUESTED_QUEUE, this.federationExchangeName, this.federationRemovalRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Federation Removal messages....");
+
+            Consumer consumer = new FederationRemovalRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(FEDERATION_REMOVAL_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    private void startConsumerOfGetAllFederationsMessages() {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(FEDERATIONS_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(FEDERATIONS_REQUESTED_QUEUE, this.federationExchangeName, this.federationsRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Get All Federations messages....");
+
+            Consumer consumer = new ListAllFederationsRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(FEDERATIONS_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    private void startConsumerOfGetFederationForPlatformMessages() {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(FEDERATION_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(FEDERATION_REQUESTED_QUEUE, this.federationExchangeName, this.federationRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Get Federation for Platform messages....");
+
+            Consumer consumer = new GetFederationForPlatformRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(FEDERATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -614,7 +711,7 @@ public class RabbitManager {
                             payload.getClass().getCanonicalName());
                     break;
             }
-            log.info("- resources operation (" + operationType + ") message sent (fanout). Contents:\n" + message);
+            log.info("- resources operation (" + operationType + ") message sent (fanout).");
         } catch (JsonProcessingException e) {
             log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
         }
@@ -640,7 +737,7 @@ public class RabbitManager {
                             informationModel.getClass().getCanonicalName());
                     break;
             }
-            log.info("- information model operation (" + operationType + ") message sent (fanout). Contents:\n" + message);
+            log.info("- information model operation (" + operationType + ") message sent (fanout).");
         } catch (JsonProcessingException e) {
             log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + informationModel, e);
         }
@@ -713,7 +810,7 @@ public class RabbitManager {
                     .build();
 
             consumer.getChannel().basicPublish("", properties.getReplyTo(), replyProps, response.getBytes());
-            log.info("- RPC reply Message sent back! Content: " + response);
+            log.info("- RPC reply Message sent back!");
         } else {
             log.error("Received RPC message without ReplyTo or CorrelationId props.");
         }
@@ -742,8 +839,7 @@ public class RabbitManager {
             rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
-                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
-                    + message);
+                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
 
             rpcChannel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
@@ -778,8 +874,7 @@ public class RabbitManager {
             rpcChannel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
             log.info("Sending Custom RPC Message... \nMessage params:\nExchange name: "
-                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props + "\nMessage: "
-                    + message);
+                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
         } catch (IOException e) {
             log.error(e);
         }
@@ -812,7 +907,7 @@ public class RabbitManager {
                     .headers(headers)
                     .build();
 
-            log.info("Sending message. Content: " + message);
+            log.info("Sending message...");
             channel.basicPublish(exchange, routingKey, props, message.getBytes());
         } catch (IOException e) {
             log.error(e);
@@ -854,15 +949,14 @@ public class RabbitManager {
 
             InformationModelValidationResponseConsumer responseConsumer =
                     new InformationModelValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
-                            rpcChannel, repositoryManager, this, operationType, authorizationManager);
+                            rpcChannel, repositoryManager, this, operationType);
 
             rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:" +
                     "\nExchange name: " + informationModelExchangeName
                     + "\nRouting key: " + rdfInformationModelValidationRequestedRoutingKey
-                    + "\nProps: " + props
-                    + "\nMessage: " + message);
+                    + "\nProps: " + props);
 
             rpcChannel.basicPublish(
                     this.informationModelExchangeName,
@@ -874,9 +968,39 @@ public class RabbitManager {
         }
     }
 
+    /**
+     * Triggers sending message containing Platform accordingly to Operation Type.
+     *
+     * @param federation
+     * @param operationType
+     */
     public void sendFederationOperationMessage(Federation federation, RegistryOperationType operationType) {
-        //// TODO: 22.08.2017 IMPLEMENT!
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(federation);
+
+            switch (operationType) {
+                case CREATION:
+                    sendMessage(this.federationExchangeName, this.federationCreatedRoutingKey, message,
+                            federation.getClass().getCanonicalName());
+                    log.info("- federation created message sent");
+                    break;
+                case MODIFICATION:
+                    sendMessage(this.federationExchangeName, this.federationModifiedRoutingKey, message,
+                            federation.getClass().getCanonicalName());
+                    log.info("- federation modified message sent");
+                    break;
+                case REMOVAL:
+                    sendMessage(this.federationExchangeName, this.federationRemovedRoutingKey, message,
+                            federation.getClass().getCanonicalName());
+                    log.info("- federation removed message sent");
+                    break;
+            }
+        } catch (JsonProcessingException e) {
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + federation, e);
+        }
     }
+
 
     public String getOwnersOfPlatformsFromAAM(String platformIds) {
         return sendRpcMessageAndConsumeResponse(aamExchangeName, aamGetPlatformOwners, platformIds);

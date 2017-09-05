@@ -24,9 +24,6 @@ import java.io.IOException;
  */
 public class FederationRemovalRequestConsumer extends DefaultConsumer {
 
-    //// TODO: 22.08.2017 MOCKED, CHANGE!!
-
-
     private static Log log = LogFactory.getLog(FederationRemovalRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
@@ -65,7 +62,7 @@ public class FederationRemovalRequestConsumer extends DefaultConsumer {
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
         FederationRegistryResponse federationResponse = new FederationRegistryResponse();
-        log.info(" [x] Received Federation to remove: '" + message + "'");
+        log.info(" [x] Received Federation to remove");
 
         try {
             Federation requestFederation = mapper.readValue(message, Federation.class);
@@ -93,8 +90,7 @@ public class FederationRemovalRequestConsumer extends DefaultConsumer {
             federationResponse.setMessage("Error occurred during Federation retrieving from message");
             federationResponse.setStatus(400);
         }
-        String response = mapper.writeValueAsString(federationResponse);
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(federationResponse));
     }
 }
 

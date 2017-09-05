@@ -10,9 +10,8 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -27,17 +26,14 @@ import java.io.IOException;
 public class InformationModelRemovalRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(InformationModelRemovalRequestConsumer.class);
-    private AuthorizationManager authorizationManager;
     private RabbitManager rabbitManager;
     private RepositoryManager repositoryManager;
 
     public InformationModelRemovalRequestConsumer(Channel channel,
                                                   RabbitManager rabbitManager,
-                                                  AuthorizationManager authorizationManager,
                                                   RepositoryManager repositoryManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
-        this.authorizationManager = authorizationManager;
         this.repositoryManager = repositoryManager;
     }
 
@@ -57,8 +53,6 @@ public class InformationModelRemovalRequestConsumer extends DefaultConsumer {
             informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
             informationModelReceived = informationModelRequest.getInformationModel();
             response.setInformationModel(informationModelReceived);
-
-            // TODO: 18.08.2017 authorization check!
 
             if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
                 log.error("Given Information Model has ID null or empty");

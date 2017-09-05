@@ -10,7 +10,6 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -25,17 +24,13 @@ import java.io.IOException;
 public class InformationModelModificationRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(InformationModelModificationRequestConsumer.class);
-    private AuthorizationManager authorizationManager;
     private RabbitManager rabbitManager;
 
     public InformationModelModificationRequestConsumer(Channel channel,
-                                                       RabbitManager rabbitManager,
-                                                       AuthorizationManager authorizationManager) {
+                                                       RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
-        this.authorizationManager = authorizationManager;
     }
-
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.

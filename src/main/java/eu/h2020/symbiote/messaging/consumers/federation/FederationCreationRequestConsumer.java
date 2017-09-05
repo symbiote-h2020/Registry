@@ -24,8 +24,6 @@ import java.io.IOException;
  */
 public class FederationCreationRequestConsumer extends DefaultConsumer {
 
-    //// TODO: 22.08.2017 MOCKED, CHANGE!!
-
     private static Log log = LogFactory.getLog(FederationCreationRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
@@ -62,7 +60,7 @@ public class FederationCreationRequestConsumer extends DefaultConsumer {
             throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received Federation to create: '" + message + "'");
+        log.info(" [x] Received Federation to create");
         FederationRegistryResponse federationResponse = new FederationRegistryResponse();
 
         try {
@@ -91,7 +89,6 @@ public class FederationCreationRequestConsumer extends DefaultConsumer {
             federationResponse.setMessage("Error occurred during Federation retrieving from message");
             federationResponse.setStatus(400);
         }
-        String response = mapper.writeValueAsString(federationResponse);
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(federationResponse));
     }
 }

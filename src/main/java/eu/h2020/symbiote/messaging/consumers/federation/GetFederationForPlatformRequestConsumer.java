@@ -10,9 +10,8 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.PlatformRegistryRequest;
 import eu.h2020.symbiote.core.internal.FederationListResponse;
 import eu.h2020.symbiote.core.model.Federation;
-import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -26,12 +25,9 @@ import java.util.List;
  */
 public class GetFederationForPlatformRequestConsumer extends DefaultConsumer {
 
-    //// TODO: 22.08.2017 MOCKED, CHANGE!!
-
     private static Log log = LogFactory.getLog(GetFederationForPlatformRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
-    private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
 
     /**
@@ -43,12 +39,10 @@ public class GetFederationForPlatformRequestConsumer extends DefaultConsumer {
      */
     public GetFederationForPlatformRequestConsumer(Channel channel,
                                                    RepositoryManager repositoryManager,
-                                                   RabbitManager rabbitManager,
-                                                   AuthorizationManager authorizationManager) {
+                                                   RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;
-        this.authorizationManager = authorizationManager;
         this.mapper = new ObjectMapper();
     }
 

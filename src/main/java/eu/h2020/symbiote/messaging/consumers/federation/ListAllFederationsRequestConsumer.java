@@ -7,9 +7,8 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.FederationListResponse;
 import eu.h2020.symbiote.core.model.Federation;
-import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -23,13 +22,9 @@ import java.util.List;
  */
 public class ListAllFederationsRequestConsumer extends DefaultConsumer {
 
-    //// TODO: 22.08.2017 MOCKED, CHANGE!!
-
-
     private static Log log = LogFactory.getLog(ListAllFederationsRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
-    private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
 
     /**
@@ -41,15 +36,12 @@ public class ListAllFederationsRequestConsumer extends DefaultConsumer {
      */
     public ListAllFederationsRequestConsumer(Channel channel,
                                              RepositoryManager repositoryManager,
-                                             RabbitManager rabbitManager,
-                                             AuthorizationManager authorizationManager) {
+                                             RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;
-        this.authorizationManager = authorizationManager;
         this.mapper = new ObjectMapper();
     }
-
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.

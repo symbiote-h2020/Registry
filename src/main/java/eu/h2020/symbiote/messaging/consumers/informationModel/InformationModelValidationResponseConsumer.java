@@ -11,9 +11,8 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.internal.InformationModelValidationResult;
 import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import org.apache.commons.logging.Log;
@@ -35,7 +34,6 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
     private RabbitManager rabbitManager;
     private RegistryOperationType operationType;
     private ObjectMapper mapper;
-    private AuthorizationManager authorizationManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -51,8 +49,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
                                                       Channel channel,
                                                       RepositoryManager repositoryManager,
                                                       RabbitManager rabbitManager,
-                                                      RegistryOperationType operationType,
-                                                      AuthorizationManager authorizationManager) {
+                                                      RegistryOperationType operationType) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -60,7 +57,6 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
         this.operationType = operationType;
-        this.authorizationManager = authorizationManager;
         this.mapper = new ObjectMapper();
         this.informationModelResponse = new InformationModelResponse();
     }
