@@ -83,7 +83,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         InformationModelValidationResult informationModelValidationResult = new InformationModelValidationResult();
         InformationModel informationModel;
 
-        log.info("[x] Received validation result: '" + message + "'");
+        log.info("[x] Received IM validation result");
 
         try {
             //receive and read message from Semantic Manager
@@ -110,7 +110,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
 
 
             informationModel = informationModelValidationResult.getObjectDescription();
-            log.info("CoreResources received from SM! Content: " + informationModel);
+            log.info("Information Model received from Semantic Manager! IM id: " + informationModel.getId());
 
             InformationModelPersistenceResult informationModelPersistenceResult = makePersistenceOperations(informationModel);
             prepareContentOfRPCResponse(informationModelPersistenceResult);

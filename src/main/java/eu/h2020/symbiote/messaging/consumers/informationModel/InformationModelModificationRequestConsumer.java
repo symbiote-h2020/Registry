@@ -54,7 +54,7 @@ public class InformationModelModificationRequestConsumer extends DefaultConsumer
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received Information Model to modify: '" + message + "'");
+        log.info(" [x] Received Information Model to modify");
 
         InformationModelRequest informationModelRequest;
         InformationModel informationModelReceived;
@@ -65,8 +65,6 @@ public class InformationModelModificationRequestConsumer extends DefaultConsumer
             informationModelReceived = informationModelRequest.getInformationModel();
             response.setInformationModel(informationModelReceived);
 
-            // TODO: 18.08.2017 authorization check!
-
             if (RegistryUtils.validateFields(informationModelReceived)) {
                 if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
                     log.error("Given Information Model has not ID! It should have an ID!");
@@ -74,7 +72,8 @@ public class InformationModelModificationRequestConsumer extends DefaultConsumer
                     response.setStatus(400);
                     rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
                 } else {
-                    log.info("Message to Semantic Manager Sent. Request: " + informationModelRequest);
+                    log.info("Message to Semantic Manager Sent. Information model id: "
+                            + informationModelRequest.getInformationModel().getId());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
                     rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
                             mapper.writeValueAsString(informationModelReceived),
