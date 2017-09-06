@@ -75,6 +75,9 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
             PlatformPersistenceResult platformPersistenceResult = this.repositoryManager.modifyPlatform(requestPlatform);
 
             if (platformPersistenceResult.getStatus() == 200) {
+                platformResponse.setMessage(
+                        platformPersistenceResult.getMessage());
+                platformResponse.setStatus(200);
                 rabbitManager.sendPlatformOperationMessage(platformPersistenceResult.getPlatform(),
                         RegistryOperationType.MODIFICATION);
             } else {
