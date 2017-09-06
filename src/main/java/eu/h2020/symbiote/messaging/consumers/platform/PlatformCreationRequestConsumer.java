@@ -76,6 +76,9 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
             if (RegistryUtils.validateFields(requestPlatform)) {
                 PlatformPersistenceResult platformPersistenceResult = this.repositoryManager.savePlatform(requestPlatform);
                 if (platformPersistenceResult.getStatus() == 200) {
+                    platformResponse.setMessage(
+                            platformPersistenceResult.getMessage());
+                    platformResponse.setStatus(200);
                     rabbitManager.sendPlatformOperationMessage(platformPersistenceResult.getPlatform(),
                             RegistryOperationType.CREATION);
                 } else {
