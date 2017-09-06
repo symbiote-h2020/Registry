@@ -20,9 +20,9 @@ import java.util.List;
 /**
  * Created by mateuszl on 12.06.2017.
  */
-public class ListAllFederationsRequestConsumer extends DefaultConsumer {
+public class GetAllFederationsRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(ListAllFederationsRequestConsumer.class);
+    private static Log log = LogFactory.getLog(GetAllFederationsRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private RepositoryManager repositoryManager;
@@ -34,9 +34,9 @@ public class ListAllFederationsRequestConsumer extends DefaultConsumer {
      * @param channel       the channel to which this consumer is attached
      * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
-    public ListAllFederationsRequestConsumer(Channel channel,
-                                             RepositoryManager repositoryManager,
-                                             RabbitManager rabbitManager) {
+    public GetAllFederationsRequestConsumer(Channel channel,
+                                            RepositoryManager repositoryManager,
+                                            RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;

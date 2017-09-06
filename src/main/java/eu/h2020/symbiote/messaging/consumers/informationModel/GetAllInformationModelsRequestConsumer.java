@@ -20,9 +20,9 @@ import java.util.List;
 /**
  * Created by mateuszl on 07.08.2017.
  */
-public class ListInformationModelsRequestConsumer extends DefaultConsumer {
+public class GetAllInformationModelsRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(ListInformationModelsRequestConsumer.class);
+    private static Log log = LogFactory.getLog(GetAllInformationModelsRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private RepositoryManager repositoryManager;
@@ -34,9 +34,9 @@ public class ListInformationModelsRequestConsumer extends DefaultConsumer {
      * @param channel       the channel to which this consumer is attached
      * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
-    public ListInformationModelsRequestConsumer(Channel channel,
-                                                RepositoryManager repositoryManager,
-                                                RabbitManager rabbitManager) {
+    public GetAllInformationModelsRequestConsumer(Channel channel,
+                                                  RepositoryManager repositoryManager,
+                                                  RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;
@@ -51,13 +51,22 @@ public class ListInformationModelsRequestConsumer extends DefaultConsumer {
         informationModelListResponse.setInformationModels(new ArrayList<>());
         informationModelListResponse.setStatus(400);
         List<InformationModel> informationModels;
-        //String message = new String(body, "UTF-8"); //content of message String is not important in this case.
+        String message = new String(body, "UTF-8");
         log.info(" [x] Received request to retrieve list of existing Information Models.");
 
         informationModels = repositoryManager.getAllInformationModels();
+
+        if (message.equalsIgnoreCase("false")) {
+            clearRDFInfoFromModels(informationModels);
+        }
+
         informationModelListResponse.setStatus(HttpStatus.SC_OK);
         informationModelListResponse.setMessage("OK. " + informationModels.size() + " Information Models found!");
         informationModelListResponse.setInformationModels(informationModels);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(informationModelListResponse));
+    }
+
+    private void clearRDFInfoFromModels(List<InformationModel> informationModels) {
+        informationModels.forEach(informationModel -> informationModel.setRdf(null));
     }
 }

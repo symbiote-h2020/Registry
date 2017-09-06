@@ -569,7 +569,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for List All Information Models Requests messages....");
 
-            Consumer consumer = new ListInformationModelsRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new GetAllInformationModelsRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(INFORMATION_MODELS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
@@ -637,7 +637,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Get All Federations messages....");
 
-            Consumer consumer = new ListAllFederationsRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new GetAllFederationsRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(FEDERATIONS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
