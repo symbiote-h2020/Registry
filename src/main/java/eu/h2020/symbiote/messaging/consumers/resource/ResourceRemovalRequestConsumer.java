@@ -86,7 +86,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
 
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received resource to remove: '" + message + "'");
+        log.info(" [x] Received resource to remove");
 
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);

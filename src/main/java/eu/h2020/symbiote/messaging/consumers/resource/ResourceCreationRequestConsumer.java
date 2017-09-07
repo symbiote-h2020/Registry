@@ -76,7 +76,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received resources to create (CoreResourceRegistryRequest): '" + message + "'");
+        log.info(" [x] Received resources to create (CoreResourceRegistryRequest)");
 
         try {
             //request from CCI received and deserialized
