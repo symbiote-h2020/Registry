@@ -66,7 +66,7 @@ public class FederationRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             Federation requestFederation = mapper.readValue(message, Federation.class);
-            federationResponse.setFederation(requestFederation);
+            federationResponse.setBody(requestFederation);
 
             if (RegistryUtils.validateFields(requestFederation)) {
                 FederationPersistenceResult federationPersistenceResult = this.repositoryManager.removeFederation(requestFederation);

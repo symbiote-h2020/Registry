@@ -65,7 +65,7 @@ public class GetFederationForPlatformRequestConsumer extends DefaultConsumer {
             throws IOException {
         PlatformRegistryRequest request;
         FederationListResponse federationResponse = new FederationListResponse();
-        federationResponse.setFederations(new ArrayList<>());
+        federationResponse.setBody(new ArrayList<>());
         List<Federation> federations;
         String message = new String(body, "UTF-8");
         log.info(" [x] Received request to retrieve federations for platform!");
@@ -73,10 +73,10 @@ public class GetFederationForPlatformRequestConsumer extends DefaultConsumer {
         try {
             request = mapper.readValue(message, PlatformRegistryRequest.class);
 
-            federations = repositoryManager.getFederationsForPlatform(request.getPlatform());
+            federations = repositoryManager.getFederationsForPlatform(request.getBody());
             federationResponse.setStatus(HttpStatus.SC_OK);
             federationResponse.setMessage("OK. " + federations.size() + " federations found!");
-            federationResponse.setFederations(federations);
+            federationResponse.setBody(federations);
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occurred during Federation retrieving from message", e);
             federationResponse.setMessage("Error occurred during Federation retrieving from message");

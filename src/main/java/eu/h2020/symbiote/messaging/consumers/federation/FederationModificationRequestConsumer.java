@@ -66,7 +66,7 @@ public class FederationModificationRequestConsumer extends DefaultConsumer {
 
         try {
             Federation federation = mapper.readValue(message, Federation.class);
-            federationResponse.setFederation(federation);
+            federationResponse.setBody(federation);
 
             if (RegistryUtils.validateFields(federation)) {
                 FederationPersistenceResult federationPersistenceResult = this.repositoryManager.modifyFederation(federation);

@@ -156,7 +156,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
             log.info("IM operation successful! (" + this.operationType.toString() + ")");
             informationModelResponse.setStatus(200);
             informationModelResponse.setMessage("IM operation successful! (" + this.operationType.toString() + ")");
-            informationModelResponse.setInformationModel(informationModel);
+            informationModelResponse.setBody(informationModel);
 
         } else {
             rollback(informationModel);

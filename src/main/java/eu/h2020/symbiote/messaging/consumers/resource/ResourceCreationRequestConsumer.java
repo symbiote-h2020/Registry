@@ -153,8 +153,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                     mapper.writeValueAsString(registryResponse));
         } else {
             ResourceInstanceValidationRequest resourceInstanceValidationRequest = new ResourceInstanceValidationRequest();
-            resourceInstanceValidationRequest.setRdf(rdfResourceRegistryRequest.getRdfInfo().getRdf());
-            resourceInstanceValidationRequest.setRdfFormat(rdfResourceRegistryRequest.getRdfInfo().getRdfFormat());
+            resourceInstanceValidationRequest.setRdf(rdfResourceRegistryRequest.getBody().getRdf());
+            resourceInstanceValidationRequest.setRdfFormat(rdfResourceRegistryRequest.getBody().getRdfFormat());
             resourceInstanceValidationRequest.setInformationModelId(informationModelIdByInterworkingServiceUrl);
 
             //sending RDF content to Semantic Manager and passing responsibility to another consumer
