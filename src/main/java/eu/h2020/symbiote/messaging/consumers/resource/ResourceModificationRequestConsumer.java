@@ -70,7 +70,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
         //// TODO: 16.08.2017 UPDATE to Interworking Service checking similar to CREATION!
 
-        log.info(" [x] Received resources to modify (CoreResourceRegistryRequest):'" + message + "'");
+        log.info(" [x] Received resources to modify (CoreResourceRegistryRequest)");
 
         try {
             //request from CCI received and deserialized
