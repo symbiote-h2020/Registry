@@ -39,7 +39,7 @@ public class AuthorizationManager {
     ObjectMapper mapper = new ObjectMapper();
     //@Value("${aam.environment.coreInterfaceAddress}")
     String aamAddress = "https://localhost:8443";
-    String clientId = "registry@" + SecurityConstants.AAM_CORE_AAM_INSTANCE_ID;
+    String clientId = "registry@" + SecurityConstants.CORE_AAM_INSTANCE_ID;
     String keystoreName = "RegistyKeystrore.jks";
     String keystorePass = "password";
     @Value("${aam.deployment.owner.username}")
@@ -115,7 +115,7 @@ public class AuthorizationManager {
                     accessPoliciesMap.put(
                             platformId,
                             new SingleLocalHomeTokenIdentityBasedTokenAccessPolicy(
-                                    SecurityConstants.AAM_CORE_AAM_INSTANCE_ID,
+                                    SecurityConstants.CORE_AAM_INSTANCE_ID,
                                     platformsAndOwnersMap.get(platformId),
                                     null));
                 } catch (InvalidArgumentsException e) {
