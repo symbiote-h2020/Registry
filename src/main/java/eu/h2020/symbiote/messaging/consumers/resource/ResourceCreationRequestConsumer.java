@@ -12,10 +12,10 @@ import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationRequest;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.model.resources.*;
 import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import org.apache.commons.logging.Log;
@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +132,6 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(registryResponse));
             }
-
         }
     }
 
@@ -168,7 +168,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      * Checks if given request consists of resources, which does not have any content in ID field.
      *
      * @param request
-     * @return
+     * @return true if given resources don't have an ID.
      */
     private boolean checkIfResourcesHaveNullOrEmptyId(CoreResourceRegistryRequest request) {
         Map<String, Resource> resourceMap = new HashMap<>();
@@ -183,22 +183,21 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     }
 
     private boolean checkIds(List<Resource> resources) {
-        //mocked !! // TODO: 08.08.2017 // FIXME: 08.08.2017 Update to new RESOURCES types
-        /*
+
         try {
             for (Resource resource : resources) {
                 if (!checkId(resource)) return false;
-                List<ActuatingService> actuatingServices = new ArrayList<>();
-                if (resource instanceof Actuator) {
-                    actuatingServices = ((Actuator) resource).getCapabilities();
-                } else if (resource instanceof MobileDevice) {
-                    actuatingServices = ((MobileDevice) resource).getCapabilities();
-                } else if (resource instanceof StationaryDevice) {
-                    actuatingServices = ((StationaryDevice) resource).getCapabilities();
+                List<Service> services = new ArrayList<>();
+                if (resource instanceof Device) {
+                    services = ((Device) resource).getServices();
+                } else if (resource instanceof MobileSensor) {
+                    services = ((MobileSensor) resource).getServices();
+                } else if (resource instanceof Actuator) {
+                    services = ((Actuator) resource).getServices();
                 }
-                if (!actuatingServices.isEmpty()) {
-                    for (ActuatingService actuatingService : actuatingServices) {
-                        if (!checkId(actuatingService)) return checkId(actuatingService);
+                if (!services.isEmpty()) {
+                    for (Service service : services) {
+                        if (!checkId(service)) return false;
                     }
                 }
             }
@@ -206,7 +205,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             log.error(e);
             return false;
         }
-        */
+
         return true;
     }
 
