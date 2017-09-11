@@ -60,7 +60,7 @@ public class GetAllFederationsRequestConsumer extends DefaultConsumer {
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
         FederationListResponse federationResponse = new FederationListResponse();
-        federationResponse.setFederations(new ArrayList<>());
+        federationResponse.setBody(new ArrayList<>());
         List<Federation> federations;
         //String message = new String(body, "UTF-8"); //unnecessary here
         log.info(" [x] Received request to retrieve all federations");
@@ -68,7 +68,7 @@ public class GetAllFederationsRequestConsumer extends DefaultConsumer {
         federations = repositoryManager.getAllFederations();
         federationResponse.setStatus(HttpStatus.SC_OK);
         federationResponse.setMessage("OK. " + federations.size() + " federations found!");
-        federationResponse.setFederations(federations);
+        federationResponse.setBody(federations);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(federationResponse));
     }
 }

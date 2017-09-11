@@ -69,7 +69,7 @@ public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
-            platformResponse.setPlatform(requestPlatform);
+            platformResponse.setBody(requestPlatform);
 
             //// TODO: 11.08.2017 should i check some information given in platform?
 

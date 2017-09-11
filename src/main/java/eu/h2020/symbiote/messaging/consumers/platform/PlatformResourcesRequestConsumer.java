@@ -73,7 +73,7 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
             throws IOException {
         CoreResourceRegistryRequest request;
         ResourceListResponse resourceRegistryResponse = new ResourceListResponse();
-        resourceRegistryResponse.setResources(new ArrayList<>());
+        resourceRegistryResponse.setBody(new ArrayList<>());
         List<CoreResource> coreResources;
         AuthorizationResult authorizationResult;
         String message = new String(body, "UTF-8");
@@ -114,7 +114,7 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
         coreResources = repositoryManager.getResourcesForPlatform(request.getPlatformId());
         resourceRegistryResponse.setStatus(HttpStatus.SC_OK);
         resourceRegistryResponse.setMessage("OK. " + coreResources.size() + " resources found!");
-        resourceRegistryResponse.setResources(RegistryUtils.convertCoreResourcesToResourcesList(coreResources));
+        resourceRegistryResponse.setBody(RegistryUtils.convertCoreResourcesToResourcesList(coreResources));
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
     }
 }

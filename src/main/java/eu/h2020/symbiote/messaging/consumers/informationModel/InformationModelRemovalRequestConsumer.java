@@ -51,8 +51,8 @@ public class InformationModelRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
-            informationModelReceived = informationModelRequest.getInformationModel();
-            response.setInformationModel(informationModelReceived);
+            informationModelReceived = informationModelRequest.getBody();
+            response.setBody(informationModelReceived);
 
             if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
                 log.error("Given Information Model has ID null or empty");

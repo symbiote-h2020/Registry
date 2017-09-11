@@ -48,7 +48,7 @@ public class GetAllInformationModelsRequestConsumer extends DefaultConsumer {
         super.handleDelivery(consumerTag, envelope, properties, body);
 
         InformationModelListResponse informationModelListResponse = new InformationModelListResponse();
-        informationModelListResponse.setInformationModels(new ArrayList<>());
+        informationModelListResponse.setBody(new ArrayList<>());
         informationModelListResponse.setStatus(400);
         List<InformationModel> informationModels;
         String message = new String(body, "UTF-8");
@@ -62,7 +62,7 @@ public class GetAllInformationModelsRequestConsumer extends DefaultConsumer {
 
         informationModelListResponse.setStatus(HttpStatus.SC_OK);
         informationModelListResponse.setMessage("OK. " + informationModels.size() + " Information Models found!");
-        informationModelListResponse.setInformationModels(informationModels);
+        informationModelListResponse.setBody(informationModels);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(informationModelListResponse));
     }
 

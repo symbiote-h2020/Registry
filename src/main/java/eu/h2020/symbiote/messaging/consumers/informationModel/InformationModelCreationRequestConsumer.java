@@ -64,13 +64,13 @@ public class InformationModelCreationRequestConsumer extends DefaultConsumer {
 
         try {
             informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
-            informationModelReceived = informationModelRequest.getInformationModel();
-            response.setInformationModel(informationModelReceived);
+            informationModelReceived = informationModelRequest.getBody();
+            response.setBody(informationModelReceived);
 
             if (RegistryUtils.validateFields(informationModelReceived)) {
                 if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
                     log.info("Message to Semantic Manager Sent. Information model id: "
-                            + informationModelRequest.getInformationModel().getId());
+                            + informationModelRequest.getBody().getId());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
                     rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
                             mapper.writeValueAsString(informationModelReceived),
