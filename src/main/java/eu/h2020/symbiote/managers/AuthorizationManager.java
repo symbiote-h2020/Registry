@@ -14,12 +14,16 @@ import eu.h2020.symbiote.security.accesspolicies.SingleLocalHomeTokenIdentityBas
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
+import eu.h2020.symbiote.security.communication.payloads.Credentials;
+import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersRequest;
+import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersResponse;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -39,7 +43,7 @@ public class AuthorizationManager {
     ObjectMapper mapper = new ObjectMapper();
     //@Value("${aam.environment.coreInterfaceAddress}")
     String aamAddress = "https://localhost:8443";
-    String clientId = "registry@" + SecurityConstants.CORE_AAM_INSTANCE_ID;
+    String clientId = "registry@" + SecurityConstants.AAM_CORE_AAM_INSTANCE_ID;
     String keystoreName = "RegistyKeystrore.jks";
     String keystorePass = "password";
     @Value("${aam.deployment.owner.username}")
@@ -115,7 +119,7 @@ public class AuthorizationManager {
                     accessPoliciesMap.put(
                             platformId,
                             new SingleLocalHomeTokenIdentityBasedTokenAccessPolicy(
-                                    SecurityConstants.CORE_AAM_INSTANCE_ID,
+                                    SecurityConstants.AAM_CORE_AAM_INSTANCE_ID,
                                     platformsAndOwnersMap.get(platformId),
                                     null));
                 } catch (InvalidArgumentsException e) {
@@ -130,9 +134,17 @@ public class AuthorizationManager {
 
     private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
         try {
-            String ownersOfPlatformsFromAAM = rabbitManager.getOwnersOfPlatformsFromAAM(mapper.writeValueAsString(platformIds));
-            return mapper.readValue(ownersOfPlatformsFromAAM, new TypeReference<Map<String, String>>() {
-            }); //// TODO: 04.09.2017 check!
+            Credentials credentials = new Credentials(componentOwnerName,componentOwnerPassword);
+            GetPlatformOwnersRequest request = new GetPlatformOwnersRequest(credentials,platformIds);
+
+            String ownersOfPlatformsFromAAM = rabbitManager.getOwnersOfPlatformsFromAAM(mapper.writeValueAsString(request));
+            GetPlatformOwnersResponse response = mapper.readValue(ownersOfPlatformsFromAAM, GetPlatformOwnersResponse.class);
+            if( !response.getHttpStatus().is2xxSuccessful() ) {
+                log.error("Getting platform owners for aam failed: " + response.getHttpStatus());
+                return new HashMap<>();
+            } else {
+                return response.getplatformsOwners();
+            }
         } catch (JsonProcessingException e) {
             log.error(e);
             return null;
