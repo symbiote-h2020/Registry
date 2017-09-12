@@ -221,6 +221,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      */
     private void sendRpcResponse() {
         try {
+            registryResponse.setServiceResponse(authorizationManager.generateServiceResponse());
             response = mapper.writeValueAsString(registryResponse);
         } catch (JsonProcessingException e) {
             log.error(e);
@@ -228,7 +229,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
-
             rabbitManager.closeConsumer(this, this.getChannel());
         } catch (IOException e) {
             log.error(e);
