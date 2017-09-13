@@ -51,6 +51,9 @@ public class AuthorizationManager {
     String componentOwnerName;
     @Value("${aam.deployment.owner.password}")
     String componentOwnerPassword;
+    @Value("${registry.security.enabled}")
+    Boolean securityEnabled;
+
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
     private RabbitManager rabbitManager;
@@ -82,26 +85,27 @@ public class AuthorizationManager {
     }
 
     public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
+        if (securityEnabled) {
+            log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
-        log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
+            if (securityRequest == null) {
+                return new AuthorizationResult("SecurityRequest is null", false);
+            }
+            if (platformIds == null) {
+                return new AuthorizationResult("Platform Ids is null", false);
+            }
 
-        if (securityRequest == null) {
-            return new AuthorizationResult("SecurityRequest is null", false);
-        }
-        if (platformIds == null) {
-            return new AuthorizationResult("Platform Ids is null", false);
-        }
+            Set<String> checkedPolicies = checkPolicies(securityRequest, platformIds);
 
-        Set<String> checkedPolicies = checkPolicies(securityRequest, platformIds);
-
-        if (platformIds.size() == checkedPolicies.size()) {
-            return new AuthorizationResult("ok", true);
+            if (platformIds.size() == checkedPolicies.size()) {
+                return new AuthorizationResult("ok", true);
+            } else {
+                return new AuthorizationResult("Provided Policies does not match with needed to perform operation.", false);
+            }
         } else {
-            return new AuthorizationResult("Provided Policies does not match with needed to perform operation.", false);
+            //if security is disabled in properties
+            return new AuthorizationResult("security disabled", true);
         }
-        //disabling security for testing
-
-//        return new AuthorizationResult("ok", true);
     }
 
     public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
