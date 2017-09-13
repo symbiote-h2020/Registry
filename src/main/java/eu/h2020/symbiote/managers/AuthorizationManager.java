@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.managers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
@@ -23,7 +22,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -41,11 +39,14 @@ public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     ObjectMapper mapper = new ObjectMapper();
-    //@Value("${aam.environment.coreInterfaceAddress}")
-    String aamAddress = "https://localhost:8443";
-    String clientId = "registry@" + SecurityConstants.CORE_AAM_INSTANCE_ID;
-    String keystoreName = "RegistyKeystrore.jks";
-    String keystorePass = "password";
+    @Value("${aam.environment.aamAddress}")
+    String aamAddress;
+    @Value("${aam.environment.clientId}")
+    String clientId;
+    @Value("${aam.environment.keystoreName}")
+    String keystoreName;
+    @Value("${aam.environment.keystorePass}")
+    String keystorePass;
     @Value("${aam.deployment.owner.username}")
     String componentOwnerName;
     @Value("${aam.deployment.owner.password}")
@@ -55,21 +56,17 @@ public class AuthorizationManager {
     private RabbitManager rabbitManager;
 
     @Autowired
-    public AuthorizationManager(PlatformRepository platformRepository, RabbitManager rabbitManager) {
+    public AuthorizationManager(PlatformRepository platformRepository, RabbitManager rabbitManager) throws SecurityHandlerException {
         this.rabbitManager = rabbitManager;
         this.platformRepository = platformRepository;
-        try {
-            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
-                    keystoreName,
-                    keystorePass,
-                    clientId,
-                    aamAddress,
-                    false,
-                    componentOwnerName,
-                    componentOwnerPassword);
-        } catch (SecurityHandlerException e) {
-            log.error(e);
-        }
+        componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
+                keystoreName,
+                keystorePass,
+                clientId,
+                aamAddress,
+                false,
+                componentOwnerName,
+                componentOwnerPassword);
     }
 
     public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {
@@ -134,12 +131,12 @@ public class AuthorizationManager {
 
     private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
         try {
-            Credentials credentials = new Credentials(componentOwnerName,componentOwnerPassword);
-            GetPlatformOwnersRequest request = new GetPlatformOwnersRequest(credentials,platformIds);
+            Credentials credentials = new Credentials(componentOwnerName, componentOwnerPassword);
+            GetPlatformOwnersRequest request = new GetPlatformOwnersRequest(credentials, platformIds);
 
             String ownersOfPlatformsFromAAM = rabbitManager.getOwnersOfPlatformsFromAAM(mapper.writeValueAsString(request));
             GetPlatformOwnersResponse response = mapper.readValue(ownersOfPlatformsFromAAM, GetPlatformOwnersResponse.class);
-            if( !response.getHttpStatus().is2xxSuccessful() ) {
+            if (!response.getHttpStatus().is2xxSuccessful()) {
                 log.error("Getting platform owners for aam failed: " + response.getHttpStatus());
                 return new HashMap<>();
             } else {
@@ -173,67 +170,6 @@ public class AuthorizationManager {
         }
         return securityRequest;
     }
-
-
-    /*
-    public AuthorizationResult checkToken(String tokenString) {
-        Token token = getToken(tokenString);
-        if (token == null) {
-            return new AuthorizationResult("Token invalid! Token could not be verified", false);
-        }
-
-        if (validationStatus != VALID) {
-            log.error("Token failed verification due to " + validationStatus);
-            return new AuthorizationResult("Token failed verification due to " + validationStatus, false);
-        }
-        return new AuthorizationResult("", true);
-    }
-
-    private Token getToken(String tokenString) {
-        Token token;
-        try {
-            token = new Token(tokenString);
-        } catch (TokenValidationException e) {
-            log.error("Token could not be verified", e);
-            return null;
-        }
-        return token;
-    }
-
-    private AuthorizationResult getAuthorizationResult(String tokenString, String platformId) {
-        JWTClaims claims;
-
-        try {
-            claims = JWTEngine.getClaimsFromToken(tokenString);
-        } catch (MalformedJWTException e) {
-            log.error("Could not get the claims for token!", e);
-            return new AuthorizationResult("Token invalid! Could not get the claims for token!", false);
-        }
-
-        // verify if there is a right token issuer in claims
-        if (!IssuingAuthorityType.CORE.equals(IssuingAuthorityType.valueOf(claims.getTtyp()))) {
-            log.error("Presented token was not issued by CoreAAM!");
-            return new AuthorizationResult("Token invalid! Presented token was not issued by CoreAAM!", false);
-        }
-
-        // verify that this JWT contains attributes relevant for platform owner
-        Map<String, String> attributes = claims.getAtt();
-
-        // PO role
-        if (!UserRole.PLATFORM_OWNER.toString().equals(attributes.get(CoreAttributes.ROLE.toString()))) {
-            log.error("Wrong role claim in token!");
-            return new AuthorizationResult("Token invalid! Wrong role claim in token!", false);
-        }
-
-        // owned platform identifier
-        if (!platformId.equals(attributes.get(CoreAttributes.OWNED_PLATFORM.toString()))) {
-            log.error("Platform owner does not match with requested operation!");
-            return new AuthorizationResult("Token invalid! Platform owner does not match with requested operation!", false);
-        }
-        return new AuthorizationResult("Authorization check successful!", true);
-    }
-
-    */
 
     public AuthorizationResult checkIfResourcesBelongToPlatform(Map<String, Resource> resources, String platformId) {
         Platform registryPlatform = platformRepository.findOne(platformId);

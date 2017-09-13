@@ -3,7 +3,6 @@ package eu.h2020.symbiote;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,7 +48,7 @@ public class RegistryTests {
         Assert.assertNotNull(rabbitManager);
         Assert.assertNotNull(rabbitTemplate);
         Assert.assertNotNull(authorizationManager);
-        */
+        */;
     }
 
     @Configuration
