@@ -39,38 +39,47 @@ public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
     ObjectMapper mapper = new ObjectMapper();
-    @Value("${aam.environment.aamAddress}")
-    String aamAddress;
-    @Value("${aam.environment.clientId}")
-    String clientId;
-    @Value("${aam.environment.keystoreName}")
-    String keystoreName;
-    @Value("${aam.environment.keystorePass}")
-    String keystorePass;
-    @Value("${aam.deployment.owner.username}")
-    String componentOwnerName;
-    @Value("${aam.deployment.owner.password}")
-    String componentOwnerPassword;
-    @Value("${registry.security.enabled}")
-    Boolean securityEnabled = false;
+    private String aamAddress;
+    private String clientId;
+    private String keystoreName;
+    private String keystorePass;
+    private String componentOwnerName;
+    private String componentOwnerPassword;
+    private Boolean securityEnabled;
 
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
     private RabbitManager rabbitManager;
 
     @Autowired
-    public AuthorizationManager(PlatformRepository platformRepository, RabbitManager rabbitManager) throws SecurityHandlerException {
+    public AuthorizationManager(PlatformRepository platformRepository,
+                                RabbitManager rabbitManager,
+                                @Value("${aam.deployment.owner.username}") String componentOwnerName,
+                                @Value("${aam.deployment.owner.password}") String componentOwnerPassword,
+                                @Value("${aam.environment.aamAddress}") String aamAddress,
+                                @Value("${aam.environment.clientId}") String clientId,
+                                @Value("${aam.environment.keystoreName}") String keystoreName,
+                                @Value("${aam.environment.keystorePass}") String keystorePass,
+                                @Value("${registry.security.enabled}") Boolean securityEnabled) throws SecurityHandlerException {
         this.rabbitManager = rabbitManager;
         this.platformRepository = platformRepository;
+        this.componentOwnerName = componentOwnerName;
+        this.componentOwnerPassword = componentOwnerPassword;
+        this.aamAddress = aamAddress;
+        this.clientId = clientId;
+        this.keystoreName = keystoreName;
+        this.keystorePass = keystorePass;
+        this.securityEnabled = securityEnabled;
+
         if (securityEnabled) {
             componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
-                    keystoreName,
-                    keystorePass,
-                    clientId,
-                    aamAddress,
+                    this.keystoreName,
+                    this.keystorePass,
+                    this.clientId,
+                    this.aamAddress,
                     false,
-                    componentOwnerName,
-                    componentOwnerPassword);
+                    this.componentOwnerName,
+                    this.componentOwnerPassword);
         }
     }
 
