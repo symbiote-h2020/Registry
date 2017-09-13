@@ -6,6 +6,7 @@ import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -110,4 +111,8 @@ public class AuthorizationManagerTests {
 //
 //        Assert.assertFalse(authorizationManager.checkIfResourcesBelongToPlatform(resources, PLATFORM_B_ID).isValidated());
 //    }
+
+    @Test
+    public void someTest(){
+    }
 }
