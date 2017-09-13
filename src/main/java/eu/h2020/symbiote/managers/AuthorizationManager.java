@@ -52,7 +52,7 @@ public class AuthorizationManager {
     @Value("${aam.deployment.owner.password}")
     String componentOwnerPassword;
     @Value("${registry.security.enabled}")
-    Boolean securityEnabled;
+    Boolean securityEnabled = false;
 
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
@@ -62,14 +62,16 @@ public class AuthorizationManager {
     public AuthorizationManager(PlatformRepository platformRepository, RabbitManager rabbitManager) throws SecurityHandlerException {
         this.rabbitManager = rabbitManager;
         this.platformRepository = platformRepository;
-        componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
-                keystoreName,
-                keystorePass,
-                clientId,
-                aamAddress,
-                false,
-                componentOwnerName,
-                componentOwnerPassword);
+        if (securityEnabled) {
+            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
+                    keystoreName,
+                    keystorePass,
+                    clientId,
+                    aamAddress,
+                    false,
+                    componentOwnerName,
+                    componentOwnerPassword);
+        }
     }
 
     public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {

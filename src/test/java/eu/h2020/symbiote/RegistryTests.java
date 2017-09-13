@@ -1,6 +1,5 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import org.junit.After;
 import org.junit.Before;
@@ -30,12 +29,8 @@ public class RegistryTests {
     @Autowired
     protected RabbitManager rabbitManager;
 
-    @Autowired
-    protected AuthorizationManager authorizationManager;
-
     @Before
     public void setUp() throws Exception {
-
     }
 
     @After

@@ -24,7 +24,7 @@ import java.util.Map;
 public class TestSetupConfig {
 
     public static final SecurityRequest SECURITY_REQUEST = null; //// TODO: 04.09.2017
-            
+
     public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
     public static final String PLATFORM_CREATION_REQUESTED_RK = "symbIoTe.platform.creationRequested";
     public static final String PLATFORM_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.modificationRequested";
@@ -39,8 +39,6 @@ public class TestSetupConfig {
     public static final String FEDERATION_CREATION_REQUESTED_RK = "symbIoTe.federation.creationRequested";
     public static final String FEDERATION_MODIFICATION_REQUESTED_RK = "symbIoTe.federation.modificationRequested";
     public static final String FEDERATION_REMOVAL_REQUESTED_RK = "symbIoTe.federation.removalRequested";
-
-
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
     public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";
@@ -96,6 +94,13 @@ public class TestSetupConfig {
     public static final String RESOURCE_STATIONARY_URI = RESOURCE_PREDICATE + "stationary1";
     public static final String RESOURCE_STATIONARY_ID = "stationary1";
 
+    public static final String AAM_ADDRESS = "";
+    public static final String AAM_CLIENT_ID = "";
+    public static final String AAM_KEYSTORE_NAME = "RegistyTestKeystrore.jks";
+    public static final String AAM_KEYSTORE_PASS = "test_pass";
+    public static final String AAM_COMP_OWNER_NAME = "";
+    public static final String AAM_COMP_OWNER_PASS = "";
+    public static final Boolean SECURITY_ENABLED = true;
 
     public static Platform generateSymbiotePlatformA() {
         Platform platform = new Platform();
