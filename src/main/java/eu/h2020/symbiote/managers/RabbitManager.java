@@ -11,10 +11,7 @@ import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.messaging.consumers.federation.*;
 import eu.h2020.symbiote.messaging.consumers.informationModel.*;
-import eu.h2020.symbiote.messaging.consumers.platform.PlatformCreationRequestConsumer;
-import eu.h2020.symbiote.messaging.consumers.platform.PlatformModificationRequestConsumer;
-import eu.h2020.symbiote.messaging.consumers.platform.PlatformRemovalRequestConsumer;
-import eu.h2020.symbiote.messaging.consumers.platform.PlatformResourcesRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.platform.*;
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceCreationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceModificationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceRemovalRequestConsumer;
@@ -65,6 +62,7 @@ public class RabbitManager {
     private static final String FEDERATION_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-federationRemovalRequestedQueue";
     private static final String FEDERATION_REQUESTED_QUEUE = "symbIoTe-Registry-federationRequestedQueue";
     private static final String FEDERATIONS_REQUESTED_QUEUE = "symbIoTe-Registry-federationsRequestedQueue";
+    private static final String PLATFORM_DETAILS_REQUESTED_QUEUE = "symbIoTe-Registry-platformDetailsRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
@@ -103,6 +101,9 @@ public class RabbitManager {
     private String platformModifiedRoutingKey;
     @Value("${rabbit.routingKey.platform.resourcesRequested}")
     private String platformResourcesRequestedRoutingKey;
+    @Value("${rabbit.routingKey.platform.platformDetailsRequested}")
+    private String platformDetailsRequestedRoutingKey;
+
     @Value("${rabbit.exchange.resource.name}")
     private String resourceExchangeName;
     @Value("${rabbit.exchange.resource.type}")
@@ -309,6 +310,7 @@ public class RabbitManager {
                 channel.queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
                 channel.queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
                 channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
+                channel.queueDelete(PLATFORM_DETAILS_REQUESTED_QUEUE);
                 channel.queueDelete(FEDERATION_REQUESTED_QUEUE);
                 channel.queueDelete(FEDERATIONS_REQUESTED_QUEUE);
                 channel.queueDelete(FEDERATION_CREATION_REQUESTED_QUEUE);
@@ -346,6 +348,7 @@ public class RabbitManager {
 
         startConsumerOfPlatformResourcesRequestsMessages();
         startConsumerOfListAllInformationModelsRequestsMessages();
+        startConsumerOfPlatformDetailsConsumer();
     }
 
     /**
@@ -495,6 +498,28 @@ public class RabbitManager {
             log.error(e);
         }
     }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Platform Details requests.
+     */
+    private void startConsumerOfPlatformDetailsConsumer() {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(PLATFORM_DETAILS_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(PLATFORM_DETAILS_REQUESTED_QUEUE, this.platformExchangeName, this.platformDetailsRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Get Platform Details messages....");
+
+            Consumer consumer = new GetPlatformDetailsRequestConsumer(channel, repositoryManager, this);
+            channel.basicConsume(PLATFORM_DETAILS_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.

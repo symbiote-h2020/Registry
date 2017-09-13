@@ -544,13 +544,15 @@ public class RepositoryManager {
     public String getInformationModelIdByInterworkingServiceUrl(String platformId, String requestedInterworkingServiceUrl) {
         String id = null;
         Platform platform = platformRepository.findOne(platformId);
-        //// TODO: 13.09.2017 NULL POINTER POSSIBLE
-        for (InterworkingService interworkingService : platform.getInterworkingServices()) {
-            if (interworkingService.getUrl().equals(requestedInterworkingServiceUrl)) {
-                id = interworkingService.getInformationModelId();
+        if (platform != null && platform.getInterworkingServices() != null) {
+            for (InterworkingService interworkingService : platform.getInterworkingServices()) {
+                if (interworkingService != null && interworkingService.getInformationModelId() != null) {
+                    if (interworkingService.getUrl().equals(requestedInterworkingServiceUrl)) {
+                        id = interworkingService.getInformationModelId();
+                    }
+                }
             }
         }
-
         return id;
     }
 
@@ -562,5 +564,9 @@ public class RepositoryManager {
 
     public List<Federation> getAllFederations() {
         return federationRepository.findAll();
+    }
+
+    public Platform getPlatformById(String id) {
+        return platformRepository.findOne(id);
     }
 }
