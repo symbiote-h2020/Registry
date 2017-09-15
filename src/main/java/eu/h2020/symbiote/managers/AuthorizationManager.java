@@ -9,7 +9,7 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
-import eu.h2020.symbiote.security.accesspolicies.SingleLocalHomeTokenIdentityBasedTokenAccessPolicy;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleLocalHomeTokenIdentityBasedAccessPolicy;
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
@@ -130,7 +130,7 @@ public class AuthorizationManager {
                 try {
                     accessPoliciesMap.put(
                             platformId,
-                            new SingleLocalHomeTokenIdentityBasedTokenAccessPolicy(
+                            new SingleLocalHomeTokenIdentityBasedAccessPolicy(
                                     SecurityConstants.CORE_AAM_INSTANCE_ID,
                                     platformsAndOwnersMap.get(platformId),
                                     null));
