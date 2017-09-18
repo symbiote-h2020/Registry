@@ -169,7 +169,9 @@ public class AuthorizationManager {
     public String generateServiceResponse() {
         String serviceResponse = "";
         try {
-            serviceResponse = componentSecurityHandler.generateServiceResponse();
+            if( securityEnabled ) {
+                serviceResponse = componentSecurityHandler.generateServiceResponse();
+            }
         } catch (SecurityHandlerException e) {
             log.error(e);
         }
@@ -179,7 +181,9 @@ public class AuthorizationManager {
     public SecurityRequest generateSecurityRequest() {
         SecurityRequest securityRequest = null;
         try {
-            securityRequest = componentSecurityHandler.generateSecurityRequestUsingCoreCredentials();
+            if( securityEnabled ) {
+                securityRequest = componentSecurityHandler.generateSecurityRequestUsingCoreCredentials();
+            }
         } catch (Exception e) {
             log.error(e);
         }
