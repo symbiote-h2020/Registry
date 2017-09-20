@@ -156,6 +156,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             resourceInstanceValidationRequest.setRdf(rdfResourceRegistryRequest.getBody().getRdf());
             resourceInstanceValidationRequest.setRdfFormat(rdfResourceRegistryRequest.getBody().getRdfFormat());
             resourceInstanceValidationRequest.setInformationModelId(informationModelIdByInterworkingServiceUrl);
+            resourceInstanceValidationRequest.setInterworkingServiceURL(requestedInterworkingServiceUrl);
 
             //sending RDF content to Semantic Manager and passing responsibility to another consumer
             rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,

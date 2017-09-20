@@ -28,8 +28,8 @@ public class RegistryApplication {
     private static Log log = LogFactory.getLog(RegistryApplication.class);
 
     public static final String BIM_MODEL_ID = "BIM";
-    public static final String BIM_MODEL_URI = "http://www.symbiote-h2020.eu/ontology/model/BIM";
-    public static final String BIM_MODEL_OWNER = "Admin";
+    public static final String BIM_MODEL_URI = "http://www.symbiote-h2020.eu/ontology/informationModel/BIM";
+    public static final String BIM_MODEL_OWNER = "BIM";
 
     public static void main(String[] args) {
         SpringApplication.run(RegistryApplication.class, args);
