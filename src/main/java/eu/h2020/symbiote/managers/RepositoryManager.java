@@ -66,6 +66,7 @@ public class RepositoryManager {
     public PlatformPersistenceResult savePlatform(Platform platformToSave) {
         PlatformPersistenceResult platformSavingResult = new PlatformPersistenceResult();
         Platform savedPlatform;
+        normalizePlatformsInterworkingServicesUrls(platformToSave);
         platformSavingResult.setPlatform(platformToSave);
 
         log.info("Received platform to save: " + platformToSave);
@@ -222,8 +223,13 @@ public class RepositoryManager {
             log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else if (resource.getInterworkingServiceURL() == null || resource.getInterworkingServiceURL().isEmpty()) {
+            log.error("Given resource has null or empty Interworking service URL!");
+            resourceSavingResult.setMessage("Given resource has null or empty Interworking service URL!");
+            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             try {
+                normalizeResourceInterworkingServiceUrl(resource);
                 log.info("Saving Resource: " + resource.toString());
 
                 CoreResource savedResource = resourceRepository.save(resource);
@@ -521,39 +527,47 @@ public class RepositoryManager {
     }
 
     private void normalizeResourceInterworkingServiceUrl(CoreResource resource) {
-        if (resource.getInterworkingServiceURL().trim().charAt(resource.getInterworkingServiceURL().length() - 1)
-                != "/".charAt(0)) {
-            resource.setInterworkingServiceURL(resource.getInterworkingServiceURL().trim() + "/");
-        }
+        resource.setInterworkingServiceURL(trimAndAddSlashIfNotPresent(resource.getInterworkingServiceURL()));
     }
 
     private void normalizePlatformsInterworkingServicesUrls(Platform platform) {
         if (platform.getInterworkingServices() != null && !platform.getInterworkingServices().isEmpty()) {
             for (InterworkingService service : platform.getInterworkingServices()) {
-                if (service.getUrl().trim().charAt(service.getUrl().length() - 1) != "/".charAt(0)) {
-                    service.setUrl(service.getUrl().trim() + "/");
-                }
+                service.setUrl(trimAndAddSlashIfNotPresent(service.getUrl()));
             }
         }
-    }
-
-    public List<InformationModel> getAllInformationModels() {
-        return informationModelRepository.findAll();
     }
 
     public String getInformationModelIdByInterworkingServiceUrl(String platformId, String requestedInterworkingServiceUrl) {
         String id = null;
+
+        String requestedInterworkingServiceUrlTrimmed = trimAndAddSlashIfNotPresent(requestedInterworkingServiceUrl);
+
         Platform platform = platformRepository.findOne(platformId);
         if (platform != null && platform.getInterworkingServices() != null) {
             for (InterworkingService interworkingService : platform.getInterworkingServices()) {
                 if (interworkingService != null && interworkingService.getInformationModelId() != null) {
-                    if (interworkingService.getUrl().equals(requestedInterworkingServiceUrl)) {
+                    String platformsInterworkingServiceUrl = trimAndAddSlashIfNotPresent(interworkingService.getUrl());
+                    if (platformsInterworkingServiceUrl.equals(requestedInterworkingServiceUrlTrimmed)) {
                         id = interworkingService.getInformationModelId();
                     }
+
                 }
             }
         }
         return id;
+    }
+
+    private String trimAndAddSlashIfNotPresent(String interworkingServiceUrl) {
+        String newInterworkingServiceUrl = interworkingServiceUrl;
+        if (interworkingServiceUrl.trim().charAt(interworkingServiceUrl.length() - 1) != "/".charAt(0)) {
+            newInterworkingServiceUrl = interworkingServiceUrl.trim() + "/";
+        }
+        return newInterworkingServiceUrl;
+    }
+
+    public List<InformationModel> getAllInformationModels() {
+        return informationModelRepository.findAll();
     }
 
     public List<Federation> getFederationsForPlatform(Platform platform) {
