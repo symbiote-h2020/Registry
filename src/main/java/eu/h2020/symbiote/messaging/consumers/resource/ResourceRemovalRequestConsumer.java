@@ -163,14 +163,16 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             response.setDescriptionType(DescriptionType.BASIC);
         }
 
-        response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-                }).writeValueAsString(resourceRemovalResultList.stream()
-                        .map(resourcePersistenceResult ->
-                                RegistryUtils.convertCoreResourceToResource
-                                        (resourcePersistenceResult.getResource()))
-                        .collect(Collectors.toList())
-                )
-        );
+        List<Resource> resourceList = resourceRemovalResultList.stream()
+                .map(resourcePersistenceResult ->
+                        RegistryUtils.convertCoreResourceToResource
+                                (resourcePersistenceResult.getResource()))
+                .collect(Collectors.toList());
+        Map<String,Resource> resourcesDeletedMap = new HashMap<>();
+        resourceList.stream().forEach(res -> resourcesDeletedMap.put(res.getId(),res));
+
+        response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
+        }).writeValueAsString(resourcesDeletedMap));
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
