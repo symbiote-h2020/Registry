@@ -102,6 +102,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);
                 response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                response.setServiceResponse(authorizationManager.generateServiceResponse());
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(response));
                 return;
@@ -110,6 +111,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             log.error("Request is null");
             response.setStatus(400);
             response.setMessage("Request is null");
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;
         }
@@ -130,6 +132,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             log.error(resourcesAccessAuthorizationResult.getMessage() + resources);
             response.setMessage(resourcesAccessAuthorizationResult.getMessage() + resources);
             response.setStatus(400);
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;
         }
@@ -173,6 +176,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
         response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
         }).writeValueAsString(resourcesDeletedMap));
+        response.setServiceResponse(authorizationManager.generateServiceResponse());
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }

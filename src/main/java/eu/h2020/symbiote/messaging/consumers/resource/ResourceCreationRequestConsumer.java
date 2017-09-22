@@ -149,6 +149,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             log.error("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
             registryResponse.setStatus(400);
             registryResponse.setMessage("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
+            registryResponse.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                     mapper.writeValueAsString(registryResponse));
         } else {

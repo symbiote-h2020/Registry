@@ -205,12 +205,17 @@ public class AuthorizationManager {
             return new AuthorizationResult("Interworking services list in given platform is null", false);
         }
 
-        List<String> platformInterworkingServicesUrls = interworkingServices.stream()
-                .map(InterworkingService::getUrl)
-                .collect(Collectors.toList());
+        List<String> platformInterworkingServicesUrls = new ArrayList<>();
+        interworkingServices.stream()
+                .map(InterworkingService::getUrl).forEach(serviceUrl -> platformInterworkingServicesUrls.add(serviceUrl.endsWith("/")?serviceUrl:serviceUrl+"/"));
+
 
         for (String key : resources.keySet()) {
-            if (!platformInterworkingServicesUrls.contains(resources.get(key).getInterworkingServiceURL())) {
+            String resourceInterworkingServiceUrl = resources.get(key).getInterworkingServiceURL();
+            if( !resourceInterworkingServiceUrl.endsWith("/") ) {
+                resourceInterworkingServiceUrl += "/";
+            }
+            if (!platformInterworkingServicesUrls.contains(resourceInterworkingServiceUrl)) {
                 log.error("Resource does not match with any Interworking Service in given platform! " + resources.get(key));
                 return new AuthorizationResult("Resource does not match with any Interworking Service in given platform!", false);
             }

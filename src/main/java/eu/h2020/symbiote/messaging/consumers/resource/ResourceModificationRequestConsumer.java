@@ -79,6 +79,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             log.error("Unable to get CoreResourceRegistryRequest from Message body!", e);
             response.setStatus(HttpStatus.SC_BAD_REQUEST);
             response.setMessage("Content invalid. Could not deserialize. Resources not modified!");
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;
         }
@@ -89,6 +90,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);
                 response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                response.setServiceResponse(authorizationManager.generateServiceResponse());
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(response));
                 return;
@@ -97,6 +99,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             log.error("Request is null!");
             response.setStatus(400);
             response.setMessage("Request is null!");
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;
         }
