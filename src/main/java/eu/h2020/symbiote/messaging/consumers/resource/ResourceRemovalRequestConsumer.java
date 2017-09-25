@@ -23,10 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -77,7 +74,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        List<ResourcePersistenceResult> resourceRemovalResultList = new ArrayList<>();
+        Map<String,ResourcePersistenceResult> resourceRemovalMap = new HashMap<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
         Map<String, Resource> resources = new HashMap<>();
 
@@ -150,12 +147,12 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                     resourceRemovalResult.setMessage("Given Resource has ID null or empty");
                     resourceRemovalResult.setStatus(400);
                 }
-                resourceRemovalResultList.add(resourceRemovalResult);
+                resourceRemovalMap.put(key,resourceRemovalResult);
             }
         }
 
-        if (checkIfRemovalWasSuccessful(resourceRemovalResultList, resourcesRemoved, resources)) {
-            sendFanoutMessage(resourceRemovalResultList);
+        if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resources)) {
+            sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
 
             response.setMessage("Success");
             response.setStatus(200);
@@ -166,17 +163,24 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             response.setDescriptionType(DescriptionType.BASIC);
         }
 
-        List<Resource> resourceList = resourceRemovalResultList.stream()
-                .map(resourcePersistenceResult ->
-                        RegistryUtils.convertCoreResourceToResource
-                                (resourcePersistenceResult.getResource()))
-                .collect(Collectors.toList());
         Map<String,Resource> resourcesDeletedMap = new HashMap<>();
-        resourceList.stream().forEach(res -> resourcesDeletedMap.put(res.getId(),res));
+        for( String key: resourceRemovalMap.keySet() ) {
+            resourcesDeletedMap.put(key,RegistryUtils.convertCoreResourceToResource(resourceRemovalMap.get(key).getResource()));
+
+        }
+
+//        List<Resource> resourceList = resourceRemovalResultList.stream()
+//                .map(resourcePersistenceResult ->
+//                        RegistryUtils.convertCoreResourceToResource
+//                                (resourcePersistenceResult.getResource()))
+//                .collect(Collectors.toList());
+
+//        resourceList.stream().forEach(res -> resourcesDeletedMap.put(res.getId(),res));
 
         response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
         }).writeValueAsString(resourcesDeletedMap));
         response.setServiceResponse(authorizationManager.generateServiceResponse());
+        System.out.println(response.getBody());
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
