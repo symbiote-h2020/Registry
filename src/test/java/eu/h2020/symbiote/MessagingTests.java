@@ -3,23 +3,20 @@ package eu.h2020.symbiote;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
-import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
-import eu.h2020.symbiote.core.cci.ResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
-import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
-import eu.h2020.symbiote.model.PlatformPersistenceResult;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
@@ -27,7 +24,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -35,6 +33,7 @@ import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -55,7 +54,7 @@ public class MessagingTests {
 
     @Before
     public void setup() throws IOException, TimeoutException {
-        /*
+
         ReflectionTestUtils.setField(rabbitManager, "rabbitHost", "localhost");
         ReflectionTestUtils.setField(rabbitManager, "rabbitUsername", "guest");
         ReflectionTestUtils.setField(rabbitManager, "rabbitPassword", "guest");
@@ -78,12 +77,26 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "federationExchangeAutodelete", false);
         ReflectionTestUtils.setField(rabbitManager, "federationExchangeInternal", false);
 
+        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeName", INFORMATION_MODEL_EXCHANGE_NAME);
+        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeType", "topic");
+        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeDurable", true);
+        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeAutodelete", false);
+        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeInternal", false);
+
         ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED_RK);
+
+        ReflectionTestUtils.setField(rabbitManager, "federationCreationRequestedRoutingKey", FEDERATION_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "federationModificationRequestedRoutingKey", FEDERATION_MODIFICATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "federationRemovalRequestedRoutingKey", FEDERATION_REMOVAL_REQUESTED_RK);
+
+        ReflectionTestUtils.setField(rabbitManager, "informationModelCreationRequestedRoutingKey", INFORMATION_MODEL_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "informationModelModificationRequestedRoutingKey", INFORMATION_MODEL_MODIFICATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "informationModelRemovalRequestedRoutingKey", INFORMATION_MODEL_REMOVAL_REQUESTED_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovedRoutingKey", PLATFORM_REMOVED_ROUTING_KEY);
@@ -92,7 +105,11 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "resourceRemovedRoutingKey", RESOURCE_REMOVED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "resourceModifiedRoutingKey", RESOURCE_MODIFIED_ROUTING_KEY);
 
-        //todo add IM and FED fields setters!
+        ReflectionTestUtils.setField(rabbitManager, "federationsRequestedRoutingKey", GET_ALL_FEDERATIONS_RK);
+        ReflectionTestUtils.setField(rabbitManager, "federationRequestedRoutingKey", GET_FEDERATION_FOR_PLATFORM_RK);
+
+        ReflectionTestUtils.setField(rabbitManager, "aamExchangeName", AAM_EXCHANGE_NAME);
+        ReflectionTestUtils.setField(rabbitManager, "aamGetPlatformOwners", AAM_GET_PLATFORM_OWNERS_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "platformResourcesRequestedRoutingKey", RESOURCES_FOR_PLATFORM_REQUESTED_RK);
 
@@ -109,7 +126,6 @@ public class MessagingTests {
 
         ReflectionTestUtils.setField(rabbitManager, "repositoryManager", mockedRepository);
 
-        */
     }
 
     @After
@@ -137,28 +153,18 @@ public class MessagingTests {
                 channel.close();
                 connection.close();
             }
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void setRabbitManagerMockedManagers() {
         ReflectionTestUtils.setField(rabbitManager, "repositoryManager", mockedRepository);
-        ReflectionTestUtils.setField(rabbitManager, "authorizationManager", mockedAuthorizationManager);
     }
 
     @Test
-    public void someTest(){
-
-    }
-
-    /* //todo
-
-    @Test
-    public void resourceCreationRequestConsumerAndValidationConsumerIntegrationTest() throws InterruptedException, IOException, TimeoutException {
-        rabbitManager.startConsumerOfResourceCreationMessages();
+    public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
@@ -166,8 +172,7 @@ public class MessagingTests {
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkOperationAccess(coreResourceRegistryRequest.getToken(),
-                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
         when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
 
@@ -177,43 +182,7 @@ public class MessagingTests {
         this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                log.debug("\n|||||||| //MOCKED ............ \nSemantic Manager received request!");
-
-                String messageReceived = new String(body);
-                assertEquals(message, messageReceived);
-                CoreResourceRegistryRequest request = mapper.readValue(messageReceived, CoreResourceRegistryRequest.class);
-
-                assertNotNull(properties);
-                String correlationId = properties.getCorrelationId();
-                String replyQueueName = properties.getReplyTo();
-                assertNotNull(correlationId);
-                assertNotNull(replyQueueName);
-
-                Map<String, CoreResource> resources = new HashMap<>();
-                try {
-                    resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, CoreResource>>() {
-                    });
-                } catch (IOException e) {
-                    log.error("Could not deserialize content of request!" + e);
-                }
-
-                ResourceInstanceValidationResult validationResult = new ResourceInstanceValidationResult();
-                validationResult.setSuccess(true);
-                validationResult.setMessage("ok");
-                validationResult.setModelValidated("ok");
-                validationResult.setModelValidatedAgainst("ok");
-                validationResult.setObjectDescription(resources);
-
-                byte[] responseBytes = mapper.writeValueAsBytes(validationResult);
-
-                AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-                        .Builder()
-                        .correlationId(properties.getCorrelationId())
-                        .build();
-
-                this.getChannel().basicPublish("", properties.getReplyTo(), replyProps, responseBytes);
-                this.getChannel().basicAck(envelope.getDeliveryTag(), false);
-                log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED |||||||||||||| ");
+                mockSemanticManagerResourceTranslationReply(envelope, properties, body, message);
             }
         });
 
@@ -224,10 +193,8 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceModificationRequestConsumerTest() throws InterruptedException, IOException {
-        // FIXME: 17.07.2017
-
-        rabbitManager.startConsumerOfResourceModificationMessages();
+    public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException {
+        rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
@@ -235,37 +202,29 @@ public class MessagingTests {
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkOperationAccess(coreResourceRegistryRequest.getToken(),
-                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("ok", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+        when(mockedRepository.modifyResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
 
         this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
-        this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK);
+        this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_TRANSLATION_REQUESTED_RK);
 
         this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
             @Override
             public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                String messageReceived = new String(body);
-                assertEquals(message, messageReceived);
-
-                assertNotNull(properties);
-
-                String correlationId = properties.getCorrelationId();
-                String replyQueueName = properties.getReplyTo();
-
-                assertNotNull(correlationId);
-                assertNotNull(replyQueueName);
-                System.out.println("received reply!");
+                mockSemanticManagerResourceTranslationReply(envelope, properties, body, message);
             }
+
         });
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        // Timeout to make sure that the message has been delivered
+        verify(mockedRepository, timeout(500).times(2)).modifyResource(any());
     }
 
     @Test
-    public void resourceRemovalRequestConsumerTest() throws IOException, InterruptedException {
-        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
-        rabbitManager.startConsumerOfResourceRemovalMessages();
+    public void resourceRemovalRequestConsumerHappyPathTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfResourceRemovalMessages(this.mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResource();
@@ -282,19 +241,102 @@ public class MessagingTests {
         resourcePersistenceResult1.setResource(RegistryUtils.convertResourceToCoreResource(resource1));
 
         when(mockedRepository.removeResource(any())).thenReturn(resourcePersistenceResult1);
-        when(mockedAuthorizationManager.checkOperationAccess(coreResourceRegistryRequest.getToken(),
-                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
-        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("ok", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), any())).thenReturn(new AuthorizationResult("ok", true));
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, Resource.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
 
-        ArgumentCaptor<Resource> argument = ArgumentCaptor.forClass(Resource.class);
-        verify(mockedRepository, times(2)).removeResource(argument.capture());
+//        ArgumentCaptor<Resource> argument = ArgumentCaptor.forClass(Resource.class);
+        verify(mockedRepository, times(2)).removeResource(any());
 
     }
+
+    @Test
+    public void resourceCreationRequestConsumerAuthFailTest() throws IOException {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
+        setRabbitManagerMockedManagers();
+
+        Resource resource1 = generateResource();
+        Resource resource2 = generateResource();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", false));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", false));
+        when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
+
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_TRANSLATION_REQUESTED_RK);
+
+        this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                mockSemanticManagerResourceTranslationReply(envelope, properties, body, message);
+            }
+        });
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+
+        // Timeout to make sure that the message has been delivered
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void resourceModificationRequestConsumerAuthFailTest() throws InterruptedException, IOException {
+        /// TODO: 04.10.2017
+    }
+
+    @Test
+    public void resourceRemovalRequestConsumerAuthFailTest(){
+        //// TODO: 04.10.2017
+    }
+
+
+    public void mockSemanticManagerResourceTranslationReply(Envelope envelope, AMQP.BasicProperties properties, byte[] body, String message) throws IOException {
+        log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
+
+        String messageReceived = new String(body);
+        assertEquals(message, messageReceived);
+        CoreResourceRegistryRequest request = mapper.readValue(messageReceived, CoreResourceRegistryRequest.class);
+
+        assertNotNull(properties);
+        String correlationId = properties.getCorrelationId();
+        String replyQueueName = properties.getReplyTo();
+        assertNotNull(correlationId);
+        assertNotNull(replyQueueName);
+
+        Map<String, CoreResource> resources = new HashMap<>();
+        try {
+            resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, CoreResource>>() {
+            });
+        } catch (IOException e) {
+            log.error("Could not deserialize content of request!" + e);
+            throw e;
+        }
+
+        ResourceInstanceValidationResult validationResult = new ResourceInstanceValidationResult();
+        validationResult.setSuccess(true);
+        validationResult.setMessage("ok");
+        validationResult.setModelValidated("ok");
+        validationResult.setModelValidatedAgainst("ok");
+        validationResult.setObjectDescription(resources);
+
+        byte[] responseBytes = mapper.writeValueAsBytes(validationResult);
+
+        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                .Builder()
+                .correlationId(properties.getCorrelationId())
+                .build();
+
+        this.channel.basicPublish("", properties.getReplyTo(), replyProps, responseBytes);
+        this.channel.basicAck(envelope.getDeliveryTag(), false);
+        log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED SM REPLY |||||||||||||| ");
+    }
+
+    /* //todo
 
     @Test
     public void platformCreationRequestConsumerTest() throws Exception {

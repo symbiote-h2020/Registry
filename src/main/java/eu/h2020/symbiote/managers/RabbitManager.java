@@ -328,9 +328,9 @@ public class RabbitManager {
      * Method gathers all of the rabbit consumer starter methods
      */
     public void startConsumers() {
-        startConsumerOfResourceCreationMessages();
-        startConsumerOfResourceModificationMessages();
-        startConsumerOfResourceRemovalMessages();
+        startConsumerOfResourceCreationMessages(this.authorizationManager);
+        startConsumerOfResourceModificationMessages(this.authorizationManager);
+        startConsumerOfResourceRemovalMessages(this.authorizationManager);
 
         startConsumerOfPlatformCreationMessages();
         startConsumerOfPlatformModificationMessages();
@@ -355,7 +355,7 @@ public class RabbitManager {
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
      */
-    public void startConsumerOfResourceCreationMessages() {
+    public void startConsumerOfResourceCreationMessages(AuthorizationManager authorizationManager) {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -376,7 +376,7 @@ public class RabbitManager {
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
      */
-    public void startConsumerOfResourceModificationMessages() {
+    public void startConsumerOfResourceModificationMessages(AuthorizationManager authorizationManager) {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -398,7 +398,7 @@ public class RabbitManager {
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
      */
-    public void startConsumerOfResourceRemovalMessages() {
+    public void startConsumerOfResourceRemovalMessages(AuthorizationManager authorizationManager) {
         Channel channel;
         try {
             channel = this.connection.createChannel();

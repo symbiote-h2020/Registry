@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class TestSetupConfig {
 
-    public static final SecurityRequest SECURITY_REQUEST = null; //// TODO: 04.09.2017
+    public static final SecurityRequest SECURITY_REQUEST = new SecurityRequest(null, new Long("5")); //// TODO: 04.09.2017
 
     public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
     public static final String PLATFORM_CREATION_REQUESTED_RK = "symbIoTe.platform.creationRequested";
@@ -35,10 +35,15 @@ public class TestSetupConfig {
     public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
 
     public static final String FEDERATION_EXCHANGE_NAME = "symbIoTe.federation";
+    public static final String INFORMATION_MODEL_EXCHANGE_NAME = "symbIoTe.platform";
 
     public static final String FEDERATION_CREATION_REQUESTED_RK = "symbIoTe.federation.creationRequested";
     public static final String FEDERATION_MODIFICATION_REQUESTED_RK = "symbIoTe.federation.modificationRequested";
     public static final String FEDERATION_REMOVAL_REQUESTED_RK = "symbIoTe.federation.removalRequested";
+
+    public static final String INFORMATION_MODEL_CREATION_REQUESTED_RK = "symbIoTe.platform.model.creationRequested";
+    public static final String INFORMATION_MODEL_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.model.modificationRequested";
+    public static final String INFORMATION_MODEL_REMOVAL_REQUESTED_RK = "symbIoTe.platform.model.removalRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
     public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";
@@ -59,6 +64,16 @@ public class TestSetupConfig {
 
     public static final String RESOURCE_TRANSLATION_REQUESTED_RK = "symbIoTe.resource.instance.translationRequested";
     public static final String RESOURCE_VALIDATION_REQUESTED_RK = "symbIoTe.resource.instance.validationRequested";
+
+
+    public static final String GET_FEDERATION_FOR_PLATFORM_RK = "symbIoTe.federation.getForPlatform";
+    public static final String GET_ALL_FEDERATIONS_RK = "symbIoTe.federation.getAll";
+
+    public static final String AAM_EXCHANGE_NAME = "symbIoTe.AuthenticationAuthorizationManager";
+    public static final String AAM_GET_PLATFORM_OWNERS_RK = "symbIoTe-AuthenticationAuthorizationManager.get_platform_owners_names";
+
+
+
 
     public static final String PLATFORM_A_ID = "1";
     public static final String PLATFORM_A_NAME = "Platform1";
@@ -100,7 +115,7 @@ public class TestSetupConfig {
     public static final String AAM_KEYSTORE_PASS = "test_pass";
     public static final String AAM_COMP_OWNER_NAME = "";
     public static final String AAM_COMP_OWNER_PASS = "";
-    public static final Boolean SECURITY_ENABLED = true;
+    public static final Boolean SECURITY_ENABLED = false;
 
     public static Platform generateSymbiotePlatformA() {
         Platform platform = new Platform();
@@ -194,7 +209,7 @@ public class TestSetupConfig {
         }).writeValueAsString(resourceList);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
-        coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
+        coreResourceRegistryRequest.setPlatformId(PLATFORM_A_ID);
         coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);

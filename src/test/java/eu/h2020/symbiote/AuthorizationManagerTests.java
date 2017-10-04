@@ -8,9 +8,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
+
+import static eu.h2020.symbiote.TestSetupConfig.*;
 
 /**
  * Created by mateuszl on 18.05.2017.
@@ -24,17 +27,15 @@ public class AuthorizationManagerTests {
     public void setup() throws IOException, TimeoutException, SecurityHandlerException {
         mockedPlatformRepository = Mockito.mock(PlatformRepository.class);
         RabbitManager rabbitManager = Mockito.mock(RabbitManager.class);
-/*
-        authorizationManager = new AuthorizationManager(mockedPlatformRepository, rabbitManager);
+
+        authorizationManager = new AuthorizationManager(mockedPlatformRepository, rabbitManager, null, null, null, null, null, null, SECURITY_ENABLED);
         ReflectionTestUtils.setField(authorizationManager, "aamAddress", AAM_ADDRESS);
         ReflectionTestUtils.setField(authorizationManager, "clientId", AAM_CLIENT_ID);
         ReflectionTestUtils.setField(authorizationManager, "keystoreName", AAM_KEYSTORE_NAME);
         ReflectionTestUtils.setField(authorizationManager, "keystorePass", AAM_KEYSTORE_PASS);
         ReflectionTestUtils.setField(authorizationManager, "componentOwnerName", AAM_COMP_OWNER_NAME);
         ReflectionTestUtils.setField(authorizationManager, "componentOwnerPassword", AAM_COMP_OWNER_PASS);
-        ReflectionTestUtils.setField(authorizationManager, "securityEnabled", SECURITY_ENABLED);
 
-*/
     }
 
     @After

@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 /**
@@ -45,7 +44,7 @@ public class AuthorizationManager {
     private String keystorePass;
     private String componentOwnerName;
     private String componentOwnerPassword;
-    private Boolean securityEnabled;
+    private Boolean securityEnabled = false;
 
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
