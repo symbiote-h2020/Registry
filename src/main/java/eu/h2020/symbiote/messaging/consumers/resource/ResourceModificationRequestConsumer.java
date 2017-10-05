@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging.consumers.resource;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
@@ -9,16 +10,22 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
-import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.managers.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Modification actions
@@ -31,6 +38,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     private AuthorizationManager authorizationManager;
     private RabbitManager rabbitManager;
     private RepositoryManager repositoryManager;
+    private ObjectMapper mapper;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -47,6 +55,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
         this.repositoryManager = repositoryManager;
+        this.mapper = new ObjectMapper();
     }
 
     /**
@@ -63,7 +72,6 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
@@ -86,7 +94,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
-            if (!tokenAuthorizationResult.isValidated()){
+            if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);
                 response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -113,11 +121,73 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                         message, request.getPlatformId(), RegistryOperationType.MODIFICATION, authorizationManager);
                 break;
             case BASIC:
-                log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
-                //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                        message, request.getPlatformId(), RegistryOperationType.MODIFICATION, authorizationManager);
+                if (checkIfResourcesHaveNullOrEmptyId(request)) {
+                    log.error("One of the resources has no ID or list with resources is invalid. Resources not modified!");
+                    response.setStatus(HttpStatus.SC_BAD_REQUEST);
+                    response.setMessage("One of the resources has no ID or list with resources is invalid. Resources not modified!");
+                    rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                            mapper.writeValueAsString(response));
+                } else {
+
+                    log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
+                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
+                    rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
+                            message, request.getPlatformId(), RegistryOperationType.MODIFICATION, authorizationManager);
+                }
                 break;
         }
+    }
+
+    /**
+     * Checks if given request consists of resources, which does not have any content in ID field.
+     *
+     * @param request
+     * @return true if given resources don't have an ID.
+     */
+    private boolean checkIfResourcesHaveNullOrEmptyId(CoreResourceRegistryRequest request) {
+        Map<String, Resource> resourceMap = new HashMap<>();
+        try {
+            resourceMap = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
+            });
+        } catch (IOException e) {
+            log.error("Could not deserialize content of request!" + e);
+        }
+        List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
+        return checkIds(resources);
+    }
+
+    private boolean checkIds(List<Resource> resources) {
+
+        try {
+            for (Resource resource : resources) {
+                if (!checkId(resource)) return false;
+                List<Service> services = new ArrayList<>();
+                if (resource instanceof Device) {
+                    services = ((Device) resource).getServices();
+                } else if (resource instanceof MobileSensor) {
+                    services = ((MobileSensor) resource).getServices();
+                } else if (resource instanceof Actuator) {
+                    services = ((Actuator) resource).getServices();
+                }
+                if (!services.isEmpty()) {
+                    for (Service service : services) {
+                        if (!checkId(service)) return false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean checkId(Resource resource) {
+        if (resource.getId() != null && !resource.getId().isEmpty()) {
+            log.error("One of the resources (or actuating services) has an ID!");
+            return false;
+        }
+        return true;
     }
 }

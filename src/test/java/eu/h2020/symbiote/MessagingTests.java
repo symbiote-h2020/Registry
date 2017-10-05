@@ -11,6 +11,7 @@ import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.messaging.consumers.resource.ResourceCreationRequestConsumer;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
@@ -27,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -163,6 +165,19 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "repositoryManager", mockedRepository);
     }
 
+    private AMQP.BasicProperties getProps(Channel channel) throws IOException {
+        String replyQueueName = "Queue" + Math.random();
+        channel.queueDeclare(replyQueueName, true, false, true, null);
+
+        String correlationId = UUID.randomUUID().toString();
+        AMQP.BasicProperties props = new AMQP.BasicProperties()
+                .builder()
+                .correlationId(correlationId)
+                .replyTo(replyQueueName)
+                .build();
+        return props;
+    }
+
     @Test
     public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
@@ -187,7 +202,12 @@ public class MessagingTests {
             }
         });
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        ResourceCreationRequestConsumer resourceCreationRequestConsumer = new ResourceCreationRequestConsumer(channel, rabbitManager, mockedAuthorizationManager, mockedRepository);
+
+        //todo without using Rabbit real server  + mock Channel
+        //resourceCreationRequestConsumer.handleDelivery("", new Envelope(5, false, RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK), getProps(channel), message.getBytes());
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500).times(2)).saveResource(any());
@@ -218,7 +238,7 @@ public class MessagingTests {
 
         });
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500).times(2)).modifyResource(any());
@@ -246,7 +266,7 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("ok", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), any())).thenReturn(new AuthorizationResult("ok", true));
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -266,7 +286,7 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", false));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", false));
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -286,7 +306,7 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", false));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", false));
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -306,7 +326,7 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", false));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", false));
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -322,7 +342,7 @@ public class MessagingTests {
         Resource resource1 = generateResourceWithoutId();
         String message = mapper.writeValueAsString(resource1);
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -338,7 +358,7 @@ public class MessagingTests {
         Resource resource1 = generateResourceWithoutId();
         String message = mapper.writeValueAsString(resource1);
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -354,7 +374,7 @@ public class MessagingTests {
         Resource resource1 = generateResourceWithoutId();
         String message = mapper.writeValueAsString(resource1);
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
@@ -376,7 +396,49 @@ public class MessagingTests {
         when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", true));
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, Resource.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void resourceModificationRequestConsumerResourceWithoutIdFailTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
+        setRabbitManagerMockedManagers();
+
+        //generating resource with ID (should not pass verification in consumer)
+        Resource resource1 = generateResourceWithoutId();
+        Resource resource2 = generateResourceWithoutId();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", true));
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void resourceCreationRequestConsumerNullBodyFailTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
+        setRabbitManagerMockedManagers();
+
+        Resource resource1 = generateResourceWithoutId();
+        Resource resource2 = generateResourceWithoutId();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequest(resource1, resource2);
+        coreResourceRegistryRequest.setBody(null);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("", true));
+
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
