@@ -18,8 +18,8 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static eu.h2020.symbiote.TestSetupConfig.addIdToCoreResource;
-import static eu.h2020.symbiote.TestSetupConfig.generateCoreResource;
-import static eu.h2020.symbiote.TestSetupConfig.generateResource;
+import static eu.h2020.symbiote.TestSetupConfig.generateCoreResourceWithoutId;
+import static eu.h2020.symbiote.TestSetupConfig.generateResourceWithoutId;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +50,7 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testSaveResourceTriggersRepository() {
-        CoreResource resource = generateCoreResource();
+        CoreResource resource = generateCoreResourceWithoutId();
         resource = addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
 
@@ -65,7 +65,7 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testModifyResourceTriggersRepository() {
-        CoreResource resource = generateCoreResource();
+        CoreResource resource = generateCoreResourceWithoutId();
         resource = addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
         when(resourceRepository.findOne("101")).thenReturn(resource);
@@ -81,7 +81,7 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testRemoveResourceTriggersRepository() {
-        CoreResource resource = generateCoreResource();
+        CoreResource resource = generateCoreResourceWithoutId();
         addIdToCoreResource(resource);
         when(resourceRepository.findOne("101")).thenReturn(resource);
         repositoryManager.removeResource(resource);
@@ -95,20 +95,20 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testSaveResourceReturnsStatus200() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         when(resourceRepository.save(coreResource)).thenReturn(addIdToCoreResource(coreResource));
         Assert.assertEquals(200,repositoryManager.saveResource(coreResource).getStatus());
     }
 
     @Test
     public void testSaveResourceWithWrongId() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.saveResource(coreResource).getStatus());
     }
 
     @Test
     public void testSaveResourceMongoError(){
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200,repositoryManager.saveResource(coreResource).getStatus());
@@ -116,13 +116,13 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testModifyResourceWithWrongId() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
     }
 
     @Test
     public void testModifyResourceWithEmptyInterworkingService() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         coreResource = addIdToCoreResource(coreResource);
         coreResource.setInterworkingServiceURL("");
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
@@ -130,7 +130,7 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testModifyResourceWithNullInterworkingService() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         coreResource = addIdToCoreResource(coreResource);
         coreResource.setInterworkingServiceURL(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
@@ -138,7 +138,7 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testModifyResourceThatDoesNotExistInDb() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.findOne(coreResource.getId())).thenReturn(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyResource(coreResource).getStatus());
@@ -146,7 +146,7 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testModifyResourceFailedWhenSaving() throws Exception {
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.findOne(coreResource.getId())).thenReturn(coreResource);
         when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE ERROR during saving"));
@@ -155,20 +155,20 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testRemoveResourceWithoutId() throws Exception {
-        Resource resource = generateResource();
+        Resource resource = generateResourceWithoutId();
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
     }
 
     @Test
     public void testRemoveResourceWithWrongId() throws Exception {
-        Resource resource = generateResource();
+        Resource resource = generateResourceWithoutId();
         resource.setId("");
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
     }
 
     @Test
     public void testRemoveResourceThatDoesNotExist() throws Exception {
-        Resource resource = generateResource();
+        Resource resource = generateResourceWithoutId();
         resource.setId("1234");
         when(resourceRepository.findOne(resource.getId())).thenReturn(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());

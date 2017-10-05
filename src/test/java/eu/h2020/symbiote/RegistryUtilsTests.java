@@ -36,7 +36,7 @@ public class RegistryUtilsTests {
     @Test
     public void testCoreResourceToResourceConverter() {
 
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
         addIdToCoreResource(coreResource);
 
         Resource resource = RegistryUtils.convertCoreResourceToResource(coreResource);
@@ -50,9 +50,9 @@ public class RegistryUtilsTests {
     @Test
     public void testCoreResourcesToResourcesConverter() {
 
-        CoreResource coreResource1 = generateCoreResource();
+        CoreResource coreResource1 = generateCoreResourceWithoutId();
         addIdToCoreResource(coreResource1);
-        CoreResource coreResource2 = generateCoreResource();
+        CoreResource coreResource2 = generateCoreResourceWithoutId();
         addIdToCoreResource(coreResource2);
 
         List<CoreResource> coreResources = new ArrayList<>();
@@ -71,7 +71,7 @@ public class RegistryUtilsTests {
 
     @Test
     public void testResourceToCoreResourceConverter() {
-        Resource resource = generateResource();
+        Resource resource = generateResourceWithoutId();
         addIdToResource(resource);
         CoreResource coreResource = RegistryUtils.convertResourceToCoreResource(resource);
 
@@ -111,7 +111,7 @@ public class RegistryUtilsTests {
 
     @Test
     public void testResourceFieldsValidation() {
-        Resource resource = generateResource();
+        Resource resource = generateResourceWithoutId();
         Assert.assertTrue(RegistryUtils.validateFields(resource));
     }
 

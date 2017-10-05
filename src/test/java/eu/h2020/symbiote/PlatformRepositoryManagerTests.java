@@ -19,7 +19,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 
 import static eu.h2020.symbiote.TestSetupConfig.PLATFORM_B_ID;
-import static eu.h2020.symbiote.TestSetupConfig.generateCoreResource;
+import static eu.h2020.symbiote.TestSetupConfig.generateCoreResourceWithoutId;
 import static eu.h2020.symbiote.TestSetupConfig.generatePlatformB;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -149,7 +149,7 @@ public class PlatformRepositoryManagerTests {
     @Test
     public void testGetResourcesForPlatform(){
         Platform platform = generatePlatformB();
-        CoreResource coreResource = generateCoreResource();
+        CoreResource coreResource = generateCoreResourceWithoutId();
 
         when(platformRepository.findOne(platform.getId())).thenReturn(platform);
         when(resourceRepository.findByInterworkingServiceURL(platform.getInterworkingServices().get(0).getUrl())).

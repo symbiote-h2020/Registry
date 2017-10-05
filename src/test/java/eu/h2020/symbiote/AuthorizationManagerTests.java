@@ -91,7 +91,7 @@ public class AuthorizationManagerTests {
 
 //    @Test
 //    public void testIfResourceBelongsToPlatform(){
-//        Resource resource = generateResource();
+//        Resource resource = generateResourceWithoutId();
 //        Platform platform = generatePlatformB();
 //        when(mockedPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);
 //        Map<String, Resource> resources = new HashMap<>();
@@ -102,7 +102,7 @@ public class AuthorizationManagerTests {
 //
 //    @Test
 //    public void testIfResourceDoesNotBelongToPlatform(){
-//        Resource resource = generateResource();
+//        Resource resource = generateResourceWithoutId();
 //        resource.setInterworkingServiceURL("http://other_url.com/");
 //        Platform platform = generatePlatformB();
 //        when(mockedPlatformRepository.findOne(PLATFORM_B_ID)).thenReturn(platform);

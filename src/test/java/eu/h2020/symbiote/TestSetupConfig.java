@@ -145,12 +145,12 @@ public class TestSetupConfig {
         return platform;
     }
 
-    public static CoreResource generateCoreResource() {
+    public static CoreResource generateCoreResourceWithoutId() {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
     }
 
-    public static Resource generateResource() {
+    public static Resource generateResourceWithoutId() {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B);
     }
 
@@ -220,9 +220,9 @@ public class TestSetupConfig {
     public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest()
             throws JsonProcessingException {
 
-        Resource resource1 = generateResource();
+        Resource resource1 = generateResourceWithoutId();
         addIdToResource(resource1);
-        Resource resource2 = generateResource();
+        Resource resource2 = generateResourceWithoutId();
         addIdToResource(resource2);
 
         Map<String, Resource> resourceList = new HashMap<>();
