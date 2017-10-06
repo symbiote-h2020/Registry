@@ -3,12 +3,10 @@ package eu.h2020.symbiote;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.DescriptionType;
-import eu.h2020.symbiote.core.model.Federation;
-import eu.h2020.symbiote.core.model.InterworkingService;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.RDFFormat;
+import eu.h2020.symbiote.core.model.*;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -197,7 +195,7 @@ public class TestSetupConfig {
         return res;
     }
 
-    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest(Resource resource1, Resource resource2)
+    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequestBasicType(Resource resource1, Resource resource2)
             throws JsonProcessingException {
 
         Map<String, Resource> resourceList = new HashMap<>();
@@ -217,27 +215,21 @@ public class TestSetupConfig {
         return coreResourceRegistryRequest;
     }
 
-    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest()
+    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequestRdfType(Resource resource1, Resource resource2)
             throws JsonProcessingException {
-
-        Resource resource1 = generateResourceWithoutId();
-        addIdToResource(resource1);
-        Resource resource2 = generateResourceWithoutId();
-        addIdToResource(resource2);
-
-        Map<String, Resource> resourceList = new HashMap<>();
-        resourceList.put("1", resource1);
-        resourceList.put("2", resource2);
+        RDFResourceRegistryRequest request = new RDFResourceRegistryRequest();
+        RDFInfo rdfInfo = new RDFInfo();
+        rdfInfo.setRdf("some rdf");
+        rdfInfo.setRdfFormat(RDFFormat.JSONLD);
+        request.setBody(rdfInfo);
 
         ObjectMapper mapper = new ObjectMapper();
-        String resources = mapper.writerFor(new TypeReference<Map<String, Resource>>() {
-        }).writeValueAsString(resourceList);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
         coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
         coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
-        coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
-        coreResourceRegistryRequest.setBody(resources);
+        coreResourceRegistryRequest.setDescriptionType(DescriptionType.RDF);
+        coreResourceRegistryRequest.setBody(mapper.writeValueAsString(request));
 
         return coreResourceRegistryRequest;
     }
