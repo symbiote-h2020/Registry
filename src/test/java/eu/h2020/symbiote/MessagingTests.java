@@ -690,6 +690,30 @@ public class MessagingTests {
         verifyZeroInteractions(mockedRepository);
     }
 
+    @Test
+    public void platformCreationRequestConsumerMongoFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
+
+        Platform requestPlatform = generatePlatformB();
+
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(500, "mongo fail mock", requestPlatform);
+
+        when(mockedRepository.savePlatform(any())).thenReturn(platformPersistenceResult);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(500, platformRegistryResponse.getStatus());
+
+        verify(mockedRepository, times(1)).savePlatform(any());
+    }
+
     private Platform generatePlatformWithNullLabels() {
         Platform requestPlatform = new Platform();
         requestPlatform.setId(PLATFORM_A_ID);
@@ -964,43 +988,32 @@ public class MessagingTests {
         verifyZeroInteractions(mockedRepository);
     }
 
-    /* //todo
     @Test
-    public void platformResourcesRequestedConsumerNullTokenFailTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
+    public void platformResourcesRequestedConsumerAuthFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
-        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType();
+
+        Resource resource1 = generateResourceWithoutId();
+        addIdToResource(resource1);
+        Resource resource2 = generateResourceWithoutId();
+        addIdToResource(resource2);
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
+
         coreResourceRegistryRequest.setSecurityRequest(null);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
         when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(),any())).thenReturn(new AuthorizationResult("null token", false));
 
-        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
-                new DefaultConsumer(this.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                        String messageReceived = new String(body);
-                        ResourceRegistryResponse responseReceived;
-                        Map<String, Resource> resourcesReceived = new HashMap<>();
-                        try {
-                            responseReceived = mapper.readValue(messageReceived, ResourceRegistryResponse.class);
-                            resourcesReceived = responseReceived.getBody();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        assertNotNull(properties);
-                        String correlationId = properties.getCorrelationId();
-                        assertNotNull(correlationId);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message);
 
-                        assertEquals(new ArrayList<>(), resourcesReceived);
-                        log.info("Received reply message: " + messageReceived);
-                    }
-                });
+        ResourceListResponse resourceListResponse = mapper.readValue(response, ResourceListResponse.class);
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
+        List<Resource> resources = resourceListResponse.getBody();
+        Assert.assertNotNull(resourceListResponse.getMessage());
+        Assert.assertEquals(400, resourceListResponse.getStatus());
+        Assert.assertTrue(resources.size() == 0);
 
         verifyZeroInteractions(mockedRepository);
     }
-*/
+
 }
