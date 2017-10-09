@@ -11,12 +11,11 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.ResourceListResponse;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.managers.RabbitManager;
-import eu.h2020.symbiote.model.AuthorizationResult;
-import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
-import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -84,6 +83,7 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
         } catch (JsonSyntaxException | JsonMappingException | JsonParseException e) {
             log.error("Error occurred during getting Request from Json", e);
             resourceRegistryResponse.setMessage("Error occurred during getting Request from Json");
+            resourceRegistryResponse.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
             return;
         }
@@ -91,30 +91,30 @@ public class PlatformResourcesRequestConsumer extends DefaultConsumer {
         if (request != null) {
             try {
                 authorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
-            } catch (NullArgumentException e) {
-                log.error(e);
+            } catch (Exception e) {
+                log.error("Authorization Error: " + e);
                 resourceRegistryResponse.setMessage("Request invalid!");
+                resourceRegistryResponse.setStatus(400);
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
                 return;
+            }
+            if (!authorizationResult.isValidated()) {
+                log.error("Token invalid! " + authorizationResult.getMessage());
+                resourceRegistryResponse.setMessage(authorizationResult.getMessage());
+                resourceRegistryResponse.setStatus(400);
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
+            } else {
+                coreResources = repositoryManager.getResourcesForPlatform(request.getPlatformId());
+                resourceRegistryResponse.setStatus(HttpStatus.SC_OK);
+                resourceRegistryResponse.setMessage("OK. " + coreResources.size() + " resources found!");
+                resourceRegistryResponse.setBody(RegistryUtils.convertCoreResourcesToResourcesList(coreResources));
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
             }
         } else {
             log.error("Request is null!");
             resourceRegistryResponse.setMessage("Request is null!");
+            resourceRegistryResponse.setStatus(400);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
-            return;
         }
-
-        if (!authorizationResult.isValidated()) {
-            log.error("Token invalid! " + authorizationResult.getMessage());
-            resourceRegistryResponse.setMessage(authorizationResult.getMessage());
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
-            return;
-        }
-
-        coreResources = repositoryManager.getResourcesForPlatform(request.getPlatformId());
-        resourceRegistryResponse.setStatus(HttpStatus.SC_OK);
-        resourceRegistryResponse.setMessage("OK. " + coreResources.size() + " resources found!");
-        resourceRegistryResponse.setBody(RegistryUtils.convertCoreResourcesToResourcesList(coreResources));
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(resourceRegistryResponse));
     }
 }

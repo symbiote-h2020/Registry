@@ -4,9 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
+import eu.h2020.symbiote.core.internal.ResourceListResponse;
+import eu.h2020.symbiote.core.model.InterworkingService;
+import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.core.model.RDFFormat;
 import eu.h2020.symbiote.core.model.RDFInfo;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
@@ -14,12 +19,15 @@ import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
@@ -27,9 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -204,30 +210,31 @@ public class MessagingTests {
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500).times(2)).saveResource(any());
     }
-/*
-    @Test
-    public void resourceCreationRequestConsumerRPCHappyPathTest() throws IOException {
-        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
-        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
-        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+    /*
+        @Test
+        public void resourceCreationRequestConsumerRPCHappyPathTest() throws IOException {
+            rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
+            setRabbitManagerMockedManagers();
 
-        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
-        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
-        when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
-        when(mockedRepository.getInformationModelIdByInterworkingServiceUrl(any(), any())).thenReturn("mocked");
+            Resource resource1 = generateResourceWithoutId();
+            Resource resource2 = generateResourceWithoutId();
+            CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
+            String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        mockSemanticManagerResourceValidationCommunication(message);
+            when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+            when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+            when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
+            when(mockedRepository.getInformationModelIdByInterworkingServiceUrl(any(), any())).thenReturn("mocked");
 
-        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
+            mockSemanticManagerResourceValidationCommunication(message);
 
-        // Timeout to make sure that the message has been delivered
-        verify(mockedRepository, timeout(500).times(2)).saveResource(any());
-    }
-*/
+            rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
+
+            // Timeout to make sure that the message has been delivered
+            verify(mockedRepository, timeout(500).times(2)).saveResource(any());
+        }
+    */
     @Test
     public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
@@ -582,43 +589,70 @@ public class MessagingTests {
         log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED SM REPLY |||||||||||||| ");
     }
 
-    /* //todo
-
     @Test
     public void platformCreationRequestConsumerTest() throws Exception {
-        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformCreationMessages();
         setRabbitManagerMockedManagers();
 
-        eu.h2020.symbiote.core.model.Platform requestPlatform = generateSymbiotePlatformA();
+        Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
 
         PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
 
         when(mockedRepository.savePlatform(any())).thenReturn(platformPersistenceResult);
 
+
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
 
-        ArgumentCaptor<Platform> argument = ArgumentCaptor.forClass(Platform.class);
-        verify(mockedRepository).savePlatform(argument.capture());
+        ArgumentCaptor<Platform> platformArgumentCaptor = ArgumentCaptor.forClass(Platform.class);
+        verify(mockedRepository).savePlatform(platformArgumentCaptor.capture());
 
-        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getComments().get(0)));
-        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
-        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInterworkingServices().get(0)));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }
 
     @Test
-    public void platformCreationRequestConsumerNullNameFailTest() throws Exception {
-        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
+    public void platformCreationRequestConsumerRPCTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
         setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
-        requestPlatform.setLabels(Arrays.asList(null));
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
+
+        when(mockedRepository.savePlatform(any())).thenReturn(platformPersistenceResult);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 200);
+
+        verify(mockedRepository).savePlatform(any());
+
+        Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(platformResponse.getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
+    }
+
+    @Test
+    public void platformCreationRequestConsumerNullNameFailTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
+
+        Platform requestPlatform = generatePlatformWithNullLabels();
+
         String message = mapper.writeValueAsString(requestPlatform);
 
         rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
@@ -630,8 +664,47 @@ public class MessagingTests {
     }
 
     @Test
+    public void platformCreationRequestConsumerNullNameFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
+
+        Platform requestPlatform = generatePlatformWithNullLabels();
+
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertNotEquals(platformRegistryResponse.getStatus(), 200);
+
+        Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
+
+        Assert.assertNull(platformResponse.getLabels());
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    private Platform generatePlatformWithNullLabels() {
+        Platform requestPlatform = new Platform();
+        requestPlatform.setId(PLATFORM_A_ID);
+        requestPlatform.setComments(Arrays.asList(PLATFORM_A_DESCRIPTION));
+        InterworkingService interworkingService = new InterworkingService();
+        interworkingService.setInformationModelId(INFORMATION_MODEL_ID_A);
+        interworkingService.setUrl(INTERWORKING_SERVICE_URL_A);
+        requestPlatform.setInterworkingServices(Arrays.asList(interworkingService));
+        requestPlatform.setRdf("http://www.symbIoTe.com/");
+        requestPlatform.setRdfFormat(RDFFormat.JSONLD);
+        return requestPlatform;
+    }
+
+    @Test
     public void platformCreationRequestConsumerJsonFailTest() throws Exception {
-        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformCreationMessages();
         setRabbitManagerMockedManagers();
 
@@ -646,8 +719,25 @@ public class MessagingTests {
     }
 
     @Test
+    public void platformCreationRequestConsumerJsonFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformCreationMessages();
+        setRabbitManagerMockedManagers();
+
+        String message = "[wrong json]";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_CREATION_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
     public void platformModificationRequestConsumerHappyPathTest() throws IOException, InterruptedException {
-        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformModificationMessages();
         setRabbitManagerMockedManagers();
 
@@ -671,7 +761,36 @@ public class MessagingTests {
     }
 
     @Test
-    public void platformModificationRequestConsumerMongoFailTest() throws IOException, InterruptedException, TimeoutException {
+    public void platformModificationRequestConsumerHappyPathRpcTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfPlatformModificationMessages();
+        setRabbitManagerMockedManagers();
+
+        Platform requestPlatform = generateSymbiotePlatformA();
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
+
+        when(mockedRepository.modifyPlatform(any())).thenReturn(platformPersistenceResult);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 200);
+
+        verify(mockedRepository).modifyPlatform(any());
+
+        Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(platformResponse.getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
+    }
+
+    @Test
+    public void platformModificationRequestConsumerMongoFailRPCTest() throws IOException, InterruptedException, TimeoutException {
         rabbitManager.startConsumerOfPlatformModificationMessages();
         setRabbitManagerMockedManagers();
 
@@ -682,47 +801,38 @@ public class MessagingTests {
 
         when(mockedRepository.modifyPlatform(any())).thenReturn(platformPersistenceResult);
 
-        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message,
-                new DefaultConsumer(this.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                        String messageReceived = new String(body);
-                        PlatformRegistryResponse platformResponseReceived = mapper.readValue(messageReceived, PlatformRegistryResponse.class);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message);
 
-                        assertNotNull(properties);
-                        String correlationId = properties.getCorrelationId();
-                        assertNotNull(correlationId);
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
 
-                        assertEquals(400, platformResponseReceived.getStatus());
-                        assertEquals(requestPlatform, platformResponseReceived.getBody());
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 500);
 
-                        log.info("Received reply message!");
-                    }
-                });
-
-        // Timeout to make sure that the message has been delivered
-        verify(mockedRepository, timeout(500)).modifyPlatform(any());
+        verify(mockedRepository, times(1)).modifyPlatform(any());
     }
 
     @Test
-    public void platformModificationRequestConsumerJsonFailTest() throws Exception {
+    public void platformModificationRequestConsumerJsonFailRpcTest() throws Exception {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformModificationMessages();
         setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
-        rabbitManager.sendCustomMessage(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message, Platform.class.getCanonicalName());
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_MODIFICATION_REQUESTED_RK, message);
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(1000);
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 400);
 
         verifyZeroInteractions(mockedRepository);
     }
 
     @Test
     public void platformRemovalRequestConsumerTest() throws IOException, InterruptedException {
-        //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformRemovalMessages();
         setRabbitManagerMockedManagers();
 
@@ -743,6 +853,35 @@ public class MessagingTests {
     }
 
     @Test
+    public void platformRemovalRequestConsumerRPCTest() throws IOException, InterruptedException {
+        rabbitManager.startConsumerOfPlatformRemovalMessages();
+        setRabbitManagerMockedManagers();
+
+        Platform requestPlatform = generateSymbiotePlatformA();
+        String message = mapper.writeValueAsString(requestPlatform);
+
+        PlatformPersistenceResult platformPersistenceResult = new PlatformPersistenceResult(200, "ok", requestPlatform);
+
+        when(mockedRepository.removePlatform(any())).thenReturn(platformPersistenceResult);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 200);
+
+        verify(mockedRepository).removePlatform(any());
+
+        Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(platformResponse.getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
+    }
+
+    @Test
     public void platformRemovalRequestConsumerJsonFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformRemovalMessages();
         setRabbitManagerMockedManagers();
@@ -758,8 +897,26 @@ public class MessagingTests {
     }
 
     @Test
+    public void platformRemovalRequestConsumerJsonFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformRemovalMessages();
+        setRabbitManagerMockedManagers();
+
+        String message = "[wrong json]";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_REMOVAL_REQUESTED_RK, message);
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform platformResponse = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
     public void platformResourcesRequestedConsumerTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
@@ -770,8 +927,7 @@ public class MessagingTests {
 
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(coreResourceRegistryRequest.getSecurityRequest(),
-                coreResourceRegistryRequest.getPlatformId())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
         when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
 
         List<CoreResource> coreResourcesFound = Arrays.asList(RegistryUtils.convertResourceToCoreResource(resource1),
@@ -779,62 +935,36 @@ public class MessagingTests {
         when(mockedRepository.getResourcesForPlatform(coreResourceRegistryRequest.getPlatformId())).
                 thenReturn(coreResourcesFound);
 
-        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
-                new DefaultConsumer(this.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                        String messageReceived = new String(body);
-                        List<Resource> resourcesReceived = mapper.readValue(messageReceived, new TypeReference<List<Resource>>() {
-                        });
-                        assertNotNull(properties);
-                        String correlationId = properties.getCorrelationId();
-                        assertNotNull(correlationId);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message);
 
-                        assertEquals(resource1.getId(), resourcesReceived.get(0).getId());
+        ResourceListResponse resourceListResponse = mapper.readValue(response, ResourceListResponse.class);
 
-                        log.info("Received reply message!");
-                    }
-                });
-
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
+        List<Resource> resources = resourceListResponse.getBody();
+        Assert.assertNotNull(resourceListResponse.getMessage());
+        Assert.assertEquals(resourceListResponse.getStatus(), 200);
+        Assert.assertTrue(resources.size() == 2);
     }
 
     @Test
     public void platformResourcesRequestedConsumerJsonFailTest() throws Exception {
-        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();
+        rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
-        String message = "[]"; //// FIXME: 18.07.2017 core Resource Registry Request with error
+        String message = "[]";
 
-        rabbitManager.sendCustomRpcMessage(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message,
-                new DefaultConsumer(this.channel) {
-                    @Override
-                    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                        String messageReceived = new String(body);
-                        ResourceRegistryResponse responseReceived;
-                        Map<String, Resource> resourcesReceived = new HashMap<>();
-                        try {
-                            responseReceived = mapper.readValue(messageReceived, ResourceRegistryResponse.class);
-                            resourcesReceived = responseReceived.getBody();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        assertNotNull(properties);
-                        String correlationId = properties.getCorrelationId();
-                        assertNotNull(correlationId);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message);
 
-                        assertEquals(new ArrayList<>(), resourcesReceived);
-                        log.info("Received reply message: " + messageReceived);
-                    }
-                });
+        ResourceListResponse resourceListResponse = mapper.readValue(response, ResourceListResponse.class);
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(500);
+        List<Resource> resources = resourceListResponse.getBody();
+        Assert.assertNotNull(resourceListResponse.getMessage());
+        Assert.assertEquals(400, resourceListResponse.getStatus());
+        Assert.assertTrue(resources.size() == 0);
 
         verifyZeroInteractions(mockedRepository);
     }
 
+    /* //todo
     @Test
     public void platformResourcesRequestedConsumerNullTokenFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages();

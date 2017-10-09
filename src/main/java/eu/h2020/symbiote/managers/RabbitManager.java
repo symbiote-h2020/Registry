@@ -346,7 +346,7 @@ public class RabbitManager {
         startConsumerOfGetFederationForPlatformMessages();
         startConsumerOfGetAllFederationsMessages();
 
-        startConsumerOfPlatformResourcesRequestsMessages();
+        startConsumerOfPlatformResourcesRequestsMessages(this.authorizationManager);
         startConsumerOfListAllInformationModelsRequestsMessages();
         startConsumerOfPlatformDetailsConsumer();
     }
@@ -419,7 +419,7 @@ public class RabbitManager {
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platforms Resources requests.
      */
-    public void startConsumerOfPlatformResourcesRequestsMessages() {
+    public void startConsumerOfPlatformResourcesRequestsMessages(AuthorizationManager authorizationManager) {
         Channel channel;
         try {
             channel = this.connection.createChannel();
