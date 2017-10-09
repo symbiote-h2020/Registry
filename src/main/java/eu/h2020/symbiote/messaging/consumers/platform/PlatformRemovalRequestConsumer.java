@@ -1,49 +1,48 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.platform;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.model.PlatformResponse;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.RegistryPlatform;
-import eu.h2020.symbiote.repository.RepositoryManager;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 
 /**
- * RabbitMQ Consumer implementation used for Platform Modification actions
- * <p>
- * Created by mateuszl
+ * Created by mateuszl on 07.08.2017.
  */
-public class PlatformModificationRequestConsumer extends DefaultConsumer {
+public class PlatformRemovalRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(PlatformModificationRequestConsumer.class);
+    private static Log log = LogFactory.getLog(PlatformRemovalRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
+     * RPC reply body: PlatformRegistryResponse (mapped to JSON).
      *
      * @param channel           the channel to which this consumer is attached
      * @param rabbitManager     rabbit manager bean passed for access to messages manager
      * @param repositoryManager repository manager bean passed for persistence actions
      */
-    public PlatformModificationRequestConsumer(Channel channel,
-                                               RepositoryManager repositoryManager,
-                                               RabbitManager rabbitManager) {
+    public PlatformRemovalRequestConsumer(Channel channel,
+                                          RepositoryManager repositoryManager,
+                                          RabbitManager rabbitManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
     }
-
 
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
@@ -59,27 +58,38 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
+
         ObjectMapper mapper = new ObjectMapper();
         String response;
-        PlatformResponse platformResponse = new PlatformResponse();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received platform to modify: '" + message + "'");
+        PlatformRegistryResponse platformResponse = new PlatformRegistryResponse();
+        log.info(" [x] Received platform to remove: '" + message + "'");
 
         Platform requestPlatform;
-        RegistryPlatform registryRegistryPlatform;
 
         try {
             requestPlatform = mapper.readValue(message, Platform.class);
+            platformResponse.setBody(requestPlatform);
 
-            registryRegistryPlatform = RegistryUtils.convertRequestPlatformToRegistryPlatform(requestPlatform);
+            //// TODO: 11.08.2017 should i check some information given in platform?
 
-            platformResponse = this.repositoryManager.modifyPlatform(registryRegistryPlatform);
-            if (platformResponse.getStatus() == 200) {
-                rabbitManager.sendPlatformOperationMessage(platformResponse.getPlatform(),
-                        RegistryOperationType.MODIFICATION);
+            PlatformPersistenceResult platformPersistenceResult = this.repositoryManager.removePlatform(requestPlatform);
+            if (platformPersistenceResult.getStatus() == 200) {
+                platformResponse.setMessage(
+                        platformPersistenceResult.getMessage());
+                platformResponse.setStatus(200);
+                rabbitManager.sendPlatformOperationMessage(platformPersistenceResult.getPlatform(),
+                        RegistryOperationType.REMOVAL);
+            } else {
+                log.error("Error occurred during Platform removing from db, due to: " +
+                        platformPersistenceResult.getMessage());
+                platformResponse.setMessage("Error occurred during Platform removing from db, due to: " +
+                        platformPersistenceResult.getMessage());
+                platformResponse.setStatus(500);
             }
-        } catch (JsonSyntaxException e) {
-            log.error("Error occured during Platform saving to db", e);
+        } catch (JsonSyntaxException | JsonMappingException e) {
+            log.error("Error occurred during Platform deleting in db", e);
+            platformResponse.setMessage("Error occurred during Platform deleting in db");
             platformResponse.setStatus(400);
         }
 
@@ -88,3 +98,4 @@ public class PlatformModificationRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, response);
     }
 }
+

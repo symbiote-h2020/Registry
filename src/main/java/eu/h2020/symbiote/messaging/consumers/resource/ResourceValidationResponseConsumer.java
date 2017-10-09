@@ -1,7 +1,8 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -14,18 +15,21 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
-import eu.h2020.symbiote.repository.RepositoryManager;
-import eu.h2020.symbiote.utils.AuthorizationManager;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 /**
  * RPC Consumer waiting for messages from Semantic Manager. Acts accordingly to received validation/translation results.
@@ -102,7 +106,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         String message = new String(body, "UTF-8");
         ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
-        List<CoreResource> coreResources = new ArrayList<>();
+        Map<String, CoreResource> coreResources;
         registryResponse.setDescriptionType(descriptionType);
 
         log.info("[x] Received '" + descriptionType + "' validation result: '" + message + "'");
@@ -110,36 +114,31 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         try {
             //receive and read message from Semantic Manager
             resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Unable to get resource validation result from Message body!", e);
             registryResponse.setStatus(500);
             registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
         }
 
         if (resourceInstanceValidationResult.isSuccess()) {
-            try {
-                coreResources = resourceInstanceValidationResult.getObjectDescription();
-                log.info("CoreResources received from SM! Content: " + coreResources);
-            } catch (JsonSyntaxException e) {
-                log.error("Unable to get Resources List from semantic response body!", e);
-            }
+            coreResources = resourceInstanceValidationResult.getObjectDescription();
+            log.info("CoreResources received from SM! Content: " + coreResources);
 
-            if (authorizationManager.checkIfResourcesBelongToPlatform
-                    (RegistryUtils.convertCoreResourcesToResources(coreResources), resourcesPlatformId)) {
-                List<RegistryPersistenceResult> persistenceOperationResultsList = makePersistenceOperations(coreResources);
-                prepareContentOfMessage(persistenceOperationResultsList);
+            AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
+                    (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
+
+            if (authorizationResult.isValidated()) {
+                Map<String, ResourcePersistenceResult> stringResourcePersistenceResultMap = makePersistenceOperations(coreResources);
+                prepareContentOfMessage(stringResourcePersistenceResultMap);
             } else {
                 registryResponse.setStatus(400);
-                registryResponse.setMessage("One of resources does not match with any Interworking Service in given platform!");
+                registryResponse.setMessage(authorizationResult.getMessage());
             }
-
         } else {
             registryResponse.setStatus(500);
             registryResponse.setMessage("Validation Error. Semantic Manager message: "
                     + resourceInstanceValidationResult.getMessage());
         }
-
-
         sendRpcResponse();
     }
 
@@ -148,27 +147,26 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      *
      * @param coreResources
      */
-    private List<RegistryPersistenceResult> makePersistenceOperations(List<CoreResource> coreResources) {
-        List<RegistryPersistenceResult> persistenceOperationResultsList = new ArrayList<>();
+    private Map<String, ResourcePersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResources) {
+        Map<String, ResourcePersistenceResult> persistenceOperationResultsMap = new HashMap<>();
         switch (operationType) {
             case CREATION:
-                for (CoreResource resource : coreResources) {
-                    RegistryPersistenceResult resourceSavingResult =
-                            this.repositoryManager.saveResource(resource);
-                    persistenceOperationResultsList.add(resourceSavingResult);
+                for (String key : coreResources.keySet()) {
+                    ResourcePersistenceResult resourceSavingResult =
+                            this.repositoryManager.saveResource(coreResources.get(key));
+                    persistenceOperationResultsMap.put(key, resourceSavingResult);
                 }
                 break;
             case MODIFICATION:
-                for (CoreResource resource : coreResources) {
-                    RegistryPersistenceResult resourceModificationResult =
-                            this.repositoryManager.modifyResource(resource);
-                    persistenceOperationResultsList.add(resourceModificationResult);
+                for (String key : coreResources.keySet()) {
+                    ResourcePersistenceResult resourceModificationResult =
+                            this.repositoryManager.modifyResource(coreResources.get(key));
+                    persistenceOperationResultsMap.put(key, resourceModificationResult);
                 }
                 break;
         }
-
-        for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
-            if (persistenceResult.getStatus() != 200) {
+        for (String key : persistenceOperationResultsMap.keySet()) {
+            if (persistenceOperationResultsMap.get(key).getStatus() != 200) {
                 this.bulkRequestSuccess = false;
                 log.error("One (or more) of resources could not be processed. " +
                         "Check list of response objects for details.");
@@ -177,39 +175,38 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         "Check list of response objects for details.");
             }
         }
-
-        return persistenceOperationResultsList;
+        return persistenceOperationResultsMap;
     }
 
     /**
      * prepares content of message with bulk save result
      */
-    private void prepareContentOfMessage(List<RegistryPersistenceResult> persistenceOperationResultsList) {
-        List<CoreResource> savedCoreResourcesList;
+    private void prepareContentOfMessage(Map<String, ResourcePersistenceResult> persistenceOperationResultsMap) {
+        List<CoreResource> savedCoreResourcesList = new ArrayList<>();
+        Map<String, Resource> savedResourcesMap = new HashMap<>();
         if (bulkRequestSuccess) {
-            savedCoreResourcesList = persistenceOperationResultsList.stream()
-                    .map(RegistryPersistenceResult::getResource)
-                    .collect(Collectors.toList());
-
+            for (String key : persistenceOperationResultsMap.keySet()) {
+                ResourcePersistenceResult resourcePersistenceResult = persistenceOperationResultsMap.get(key);
+                savedCoreResourcesList.add(resourcePersistenceResult.getResource());
+                savedResourcesMap.put(key, RegistryUtils.convertCoreResourceToResource(resourcePersistenceResult.getResource()));
+            }
             sendFanoutMessage(savedCoreResourcesList);
 
             log.info("Bulk operation successful! (" + this.operationType.toString() + ")");
             registryResponse.setStatus(200);
             registryResponse.setMessage("Bulk operation successful! (" + this.operationType.toString() + ")");
 
-            List<Resource> resources = RegistryUtils.convertCoreResourcesToResources(savedCoreResourcesList);
-
             try {
-                registryResponse.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-                }).writeValueAsString(resources));
+                registryResponse.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
+                }).writeValueAsString(savedResourcesMap));
             } catch (JsonProcessingException e) {
                 log.error("Could not map list of resource to JSON", e);
             }
 
         } else {
-            for (RegistryPersistenceResult persistenceResult : persistenceOperationResultsList) {
-                if (persistenceResult.getStatus() == 200) {
-                    rollback(persistenceResult.getResource());
+            for (String key : persistenceOperationResultsMap.keySet()) {
+                if (persistenceOperationResultsMap.get(key).getStatus() == 200) {
+                    rollback(persistenceOperationResultsMap.get(key).getResource());
                 }
             }
             log.error("Bulk request ERROR");
@@ -224,6 +221,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
      */
     private void sendRpcResponse() {
         try {
+            registryResponse.setServiceResponse(authorizationManager.generateServiceResponse());
             response = mapper.writeValueAsString(registryResponse);
         } catch (JsonProcessingException e) {
             log.error(e);
@@ -231,9 +229,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
-
             rabbitManager.closeConsumer(this, this.getChannel());
-
         } catch (IOException e) {
             log.error(e);
         }

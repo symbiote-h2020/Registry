@@ -3,42 +3,52 @@ package eu.h2020.symbiote;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.DescriptionType;
-import eu.h2020.symbiote.core.model.InterworkingService;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.RDFFormat;
+import eu.h2020.symbiote.core.model.*;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPlatform;
+import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Mael on 23/01/2017.
  */
 public class TestSetupConfig {
 
-    public static final String MOCKED_TOKEN = "eyJhbGciOiJFUzI1NiJ9.eyJTWU1CSU9URV9Pd25lZFBsYXRmb3JtIjoidGVzdDFQbGF0IiwiU1lNQklPVEVfUm9sZSI6IlBMQVRGT1JNX09XTkVSIiwidHR5cCI6IkNPUkUiLCJzdWIiOiJUZXN0MSIsImlwayI6Ik1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRXI2OXZEV0pzT3duYW9CM0FDRVJPdnRETWtmNjh5aUd6c3lmR1duOWZnSnJHT2ZoTGJkM2Q5NEMxay9TUW1hRWdTakVOUWI4ZEljME9FYWRSRzFtWGR3PT0iLCJpc3MiOiJTeW1iSW9UZV9Db3JlX0FBTSIsImV4cCI6MTQ5NTExNTExMiwiaWF0IjoxNDk1MTExNTEyLCJqdGkiOiI0ODY1MTQ2NTIiLCJzcGsiOiJNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUV5RVJnYXhnQUUzSmUwand6RDBMdjluby9wQVQyUjV0Njc0MzJrcTQxaHNGTWZRSXdyQ212RVRZbW9lekgxYWU2WSsyV0ZCQVdiMHhiMGVUd1ozeWZZdz09In0.M7fIyUsr0GfUN7IyaKMG9T41dabvkFS_UNGeq3RCzzyzA-ttEdHnDNV3oImX7eMS_vvp-prBlnSsVl0dhL131Q";
+    public static final SecurityRequest SECURITY_REQUEST = new SecurityRequest(null, new Long("5")); //// TODO: 04.09.2017
 
     public static final String PLATFORM_EXCHANGE_NAME = "symbIoTe.platform";
-    public static final String PLATFORM_CREATION_REQUESTED = "symbIoTe.platform.creationRequested";
-    public static final String PLATFORM_MODIFICATION_REQUESTED = "symbIoTe.platform.modificationRequested";
-    public static final String PLATFORM_REMOVAL_REQUESTED = "symbIoTe.platform.removalRequested";
+    public static final String PLATFORM_CREATION_REQUESTED_RK = "symbIoTe.platform.creationRequested";
+    public static final String PLATFORM_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.modificationRequested";
+    public static final String PLATFORM_REMOVAL_REQUESTED_RK = "symbIoTe.platform.removalRequested";
     public static final String RESOURCE_EXCHANGE_NAME = "symbIoTe.resource";
-    public static final String RESOURCE_CREATION_REQUESTED = "symbIoTe.resource.creationRequested";
-    public static final String RESOURCE_MODIFICATION_REQUESTED = "symbIoTe.resource.modificationRequested";
-    public static final String RESOURCE_REMOVAL_REQUESTED = "symbIoTe.resource.removalRequested";
+    public static final String RESOURCE_CREATION_REQUESTED_RK = "symbIoTe.resource.creationRequested";
+    public static final String RESOURCE_MODIFICATION_REQUESTED_RK = "symbIoTe.resource.modificationRequested";
+    public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
+
+    public static final String FEDERATION_EXCHANGE_NAME = "symbIoTe.federation";
+    public static final String INFORMATION_MODEL_EXCHANGE_NAME = "symbIoTe.platform";
+
+    public static final String FEDERATION_CREATION_REQUESTED_RK = "symbIoTe.federation.creationRequested";
+    public static final String FEDERATION_MODIFICATION_REQUESTED_RK = "symbIoTe.federation.modificationRequested";
+    public static final String FEDERATION_REMOVAL_REQUESTED_RK = "symbIoTe.federation.removalRequested";
+
+    public static final String INFORMATION_MODEL_CREATION_REQUESTED_RK = "symbIoTe.platform.model.creationRequested";
+    public static final String INFORMATION_MODEL_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.model.modificationRequested";
+    public static final String INFORMATION_MODEL_REMOVAL_REQUESTED_RK = "symbIoTe.platform.model.removalRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
-    public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.modified";
-    public static final String PLATFORM_REMOVED_ROUTING_KEY = "symbIoTe.platform.removed";
+    public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";
+    public static final String PLATFORM_REMOVED_ROUTING_KEY = "symbIoTe.platform.deleted";
     public static final String RESOURCE_CREATED_ROUTING_KEY = "symbIoTe.resource.created";
-    public static final String RESOURCE_REMOVED_ROUTING_KEY = "symbIoTe.resource.removed";
-    public static final String RESOURCE_MODIFIED_ROUTING_KEY = "symbIoTe.resource.modified";
+    public static final String RESOURCE_REMOVED_ROUTING_KEY = "symbIoTe.resource.deleted";
+    public static final String RESOURCE_MODIFIED_ROUTING_KEY = "symbIoTe.resource.updated";
 
     public static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
     public static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
@@ -46,14 +56,31 @@ public class TestSetupConfig {
     public static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
     public static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     public static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
+    public static final String PLATFORM_RESOURCES_REQUESTED_QUEUE = "symbIoTe-Registry-platformResourcesRequestedQueue";
+
+    public static final String RESOURCES_FOR_PLATFORM_REQUESTED_RK = "symbIoTe.platform.resourcesRequested";
+
+    public static final String RESOURCE_TRANSLATION_REQUESTED_RK = "symbIoTe.resource.instance.translationRequested";
+    public static final String RESOURCE_VALIDATION_REQUESTED_RK = "symbIoTe.resource.instance.validationRequested";
+
+
+    public static final String GET_FEDERATION_FOR_PLATFORM_RK = "symbIoTe.federation.getForPlatform";
+    public static final String GET_ALL_FEDERATIONS_RK = "symbIoTe.federation.getAll";
+
+    public static final String AAM_EXCHANGE_NAME = "symbIoTe.AuthenticationAuthorizationManager";
+    public static final String AAM_GET_PLATFORM_OWNERS_RK = "symbIoTe-AuthenticationAuthorizationManager.get_platform_owners_names";
+
+
+
 
     public static final String PLATFORM_A_ID = "1";
     public static final String PLATFORM_A_NAME = "Platform1";
-    public static final String PLATFORM_A_MODEL_ID = "11";
     public static final String PLATFORM_A_DESCRIPTION = "11desc";
     public static final String PLATFORM_A_URI = "http://www.symbiote-h2020.eu/ontology/platforms/1";
     public static final String PLATFORM_A_SERVICE_URI = "http://www.symbiote-h2020.eu/ontology/platforms/1/service/somehost1.com/resourceAccessProxy";
     public static final String PLATFORM_A_URL = "http://somehost1.com/resourceAccessProxy";
+    public static final String INTERWORKING_SERVICE_URL_A = "http://somehost1.com/platformA";
+    public static final String INFORMATION_MODEL_ID_A = "IM_1";
 
     public static final String PLATFORM_A_NAME_UPDATED = "Platform1Updated";
     public static final String PLATFORM_A_MODEL_ID_UPDATED = "11Updated";
@@ -64,7 +91,7 @@ public class TestSetupConfig {
     public static final String PLATFORM_B_NAME = "PlatformB";
     public static final String PLATFORM_B_DESCRIPTION = "21desc";
     public static final String INTERWORKING_SERVICE_URL_B = "http://somehost1.com/platformB";
-    public static final String INFORMATION_MODEL_ID_B = "IM_1";
+    public static final String INFORMATION_MODEL_ID_B = "IM_2";
 
     public static final String RESOURCE_PREDICATE = "http://www.symbiote-h2020.eu/ontology/resources/";
 
@@ -80,38 +107,59 @@ public class TestSetupConfig {
     public static final String RESOURCE_STATIONARY_URI = RESOURCE_PREDICATE + "stationary1";
     public static final String RESOURCE_STATIONARY_ID = "stationary1";
 
+    public static final String AAM_ADDRESS = "";
+    public static final String AAM_CLIENT_ID = "";
+    public static final String AAM_KEYSTORE_NAME = "RegistyTestKeystrore.jks";
+    public static final String AAM_KEYSTORE_PASS = "test_pass";
+    public static final String AAM_COMP_OWNER_NAME = "";
+    public static final String AAM_COMP_OWNER_PASS = "";
+    public static final Boolean SECURITY_ENABLED = false;
 
-    public static Platform generatePlatformA() {
+    public static Platform generateSymbiotePlatformA() {
         Platform platform = new Platform();
-        platform.setPlatformId(PLATFORM_A_ID);
-        platform.setInformationModelId(PLATFORM_A_MODEL_ID);
-        platform.setDescription(PLATFORM_A_DESCRIPTION);
-        platform.setName(PLATFORM_A_NAME);
-        platform.setUrl(PLATFORM_A_URL);
+        platform.setId(PLATFORM_A_ID);
+        platform.setComments(Arrays.asList(PLATFORM_A_DESCRIPTION));
+        platform.setLabels(Arrays.asList(PLATFORM_A_NAME));
+        InterworkingService interworkingService = new InterworkingService();
+        interworkingService.setInformationModelId(INFORMATION_MODEL_ID_A);
+        interworkingService.setUrl(INTERWORKING_SERVICE_URL_A);
+        platform.setInterworkingServices(Arrays.asList(interworkingService));
+        platform.setRdf("http://www.symbIoTe.com/");
+        platform.setRdfFormat(RDFFormat.JSONLD);
         return platform;
     }
 
-    public static RegistryPlatform generateRegistryPlatformB() {
-        RegistryPlatform platform = new RegistryPlatform();
+    public static Platform generatePlatformB() {
+        Platform platform = new Platform();
         platform.setId(PLATFORM_B_ID);
-        platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
         platform.setComments(Arrays.asList(PLATFORM_B_DESCRIPTION));
+        platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
         InterworkingService interworkingService = new InterworkingService();
         interworkingService.setInformationModelId(INFORMATION_MODEL_ID_B);
         interworkingService.setUrl(INTERWORKING_SERVICE_URL_B);
         platform.setInterworkingServices(Arrays.asList(interworkingService));
-        platform.setBody("http://www.symbIoTe.com/");
-        platform.setRdfFormat("some RDF Format");
+        platform.setRdf("http://www.symbIoTe.com/");
+        platform.setRdfFormat(RDFFormat.JSONLD);
         return platform;
     }
 
-    public static CoreResource generateCoreResource() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, INTERWORKING_SERVICE_URL_B,
+    public static CoreResource generateCoreResourceWithoutId() {
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
     }
 
-    public static Resource generateResource() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, RESOURCE_101_ID, INTERWORKING_SERVICE_URL_B);
+    public static Resource generateResourceWithoutId() {
+        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B);
+    }
+
+    public static CoreResource addIdToCoreResource(CoreResource coreResource) {
+        coreResource.setId(RESOURCE_101_ID);
+        return coreResource;
+    }
+
+    public static Resource addIdToResource(Resource resource) {
+        resource.setId(RESOURCE_101_ID);
+        return resource;
     }
 
     public static CoreResource generateStationarySensor() {
@@ -147,23 +195,78 @@ public class TestSetupConfig {
         return res;
     }
 
-    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequest(Resource resource1, Resource resource2)
+    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequestBasicType(Resource resource1, Resource resource2)
             throws JsonProcessingException {
-        List<Resource> resourceList = new ArrayList<>();
-        resourceList.add(resource1);
-        resourceList.add(resource2);
+
+        Map<String, Resource> resourceList = new HashMap<>();
+        resourceList.put("1", resource1);
+        resourceList.put("2", resource2);
 
         ObjectMapper mapper = new ObjectMapper();
-        String resources = mapper.writerFor(new TypeReference<List<Resource>>() {
+        String resources = mapper.writerFor(new TypeReference<Map<String, Resource>>() {
         }).writeValueAsString(resourceList);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
-        coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
-        coreResourceRegistryRequest.setToken(MOCKED_TOKEN);
+        coreResourceRegistryRequest.setPlatformId(PLATFORM_A_ID);
+        coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);
 
         return coreResourceRegistryRequest;
     }
 
+    public static CoreResourceRegistryRequest generateCoreResourceRegistryRequestRdfType(Resource resource1, Resource resource2)
+            throws JsonProcessingException {
+        RDFResourceRegistryRequest request = new RDFResourceRegistryRequest();
+        RDFInfo rdfInfo = new RDFInfo();
+        rdfInfo.setRdf("some rdf");
+        rdfInfo.setRdfFormat(RDFFormat.JSONLD);
+        request.setBody(rdfInfo);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
+        coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
+        coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
+        coreResourceRegistryRequest.setDescriptionType(DescriptionType.RDF);
+        coreResourceRegistryRequest.setBody(mapper.writeValueAsString(request));
+
+        return coreResourceRegistryRequest;
+    }
+
+    private static Federation.FederationMember generateMemberA() {
+        Federation.FederationMember federationMember = new Federation.FederationMember();
+        federationMember.setPlatformId(PLATFORM_A_ID);
+        federationMember.setInterworkingServiceURL(INTERWORKING_SERVICE_URL_A);
+        return federationMember;
+    }
+
+    private static Federation.FederationMember generateMemberB() {
+        Federation.FederationMember federationMember = new Federation.FederationMember();
+        federationMember.setPlatformId(PLATFORM_B_ID);
+        federationMember.setInterworkingServiceURL(INTERWORKING_SERVICE_URL_B);
+        return federationMember;
+    }
+
+    public static Federation generateFederationA() {
+        Federation federation = new Federation();
+
+        federation.setName("FederationA");
+        federation.setId("A");
+        federation.setPublic(true);
+        federation.setSlaDefinition("defA");
+        federation.setMembers(Arrays.asList(generateMemberA()));
+
+        return federation;
+    }
+
+    public static Federation generateFederationB() {
+        Federation federation = new Federation();
+        federation.setName("FederationB");
+        federation.setId("B");
+        federation.setPublic(false);
+        federation.setSlaDefinition("defB");
+        federation.setMembers(Arrays.asList(generateMemberB()));
+        return federation;
+    }
 }

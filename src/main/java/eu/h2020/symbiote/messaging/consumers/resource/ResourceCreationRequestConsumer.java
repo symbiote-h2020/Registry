@@ -1,24 +1,33 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.resource;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
+import eu.h2020.symbiote.core.internal.ResourceInstanceValidationRequest;
 import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.utils.AuthorizationManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * RabbitMQ Consumer implementation used for Resource Creation actions
@@ -31,6 +40,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
+    private RepositoryManager repositoryManager;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -41,10 +51,12 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      */
     public ResourceCreationRequestConsumer(Channel channel,
                                            RabbitManager rabbitManager,
-                                           AuthorizationManager authorizationManager) {
+                                           AuthorizationManager authorizationManager,
+                                           RepositoryManager repositoryManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
+        this.repositoryManager = repositoryManager;
         this.mapper = new ObjectMapper();
     }
 
@@ -65,12 +77,12 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received resources to create (CoreResourceRegistryRequest): '" + message + "'");
+        log.info(" [x] Received resources to create (CoreResourceRegistryRequest)");
 
         try {
             //request from CCI received and deserialized
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Unable to get CoreResourceRegistryRequest from Message body!", e);
             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
             registryResponse.setMessage("Content invalid. Could not deserialize. Resources not created!");
@@ -79,10 +91,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
         if (request != null) {
             //checking access by token verification
-            if (!authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
-                log.error("Token invalid");
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
+            if (!tokenAuthorizationResult.isValidated()) {
+                log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 registryResponse.setStatus(400);
-                registryResponse.setMessage("Token invalid");
+                registryResponse.setMessage("Error: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(registryResponse));
                 return;
@@ -93,16 +106,16 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 switch (request.getDescriptionType()) {
                     case RDF:
                         log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
-                        //sending RDF content to Semantic Manager and passing responsibility to another consumer
-                        rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                                message, request.getPlatformId(), RegistryOperationType.CREATION);
+
+                        createAndSendValidationRequest(envelope, properties, request, registryResponse);
+
                         break;
                     case BASIC:
                         if (checkIfResourcesHaveNullOrEmptyId(request)) {
                             log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                             //sending JSON content to Semantic Manager and passing responsibility to another consumer
                             rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                    message, request.getPlatformId(), RegistryOperationType.CREATION);
+                                    message, request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
                         } else {
                             log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
                             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -119,7 +132,37 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                         mapper.writeValueAsString(registryResponse));
             }
+        }
+    }
 
+    private void createAndSendValidationRequest(Envelope envelope, AMQP.BasicProperties properties,
+                                                CoreResourceRegistryRequest request,
+                                                CoreResourceRegistryResponse registryResponse) throws IOException {
+        RDFResourceRegistryRequest rdfResourceRegistryRequest = mapper.readValue(request.getBody(), RDFResourceRegistryRequest.class);
+
+        String requestedInterworkingServiceUrl = rdfResourceRegistryRequest.getInterworkingServiceUrl();
+
+        String informationModelIdByInterworkingServiceUrl =
+                repositoryManager.getInformationModelIdByInterworkingServiceUrl(request.getPlatformId(), requestedInterworkingServiceUrl);
+
+        if (informationModelIdByInterworkingServiceUrl == null) {
+            log.error("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
+            registryResponse.setStatus(400);
+            registryResponse.setMessage("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
+            registryResponse.setServiceResponse(authorizationManager.generateServiceResponse());
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                    mapper.writeValueAsString(registryResponse));
+        } else {
+            ResourceInstanceValidationRequest resourceInstanceValidationRequest = new ResourceInstanceValidationRequest();
+            resourceInstanceValidationRequest.setRdf(rdfResourceRegistryRequest.getBody().getRdf());
+            resourceInstanceValidationRequest.setRdfFormat(rdfResourceRegistryRequest.getBody().getRdfFormat());
+            resourceInstanceValidationRequest.setInformationModelId(informationModelIdByInterworkingServiceUrl);
+            resourceInstanceValidationRequest.setInterworkingServiceURL(requestedInterworkingServiceUrl);
+
+            //sending RDF content to Semantic Manager and passing responsibility to another consumer
+            rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
+                    mapper.writeValueAsString(resourceInstanceValidationRequest),
+                    request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
         }
     }
 
@@ -127,34 +170,36 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
      * Checks if given request consists of resources, which does not have any content in ID field.
      *
      * @param request
-     * @return
+     * @return true if given resources don't have an ID.
      */
     private boolean checkIfResourcesHaveNullOrEmptyId(CoreResourceRegistryRequest request) {
-        List<Resource> resources = new ArrayList<>();
+        Map<String, Resource> resourceMap = new HashMap<>();
         try {
-            resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
+            resourceMap = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
             });
         } catch (IOException e) {
             log.error("Could not deserialize content of request!" + e);
         }
+        List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
         return checkIds(resources);
     }
 
     private boolean checkIds(List<Resource> resources) {
+
         try {
             for (Resource resource : resources) {
                 if (!checkId(resource)) return false;
-                List<ActuatingService> actuatingServices = new ArrayList<>();
-                if (resource instanceof Actuator) {
-                    actuatingServices = ((Actuator) resource).getCapabilities();
-                } else if (resource instanceof MobileDevice) {
-                    actuatingServices = ((MobileDevice) resource).getCapabilities();
-                } else if (resource instanceof StationaryDevice) {
-                    actuatingServices = ((StationaryDevice) resource).getCapabilities();
+                List<Service> services = new ArrayList<>();
+                if (resource instanceof Device) {
+                    services = ((Device) resource).getServices();
+                } else if (resource instanceof MobileSensor) {
+                    services = ((MobileSensor) resource).getServices();
+                } else if (resource instanceof Actuator) {
+                    services = ((Actuator) resource).getServices();
                 }
-                if (!actuatingServices.isEmpty()) {
-                    for (ActuatingService actuatingService : actuatingServices) {
-                        if (!checkId(actuatingService)) return checkId(actuatingService);
+                if (!services.isEmpty()) {
+                    for (Service service : services) {
+                        if (!checkId(service)) return false;
                     }
                 }
             }
@@ -162,6 +207,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             log.error(e);
             return false;
         }
+
         return true;
     }
 
@@ -172,5 +218,4 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         }
         return true;
     }
-
 }

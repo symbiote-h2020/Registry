@@ -1,6 +1,7 @@
-package eu.h2020.symbiote.messaging;
+package eu.h2020.symbiote.messaging.consumers.resource;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
@@ -12,16 +13,17 @@ import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.model.RegistryPersistenceResult;
-import eu.h2020.symbiote.repository.RepositoryManager;
-import eu.h2020.symbiote.utils.AuthorizationManager;
+import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -72,77 +74,85 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        List<RegistryPersistenceResult> resourceRemovalResultList = new ArrayList<>();
+        Map<String,ResourcePersistenceResult> resourceRemovalMap = new HashMap<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
-        List<Resource> resources = new ArrayList<>();
+        Map<String, Resource> resources = new HashMap<>();
 
         CoreResourceRegistryRequest request = null;
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
-        RegistryPersistenceResult resourceRemovalResult = new RegistryPersistenceResult();
+        ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
 
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received resource to remove: '" + message + "'");
+        log.info(" [x] Received resource to remove");
 
         try {
             request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException e) {
-            log.error("Error occured during getting Operation Request from Json", e);
+        } catch (JsonSyntaxException | JsonMappingException e) {
+            log.error("Error occurred during getting Operation Request from Json", e);
             response.setStatus(400);
-            response.setMessage("Error occured during getting Operation Request from Json");
+            response.setMessage("Error occurred during getting Operation Request from Json");
         }
 
         if (request != null) {
-            if (authorizationManager.checkResourceOperationAccess(request.getToken(), request.getPlatformId())) {
-                try {
-                    resources = mapper.readValue(request.getBody(), new TypeReference<List<Resource>>() {
-                    });
-                } catch (JsonSyntaxException e) {
-                    log.error("Error occured during getting Resources from Json", e);
-                    response.setStatus(400);
-                    response.setMessage("Error occured during getting Resources from Json");
-                }
-            } else {
-                log.error("Token invalid");
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
+            if (!tokenAuthorizationResult.isValidated()){
+                log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 response.setStatus(400);
-                response.setMessage("Token invalid");
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                response.setServiceResponse(authorizationManager.generateServiceResponse());
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                        mapper.writeValueAsString(response));
                 return;
             }
         } else {
             log.error("Request is null");
             response.setStatus(400);
             response.setMessage("Request is null");
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;
         }
 
-        if (!authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId())) {
-            log.error("One of resources does not match with any Interworking Service in given platform!" + resources);
-            response.setMessage("One of resources does not match with any Interworking Service in given platform!" + resources);
+        try {
+            resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
+            });
+        } catch (JsonSyntaxException | JsonMappingException e) {
+            log.error("Error occurred during getting Resources from Json", e);
             response.setStatus(400);
+            response.setMessage("Error occurred during getting Resources from Json");
+        }
+
+        AuthorizationResult resourcesAccessAuthorizationResult =
+                authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId());
+
+        if (!resourcesAccessAuthorizationResult.isValidated()) {
+            log.error(resourcesAccessAuthorizationResult.getMessage() + resources);
+            response.setMessage(resourcesAccessAuthorizationResult.getMessage() + resources);
+            response.setStatus(400);
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
             return;
         }
 
-        for (Resource resource : resources) {
-            if (resource == null) {
+        for (String key : resources.keySet()) {
+            if (resources.get(key) == null) {
                 log.error("Resources list contains a NULL resource!" + resources);
                 response.setMessage("Resources list contains a NULL resource!" + resources);
                 response.setStatus(410);
             } else {
-                if (resource.getId() != null || !resource.getId().isEmpty()) {
-                    resourceRemovalResult = this.repositoryManager.removeResource(resource);
+                if (resources.get(key).getId() != null || !resources.get(key).getId().isEmpty()) {
+                    resourceRemovalResult = this.repositoryManager.removeResource(resources.get(key));
                 } else {
                     log.error("Given Resource has id null or empty");
                     resourceRemovalResult.setMessage("Given Resource has ID null or empty");
                     resourceRemovalResult.setStatus(400);
                 }
-                resourceRemovalResultList.add(resourceRemovalResult);
+                resourceRemovalMap.put(key,resourceRemovalResult);
             }
         }
 
-        if (checkIfRemovalWasSuccessful(resourceRemovalResultList, resourcesRemoved, resources)) {
-            sendFanoutMessage(resourceRemovalResultList);
+        if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resources)) {
+            sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
 
             response.setMessage("Success");
             response.setStatus(200);
@@ -153,21 +163,31 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             response.setDescriptionType(DescriptionType.BASIC);
         }
 
-        response.setBody(mapper.writerFor(new TypeReference<List<Resource>>() {
-                }).writeValueAsString(resourceRemovalResultList.stream()
-                        .map(registryPersistenceResult ->
-                                RegistryUtils.convertCoreResourceToResource
-                                        (registryPersistenceResult.getResource()))
-                        .collect(Collectors.toList())
-                )
-        );
+        Map<String,Resource> resourcesDeletedMap = new HashMap<>();
+        for( String key: resourceRemovalMap.keySet() ) {
+            resourcesDeletedMap.put(key,RegistryUtils.convertCoreResourceToResource(resourceRemovalMap.get(key).getResource()));
+
+        }
+
+//        List<Resource> resourceList = resourceRemovalResultList.stream()
+//                .map(resourcePersistenceResult ->
+//                        RegistryUtils.convertCoreResourceToResource
+//                                (resourcePersistenceResult.getResource()))
+//                .collect(Collectors.toList());
+
+//        resourceList.stream().forEach(res -> resourcesDeletedMap.put(res.getId(),res));
+
+        response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
+        }).writeValueAsString(resourcesDeletedMap));
+        response.setServiceResponse(authorizationManager.generateServiceResponse());
+        System.out.println(response.getBody());
 
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
 
-    private void sendFanoutMessage(List<RegistryPersistenceResult> resourceRemovalResultList) {
+    private void sendFanoutMessage(List<ResourcePersistenceResult> resourceRemovalResultList) {
         List<String> resourcesIds = resourceRemovalResultList.stream()
-                .map(RegistryPersistenceResult::getResource)
+                .map(ResourcePersistenceResult::getResource)
                 .map(CoreResource::getId)
                 .collect(Collectors.toList());
 
@@ -176,9 +196,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendResourcesRemovalMessage(resourcesIds);
     }
 
-    private boolean checkIfRemovalWasSuccessful(List<RegistryPersistenceResult> resourceRemovalResultList,
-                                                List<Resource> resourcesRemoved, List<Resource> resources) {
-        for (RegistryPersistenceResult result : resourceRemovalResultList) {
+    private boolean checkIfRemovalWasSuccessful(List<ResourcePersistenceResult> resourceRemovalResultList,
+                                                List<Resource> resourcesRemoved, Map<String, Resource> resources) {
+        for (ResourcePersistenceResult result : resourceRemovalResultList) {
             if (result.getStatus() == 200) {
                 resourcesRemoved.add(result.getResource());
             }

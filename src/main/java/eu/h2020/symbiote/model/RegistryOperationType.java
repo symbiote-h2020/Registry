@@ -1,7 +1,7 @@
 package eu.h2020.symbiote.model;
 
 /**
- * Created by mateuszl on 18.04.2017.
+ * Enum class used for choosing an operation type performed in Registry.
  */
 public enum RegistryOperationType {
     CREATION, MODIFICATION, REMOVAL
