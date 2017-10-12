@@ -18,6 +18,7 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -41,6 +42,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
+    private Map<String, SingleTokenAccessPolicySpecifier> policiesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -103,6 +105,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
             if (request.getBody() != null) {
 
+                this.policiesMap = request.getFilteringPolicies();
+
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:
@@ -120,7 +124,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                     request.getPlatformId(),
                                     RegistryOperationType.CREATION,
                                     authorizationManager,
-                                    request.getFilteringPolicies());
+                                    this.policiesMap);
                         } else {
                             log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
                             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -167,7 +171,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             //sending RDF content to Semantic Manager and passing responsibility to another consumer
             rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
                     mapper.writeValueAsString(resourceInstanceValidationRequest),
-                    request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
+                    request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager, this.policiesMap);
         }
     }
 

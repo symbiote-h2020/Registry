@@ -21,6 +21,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -186,7 +187,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException {
+    public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -236,7 +237,7 @@ public class MessagingTests {
         }
     */
     @Test
-    public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException {
+    public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -260,7 +261,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceRemovalRequestConsumerHappyPathTest() throws IOException, InterruptedException {
+    public void resourceRemovalRequestConsumerHappyPathTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(this.mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -289,7 +290,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceCreationRequestConsumerAuthFailTest() throws IOException, InterruptedException {
+    public void resourceCreationRequestConsumerAuthFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -309,7 +310,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceModificationRequestConsumerAuthFailTest() throws InterruptedException, IOException {
+    public void resourceModificationRequestConsumerAuthFailTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -329,7 +330,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceRemovalRequestConsumerAuthFailTest() throws JsonProcessingException, InterruptedException {
+    public void resourceRemovalRequestConsumerAuthFailTest() throws JsonProcessingException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -397,7 +398,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceCreationRequestConsumerResourceWithIdFailTest() throws IOException, InterruptedException {
+    public void resourceCreationRequestConsumerResourceWithIdFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -419,7 +420,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceModificationRequestConsumerResourceWithoutIdFailTest() throws IOException, InterruptedException {
+    public void resourceModificationRequestConsumerResourceWithoutIdFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -440,7 +441,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceRemovalRequestConsumerWithoutIdFailTest() throws JsonProcessingException, InterruptedException {
+    public void resourceRemovalRequestConsumerWithoutIdFailTest() throws JsonProcessingException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 
@@ -460,7 +461,7 @@ public class MessagingTests {
     }
 
     @Test
-    public void resourceCreationRequestConsumerNullBodyFailTest() throws IOException, InterruptedException {
+    public void resourceCreationRequestConsumerNullBodyFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
         setRabbitManagerMockedManagers();
 

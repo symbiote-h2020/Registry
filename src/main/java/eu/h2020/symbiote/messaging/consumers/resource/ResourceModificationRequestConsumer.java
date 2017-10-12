@@ -16,6 +16,7 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -39,6 +40,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     private RabbitManager rabbitManager;
     private RepositoryManager repositoryManager;
     private ObjectMapper mapper;
+    private Map<String, SingleTokenAccessPolicySpecifier> policiesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -93,6 +95,7 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         }
 
         if (request != null) {
+            this.policiesMap = request.getFilteringPolicies();
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -118,7 +121,11 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 log.info("Message to Semantic Manager Sent. Content Type : RDF. Request: " + request.getBody());
                 //sending RDF content to Semantic Manager and passing responsibility to another consumer
                 rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                        message, request.getPlatformId(), RegistryOperationType.MODIFICATION, authorizationManager);
+                        message,
+                        request.getPlatformId(),
+                        RegistryOperationType.MODIFICATION,
+                        authorizationManager,
+                        this.policiesMap);
                 break;
             case BASIC:
                 if (checkIfResourcesHaveNullOrEmptyId(request)) {
@@ -132,7 +139,11 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                     log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
                     rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                            message, request.getPlatformId(), RegistryOperationType.MODIFICATION, authorizationManager);
+                            message,
+                            request.getPlatformId(),
+                            RegistryOperationType.MODIFICATION,
+                            authorizationManager,
+                            this.policiesMap);
                 }
                 break;
         }

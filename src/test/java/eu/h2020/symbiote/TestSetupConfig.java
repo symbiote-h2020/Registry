@@ -10,11 +10,16 @@ import eu.h2020.symbiote.core.model.*;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.commons.Token;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Mael on 23/01/2017.
@@ -145,7 +150,12 @@ public class TestSetupConfig {
 
     public static CoreResource generateCoreResourceWithoutId() {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
-                RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
+                RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD, new IAccessPolicy() {
+                    @Override
+                    public Set<Token> isSatisfiedWith(Set<Token> authorizationTokens) {
+                        return null;
+                    }
+                });
     }
 
     public static Resource generateResourceWithoutId() {
@@ -164,16 +174,26 @@ public class TestSetupConfig {
 
     public static CoreResource generateStationarySensor() {
         return generateSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
-                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD);
+                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD, new IAccessPolicy() {
+                    @Override
+                    public Set<Token> isSatisfiedWith(Set<Token> authorizationTokens) {
+                        return null;
+                    }
+                });
     }
 
     public static CoreResource generateModifiedStationarySensor() {
         return generateSensor(RESOURCE_STATIONARY_LABEL_MODIFIED, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
-                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME_MODIFIED, RDFFormat.JSONLD);
+                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME_MODIFIED, RDFFormat.JSONLD, new IAccessPolicy() {
+                    @Override
+                    public Set<Token> isSatisfiedWith(Set<Token> authorizationTokens) {
+                        return null;
+                    }
+                });
     }
 
     public static CoreResource generateSensor(String label, String comment, String id, String serviceUrl,
-                                              String rdfFilename, RDFFormat format) {
+                                              String rdfFilename, RDFFormat format, IAccessPolicy policy) {
         CoreResource res = new CoreResource();
         res.setComments(Arrays.asList(comment));
         res.setLabels(Arrays.asList(label));
@@ -182,6 +202,7 @@ public class TestSetupConfig {
         res.setRdf(rdfFilename);
         res.setRdfFormat(format);
         res.setType(CoreResourceType.STATIONARY_SENSOR);
+        res.setPolicy(policy);
         return res;
     }
 
@@ -196,21 +217,30 @@ public class TestSetupConfig {
     }
 
     public static CoreResourceRegistryRequest generateCoreResourceRegistryRequestBasicType(Resource resource1, Resource resource2)
-            throws JsonProcessingException {
+            throws JsonProcessingException, InvalidArgumentsException {
 
-        Map<String, Resource> resourceList = new HashMap<>();
-        resourceList.put("1", resource1);
-        resourceList.put("2", resource2);
+        Map<String, Resource> resourceMap = new HashMap<>();
+        resourceMap.put("1", resource1);
+        resourceMap.put("2", resource2);
 
         ObjectMapper mapper = new ObjectMapper();
         String resources = mapper.writerFor(new TypeReference<Map<String, Resource>>() {
-        }).writeValueAsString(resourceList);
+        }).writeValueAsString(resourceMap);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
         coreResourceRegistryRequest.setPlatformId(PLATFORM_A_ID);
         coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);
+
+        Map<String, SingleTokenAccessPolicySpecifier> filteringPolicies = new HashMap<>();
+        Map<String, String> claims = new HashMap<>();
+        claims.put("a","a");
+        filteringPolicies.put("1", new SingleTokenAccessPolicySpecifier(SingleTokenAccessPolicySpecifier.SingleTokenAccessPolicyType.PUBLIC, null));
+        filteringPolicies.put("2", new SingleTokenAccessPolicySpecifier(SingleTokenAccessPolicySpecifier.SingleTokenAccessPolicyType.PUBLIC, null));
+
+        coreResourceRegistryRequest.setFilteringPolicies(filteringPolicies);
+
 
         return coreResourceRegistryRequest;
     }
