@@ -17,6 +17,7 @@ import eu.h2020.symbiote.messaging.consumers.resource.ResourceModificationReques
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceRemovalRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.resource.ResourceValidationResponseConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -787,7 +788,8 @@ public class RabbitManager {
                                                     String message,
                                                     String platformId,
                                                     RegistryOperationType operationType,
-                                                    AuthorizationManager authorizationManager) {
+                                                    AuthorizationManager authorizationManager,
+                                                    Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
         sendResourceValidationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.rdfResourceValidationRequestedRoutingKey,
@@ -795,7 +797,8 @@ public class RabbitManager {
                 operationType,
                 message,
                 platformId,
-                authorizationManager);
+                authorizationManager,
+                policiesMap);
         log.info("- rdf resource to validation message sent");
     }
 
@@ -805,7 +808,8 @@ public class RabbitManager {
                                                       String message,
                                                       String platformId,
                                                       RegistryOperationType operationType,
-                                                      AuthorizationManager authorizationManager) {
+                                                      AuthorizationManager authorizationManager,
+                                                      Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
         sendResourceValidationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
@@ -813,7 +817,8 @@ public class RabbitManager {
                 operationType,
                 message,
                 platformId,
-                authorizationManager);
+                authorizationManager,
+                policiesMap);
     }
 
     /**
@@ -845,7 +850,8 @@ public class RabbitManager {
     private void sendResourceValidationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
                                                                    Envelope rpcEnvelope, String exchangeName, String routingKey,
                                                                    DescriptionType descriptionType, RegistryOperationType operationType,
-                                                                   String message, String platformId, AuthorizationManager authorizationManager) {
+                                                                   String message, String platformId, AuthorizationManager authorizationManager,
+                                                                   Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
         try {
             String replyQueueName = rpcChannel.queueDeclare().getQueue();
 
@@ -859,7 +865,7 @@ public class RabbitManager {
             ResourceValidationResponseConsumer responseConsumer =
                     new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             rpcChannel, repositoryManager, this, platformId, operationType, descriptionType,
-                            authorizationManager);
+                            authorizationManager, policiesMap);
 
             rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
 

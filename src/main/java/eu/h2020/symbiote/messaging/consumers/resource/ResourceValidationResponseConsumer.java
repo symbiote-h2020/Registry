@@ -15,12 +15,14 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
-import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.managers.AuthorizationManager;
+import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyFactory;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,6 +55,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private DescriptionType descriptionType;
     private String response;
     private AuthorizationManager authorizationManager;
+    private Map<String, SingleTokenAccessPolicySpecifier> policiesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -71,7 +74,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                                               String resourcesPlatformId,
                                               RegistryOperationType operationType,
                                               DescriptionType descriptionType,
-                                              AuthorizationManager authorizationManager) {
+                                              AuthorizationManager authorizationManager,
+                                              Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -82,6 +86,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.operationType = operationType;
         this.descriptionType = descriptionType;
         this.authorizationManager = authorizationManager;
+        this.policiesMap = policiesMap;
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreResourceRegistryResponse();
         response = "";
@@ -152,16 +157,32 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         switch (operationType) {
             case CREATION:
                 for (String key : coreResources.keySet()) {
-                    ResourcePersistenceResult resourceSavingResult =
-                            this.repositoryManager.saveResource(coreResources.get(key));
-                    persistenceOperationResultsMap.put(key, resourceSavingResult);
+                    CoreResource coreResource = coreResources.get(key);
+                    try {
+                        coreResource.setPolicy(SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(policiesMap.get(key)));
+                        ResourcePersistenceResult resourceSavingResult =
+                                this.repositoryManager.saveResource(coreResource);
+                        persistenceOperationResultsMap.put(key, resourceSavingResult);
+                    } catch (Exception e) {
+                        log.error("Couldn't get Access Policies for Core Resource. " + e);
+                        persistenceOperationResultsMap.put(key,
+                                new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                    }
                 }
                 break;
             case MODIFICATION:
                 for (String key : coreResources.keySet()) {
-                    ResourcePersistenceResult resourceModificationResult =
-                            this.repositoryManager.modifyResource(coreResources.get(key));
-                    persistenceOperationResultsMap.put(key, resourceModificationResult);
+                    CoreResource coreResource = coreResources.get(key);
+                    try {
+                        coreResource.setPolicy(SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(policiesMap.get(key)));
+                        ResourcePersistenceResult resourceModificationResult =
+                                this.repositoryManager.modifyResource(coreResources.get(key));
+                        persistenceOperationResultsMap.put(key, resourceModificationResult);
+                    } catch (Exception e){
+                        log.error("Couldn't get Access Policies for Core Resource. " + e);
+                        persistenceOperationResultsMap.put(key,
+                                new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                    }
                 }
                 break;
         }

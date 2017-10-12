@@ -102,6 +102,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
             }
 
             if (request.getBody() != null) {
+
                 //contact with Semantic Manager accordingly to Type of object Description received
                 switch (request.getDescriptionType()) {
                     case RDF:
@@ -115,7 +116,11 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                             log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                             //sending JSON content to Semantic Manager and passing responsibility to another consumer
                             rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                    message, request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager);
+                                    message,
+                                    request.getPlatformId(),
+                                    RegistryOperationType.CREATION,
+                                    authorizationManager,
+                                    request.getFilteringPolicies());
                         } else {
                             log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
                             registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
