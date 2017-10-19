@@ -83,19 +83,19 @@ public class AuthorizationManager {
         }
     }
 
-    public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) throws InvalidArgumentsException {
+    public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {
         Set<String> ids = new HashSet<>();
         ids.add(platformId);
         return checkOperationAccess(securityRequest, ids);
     }
 
-    public AuthorizationResult checkSMultiplePlatformOperationAccess(SecurityRequest securityRequest, List<String> platformIds) throws InvalidArgumentsException {
+    public AuthorizationResult checkSMultiplePlatformOperationAccess(SecurityRequest securityRequest, List<String> platformIds) {
         Set<String> ids = new HashSet<>();
         ids.addAll(platformIds);
         return checkOperationAccess(securityRequest, ids);
     }
 
-    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) throws InvalidArgumentsException {
+    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
         if (securityEnabled) {
             log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
@@ -119,15 +119,15 @@ public class AuthorizationManager {
         }
     }
 
-    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) throws InvalidArgumentsException {
+    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
 
         String rhComponentId = "reghandler";
 
         for (String platformId : platformIds) {
-            SingleTokenAccessPolicySpecifier specifier = new SingleTokenAccessPolicySpecifier(rhComponentId, platformId);
             try {
+                SingleTokenAccessPolicySpecifier specifier = new SingleTokenAccessPolicySpecifier(rhComponentId, platformId);
                 accessPoliciesMap.put(
                         platformId, SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(specifier));
 
