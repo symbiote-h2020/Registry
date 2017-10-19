@@ -8,6 +8,7 @@ import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -49,7 +50,7 @@ public class ResourceRepositoryManagerTests {
     }
 
     @Test
-    public void testSaveResourceTriggersRepository() {
+    public void testSaveResourceTriggersRepository() throws InvalidArgumentsException {
         CoreResource resource = generateCoreResourceWithoutId();
         resource = addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
@@ -64,7 +65,7 @@ public class ResourceRepositoryManagerTests {
     }
 
     @Test
-    public void testModifyResourceTriggersRepository() {
+    public void testModifyResourceTriggersRepository() throws InvalidArgumentsException {
         CoreResource resource = generateCoreResourceWithoutId();
         resource = addIdToCoreResource(resource);
         when(resourceRepository.save(resource)).thenReturn(resource);
@@ -80,7 +81,7 @@ public class ResourceRepositoryManagerTests {
     }
 
     @Test
-    public void testRemoveResourceTriggersRepository() {
+    public void testRemoveResourceTriggersRepository() throws InvalidArgumentsException {
         CoreResource resource = generateCoreResourceWithoutId();
         addIdToCoreResource(resource);
         when(resourceRepository.findOne("101")).thenReturn(resource);
@@ -107,7 +108,7 @@ public class ResourceRepositoryManagerTests {
     }
 
     @Test
-    public void testSaveResourceMongoError(){
+    public void testSaveResourceMongoError() throws InvalidArgumentsException {
         CoreResource coreResource = generateCoreResourceWithoutId();
         coreResource = addIdToCoreResource(coreResource);
         when(resourceRepository.save(coreResource)).thenThrow(new MongoException("FAKE MONGO ERROR"));

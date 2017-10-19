@@ -10,16 +10,13 @@ import eu.h2020.symbiote.core.model.*;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.Resource;
-import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
-import eu.h2020.symbiote.security.commons.Token;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by Mael on 23/01/2017.
@@ -148,14 +145,10 @@ public class TestSetupConfig {
         return platform;
     }
 
-    public static CoreResource generateCoreResourceWithoutId() {
+    public static CoreResource generateCoreResourceWithoutId() throws InvalidArgumentsException {
         return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
-                RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD, new IAccessPolicy() {
-                    @Override
-                    public Set<Token> isSatisfiedWith(Set<Token> authorizationTokens) {
-                        return null;
-                    }
-                });
+                RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD,
+                new SingleTokenAccessPolicySpecifier("mock", "mock"));
     }
 
     public static Resource generateResourceWithoutId() {
@@ -172,28 +165,20 @@ public class TestSetupConfig {
         return resource;
     }
 
-    public static CoreResource generateStationarySensor() {
+    public static CoreResource generateStationarySensor() throws InvalidArgumentsException {
         return generateSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
-                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD, new IAccessPolicy() {
-                    @Override
-                    public Set<Token> isSatisfiedWith(Set<Token> authorizationTokens) {
-                        return null;
-                    }
-                });
+                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD,
+                new SingleTokenAccessPolicySpecifier("mock", "mock"));
     }
 
-    public static CoreResource generateModifiedStationarySensor() {
+    public static CoreResource generateModifiedStationarySensor() throws InvalidArgumentsException {
         return generateSensor(RESOURCE_STATIONARY_LABEL_MODIFIED, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
-                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME_MODIFIED, RDFFormat.JSONLD, new IAccessPolicy() {
-                    @Override
-                    public Set<Token> isSatisfiedWith(Set<Token> authorizationTokens) {
-                        return null;
-                    }
-                });
+                PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME_MODIFIED, RDFFormat.JSONLD,
+                new SingleTokenAccessPolicySpecifier("mock", "mock"));
     }
 
     public static CoreResource generateSensor(String label, String comment, String id, String serviceUrl,
-                                              String rdfFilename, RDFFormat format, IAccessPolicy policy) {
+                                              String rdfFilename, RDFFormat format, SingleTokenAccessPolicySpecifier specifier) {
         CoreResource res = new CoreResource();
         res.setComments(Arrays.asList(comment));
         res.setLabels(Arrays.asList(label));
@@ -202,7 +187,7 @@ public class TestSetupConfig {
         res.setRdf(rdfFilename);
         res.setRdfFormat(format);
         res.setType(CoreResourceType.STATIONARY_SENSOR);
-        res.setPolicy(policy);
+        res.setPolicySpecifier(specifier);
         return res;
     }
 

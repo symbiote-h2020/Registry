@@ -21,7 +21,6 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
-import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyFactory;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -159,7 +158,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 for (String key : coreResources.keySet()) {
                     CoreResource coreResource = coreResources.get(key);
                     try {
-                        coreResource.setPolicy(SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(policiesMap.get(key)));
+                        coreResource.setPolicySpecifier(policiesMap.get(key));
                         ResourcePersistenceResult resourceSavingResult =
                                 this.repositoryManager.saveResource(coreResource);
                         persistenceOperationResultsMap.put(key, resourceSavingResult);
@@ -174,7 +173,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 for (String key : coreResources.keySet()) {
                     CoreResource coreResource = coreResources.get(key);
                     try {
-                        coreResource.setPolicy(SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(policiesMap.get(key)));
+                        coreResource.setPolicySpecifier(policiesMap.get(key));
                         ResourcePersistenceResult resourceModificationResult =
                                 this.repositoryManager.modifyResource(coreResources.get(key));
                         persistenceOperationResultsMap.put(key, resourceModificationResult);

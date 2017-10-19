@@ -4,6 +4,7 @@ import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.internal.CoreResourceType;
 import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -34,7 +35,7 @@ public class RegistryUtilsTests {
     }
 
     @Test
-    public void testCoreResourceToResourceConverter() {
+    public void testCoreResourceToResourceConverter() throws InvalidArgumentsException {
 
         CoreResource coreResource = generateCoreResourceWithoutId();
         addIdToCoreResource(coreResource);
@@ -48,7 +49,7 @@ public class RegistryUtilsTests {
     }
 
     @Test
-    public void testCoreResourcesToResourcesConverter() {
+    public void testCoreResourcesToResourcesConverter() throws InvalidArgumentsException {
 
         CoreResource coreResource1 = generateCoreResourceWithoutId();
         addIdToCoreResource(coreResource1);

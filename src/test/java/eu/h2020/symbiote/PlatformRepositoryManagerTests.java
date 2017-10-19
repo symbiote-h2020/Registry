@@ -8,6 +8,7 @@ import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.repository.ResourceRepository;
+import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -147,7 +148,7 @@ public class PlatformRepositoryManagerTests {
     }
 
     @Test
-    public void testGetResourcesForPlatform(){
+    public void testGetResourcesForPlatform() throws InvalidArgumentsException {
         Platform platform = generatePlatformB();
         CoreResource coreResource = generateCoreResourceWithoutId();
 
