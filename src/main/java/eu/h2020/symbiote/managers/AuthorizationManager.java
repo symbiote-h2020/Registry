@@ -9,8 +9,7 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
-import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyFactory;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.ComponentHomeTokenAccessPolicy;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import eu.h2020.symbiote.security.communication.payloads.Credentials;
@@ -120,31 +119,29 @@ public class AuthorizationManager {
         }
     }
 
-    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) throws InvalidArgumentsException {
+    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
 
-        Map<String, String> requiredClaims = new HashMap<>();
+        Map<String, String> platformsAndOwnersMap = getOwnersOfPlatformsFromAAM(platformIds);
 
-        for (String platformId : platformIds) {
+        String jakiesCos = JAKIESIDMIKENA;
+        String rHComponentId = "reghandler@" + jakiesCos;
 
-            requiredClaims.put(Claims.ISSUER, platformId); // ??????????
-            requiredClaims.put(Claims.SUBJECT, "rh"); // ??????????
-
-            SingleTokenAccessPolicySpecifier specifier =
-                    new SingleTokenAccessPolicySpecifier(
-                            SingleTokenAccessPolicySpecifier.SingleTokenAccessPolicyType.SLHTIBAP,
-                            requiredClaims);
-
-            try {
+        if (platformsAndOwnersMap != null) {
+            for (String platformId : platformsAndOwnersMap.keySet()) {
+                try {
                     accessPoliciesMap.put(
-                            platformId, SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(specifier));
-
+                            platformId,
+                            new ComponentHomeTokenAccessPolicy(platformId, rHComponentId, new HashMap<>()));
                 } catch (InvalidArgumentsException e) {
                     log.error(e);
                 }
             }
             return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+        } else {
+            return new HashSet<>();
+        }
     }
 
     private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
