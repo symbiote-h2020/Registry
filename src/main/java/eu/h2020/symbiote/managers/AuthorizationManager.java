@@ -9,8 +9,8 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleLocalHomeTokenIdentityBasedAccessPolicy;
-import eu.h2020.symbiote.security.commons.SecurityConstants;
+import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyFactory;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import eu.h2020.symbiote.security.communication.payloads.Credentials;
@@ -18,6 +18,7 @@ import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersReques
 import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersResponse;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
+import io.jsonwebtoken.Claims;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +72,8 @@ public class AuthorizationManager {
         this.securityEnabled = securityEnabled;
 
         if (securityEnabled) {
-            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(aamAddress,
+            componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(
+                    this.aamAddress,
                     this.keystoreName,
                     this.keystorePass,
                     this.clientId,
@@ -82,19 +84,19 @@ public class AuthorizationManager {
         }
     }
 
-    public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {
+    public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) throws InvalidArgumentsException {
         Set<String> ids = new HashSet<>();
         ids.add(platformId);
         return checkOperationAccess(securityRequest, ids);
     }
 
-    public AuthorizationResult checkSMultiplePlatformOperationAccess(SecurityRequest securityRequest, List<String> platformIds) {
+    public AuthorizationResult checkSMultiplePlatformOperationAccess(SecurityRequest securityRequest, List<String> platformIds) throws InvalidArgumentsException {
         Set<String> ids = new HashSet<>();
         ids.addAll(platformIds);
         return checkOperationAccess(securityRequest, ids);
     }
 
-    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
+    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) throws InvalidArgumentsException {
         if (securityEnabled) {
             log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
@@ -118,29 +120,31 @@ public class AuthorizationManager {
         }
     }
 
-    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
+    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) throws InvalidArgumentsException {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
 
-        Map<String, String> platformsAndOwnersMap = getOwnersOfPlatformsFromAAM(platformIds);
+        Map<String, String> requiredClaims = new HashMap<>();
 
-        if (platformsAndOwnersMap != null) {
-            for (String platformId : platformsAndOwnersMap.keySet()) {
-                try {
+        for (String platformId : platformIds) {
+
+            requiredClaims.put(Claims.ISSUER, platformId); // ??????????
+            requiredClaims.put(Claims.SUBJECT, "rh"); // ??????????
+
+            SingleTokenAccessPolicySpecifier specifier =
+                    new SingleTokenAccessPolicySpecifier(
+                            SingleTokenAccessPolicySpecifier.SingleTokenAccessPolicyType.SLHTIBAP,
+                            requiredClaims);
+
+            try {
                     accessPoliciesMap.put(
-                            platformId,
-                            new SingleLocalHomeTokenIdentityBasedAccessPolicy(
-                                    SecurityConstants.CORE_AAM_INSTANCE_ID,
-                                    platformsAndOwnersMap.get(platformId),
-                                    null));
+                            platformId, SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(specifier));
+
                 } catch (InvalidArgumentsException e) {
                     log.error(e);
                 }
             }
             return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
-        } else {
-            return new HashSet<>();
-        }
     }
 
     private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
@@ -175,18 +179,6 @@ public class AuthorizationManager {
             log.error(e);
         }
         return serviceResponse;
-    }
-
-    public SecurityRequest generateSecurityRequest() {
-        SecurityRequest securityRequest = null;
-        try {
-            if( securityEnabled ) {
-                securityRequest = componentSecurityHandler.generateSecurityRequestUsingCoreCredentials();
-            }
-        } catch (Exception e) {
-            log.error(e);
-        }
-        return securityRequest;
     }
 
     public AuthorizationResult checkIfResourcesBelongToPlatform(Map<String, Resource> resources, String platformId) {
