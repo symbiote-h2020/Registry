@@ -9,7 +9,8 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.ComponentHomeTokenAccessPolicy;
+import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyFactory;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import eu.h2020.symbiote.security.communication.payloads.Credentials;
@@ -17,7 +18,6 @@ import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersReques
 import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersResponse;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
-import io.jsonwebtoken.Claims;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,29 +119,23 @@ public class AuthorizationManager {
         }
     }
 
-    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
+    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) throws InvalidArgumentsException {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
 
-        Map<String, String> platformsAndOwnersMap = getOwnersOfPlatformsFromAAM(platformIds);
+        String rhComponentId = "reghandler";
 
-        String jakiesCos = JAKIESIDMIKENA;
-        String rHComponentId = "reghandler@" + jakiesCos;
+        for (String platformId : platformIds) {
+            SingleTokenAccessPolicySpecifier specifier = new SingleTokenAccessPolicySpecifier(rhComponentId, platformId);
+            try {
+                accessPoliciesMap.put(
+                        platformId, SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(specifier));
 
-        if (platformsAndOwnersMap != null) {
-            for (String platformId : platformsAndOwnersMap.keySet()) {
-                try {
-                    accessPoliciesMap.put(
-                            platformId,
-                            new ComponentHomeTokenAccessPolicy(platformId, rHComponentId, new HashMap<>()));
-                } catch (InvalidArgumentsException e) {
-                    log.error(e);
-                }
+            } catch (InvalidArgumentsException e) {
+                log.error(e);
             }
-            return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
-        } else {
-            return new HashSet<>();
         }
+        return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
     }
 
     private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {

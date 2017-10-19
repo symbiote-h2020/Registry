@@ -5,14 +5,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
-import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
 import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
 import eu.h2020.symbiote.core.internal.ResourceListResponse;
 import eu.h2020.symbiote.core.model.InterworkingService;
 import eu.h2020.symbiote.core.model.Platform;
 import eu.h2020.symbiote.core.model.RDFFormat;
-import eu.h2020.symbiote.core.model.RDFInfo;
 import eu.h2020.symbiote.core.model.internal.CoreResource;
 import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -212,30 +211,61 @@ public class MessagingTests {
         verify(mockedRepository, timeout(500).times(2)).saveResource(any());
     }
 
-    /*
-        @Test
-        public void resourceCreationRequestConsumerRPCHappyPathTest() throws IOException {
-            rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-            setRabbitManagerMockedManagers();
+    @Test
+    public void resourceCreationRequestConsumerRPCSemanticContentFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
+        setRabbitManagerMockedManagers();
 
-            Resource resource1 = generateResourceWithoutId();
-            Resource resource2 = generateResourceWithoutId();
-            CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
-            String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+        Resource resource1 = generateResourceWithoutId();
+        Resource resource2 = generateResourceWithoutId();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-            when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
-            when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
-            when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
-            when(mockedRepository.getInformationModelIdByInterworkingServiceUrl(any(), any())).thenReturn("mocked");
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+        when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
+        when(mockedRepository.getInformationModelIdByInterworkingServiceUrl(any(), any())).thenReturn("mocked");
 
-            mockSemanticManagerResourceValidationCommunication(message);
+        mockSemanticManagerResourceValidationCommunication(message);
 
-            rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
-            // Timeout to make sure that the message has been delivered
-            verify(mockedRepository, timeout(500).times(2)).saveResource(any());
-        }
-    */
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+        verify(mockedRepository, times(1)).getInformationModelIdByInterworkingServiceUrl(any(), any());
+        verify(mockedRepository, times(0)).saveResource(any());
+    }
+
+    @Test
+
+    public void resourceCreationRequestConsumerRPCNullInterworkingUrlFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
+        setRabbitManagerMockedManagers();
+
+        Resource resource1 = generateResourceWithoutId();
+        Resource resource2 = generateResourceWithoutId();
+        CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
+        String message = mapper.writeValueAsString(coreResourceRegistryRequest);
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+        when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
+        when(mockedRepository.getInformationModelIdByInterworkingServiceUrl(any(), any())).thenReturn(null);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message);
+
+        CoreResourceRegistryResponse coreResourceRegistryResponse = mapper.readValue(response, CoreResourceRegistryResponse.class);
+
+        Assert.assertNotNull(coreResourceRegistryResponse.getMessage());
+        Assert.assertNotEquals(coreResourceRegistryResponse.getStatus(), 200);
+
+//        mockSemanticManagerResourceValidationCommunication(message);
+
+        verify(mockedRepository, times(1)).getInformationModelIdByInterworkingServiceUrl(any(), any());
+        verify(mockedRepository, times(0)).saveResource(any());
+    }
+
+
     @Test
     public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
@@ -546,37 +576,15 @@ public class MessagingTests {
         });
     }
 
-
     public void mockSemanticManagerResourceValidationReply(Envelope envelope, AMQP.BasicProperties properties, byte[] body, String message) throws IOException {
         log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
 
-        String messageReceived = new String(body);
-//        assertEquals(message, messageReceived);
-        RDFResourceRegistryRequest request = mapper.readValue(messageReceived, RDFResourceRegistryRequest.class);
-
-        assertNotNull(properties);
         String correlationId = properties.getCorrelationId();
         String replyQueueName = properties.getReplyTo();
         assertNotNull(correlationId);
         assertNotNull(replyQueueName);
 
-        RDFInfo rdfInfo = request.getBody();
-
-
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
-
-        Map<String, CoreResource> resources = new HashMap<>();
-
-        resources.put("1", RegistryUtils.convertResourceToCoreResource(resource1));
-        resources.put("2", RegistryUtils.convertResourceToCoreResource(resource2));
-
         ResourceInstanceValidationResult validationResult = new ResourceInstanceValidationResult();
-        validationResult.setSuccess(true);
-        validationResult.setMessage("ok");
-        validationResult.setModelValidated("ok");
-        validationResult.setModelValidatedAgainst("ok");
-        validationResult.setObjectDescription(resources);
 
         byte[] responseBytes = mapper.writeValueAsBytes(validationResult);
 
@@ -779,10 +787,10 @@ public class MessagingTests {
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500)).modifyPlatform(argument.capture());
 
-        Assert.assertTrue(argument.getValue().getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(argument.getValue().getComments().get(0).equals(requestPlatform.getComments().get(0)));
-        Assert.assertTrue(argument.getValue().getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
-        Assert.assertTrue(argument.getValue().getInterworkingServices().get(0).getInformationModelId().equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
+        Assert.assertEquals(argument.getValue().getId(),requestPlatform.getId());
+        Assert.assertEquals(argument.getValue().getComments().get(0),requestPlatform.getComments().get(0));
+        Assert.assertEquals(argument.getValue().getLabels().get(0),requestPlatform.getLabels().get(0));
+        Assert.assertEquals(argument.getValue().getInterworkingServices().get(0).getInformationModelId(),requestPlatform.getInterworkingServices().get(0).getInformationModelId());
     }
 
     @Test
@@ -1003,7 +1011,7 @@ public class MessagingTests {
         coreResourceRegistryRequest.setSecurityRequest(null);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
-        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(),any())).thenReturn(new AuthorizationResult("null token", false));
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("null token", false));
 
         String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, RESOURCES_FOR_PLATFORM_REQUESTED_RK, message);
 
