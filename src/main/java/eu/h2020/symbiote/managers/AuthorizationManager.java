@@ -1,7 +1,5 @@
 package eu.h2020.symbiote.managers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.InterworkingService;
@@ -13,9 +11,6 @@ import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyF
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
-import eu.h2020.symbiote.security.communication.payloads.Credentials;
-import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersRequest;
-import eu.h2020.symbiote.security.communication.payloads.GetPlatformOwnersResponse;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
 import org.apache.commons.logging.Log;
@@ -24,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.*;
 
 
@@ -37,7 +31,6 @@ import java.util.*;
 public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
-    ObjectMapper mapper = new ObjectMapper();
     private String aamAddress;
     private String clientId;
     private String keystoreName;
@@ -48,11 +41,9 @@ public class AuthorizationManager {
 
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
-    private RabbitManager rabbitManager;
 
     @Autowired
     public AuthorizationManager(PlatformRepository platformRepository,
-                                RabbitManager rabbitManager,
                                 @Value("${aam.deployment.owner.username}") String componentOwnerName,
                                 @Value("${aam.deployment.owner.password}") String componentOwnerPassword,
                                 @Value("${aam.environment.aamAddress}") String aamAddress,
@@ -60,7 +51,6 @@ public class AuthorizationManager {
                                 @Value("${aam.environment.keystoreName}") String keystoreName,
                                 @Value("${aam.environment.keystorePass}") String keystorePass,
                                 @Value("${registry.security.enabled}") Boolean securityEnabled) throws SecurityHandlerException {
-        this.rabbitManager = rabbitManager;
         this.platformRepository = platformRepository;
         this.componentOwnerName = componentOwnerName;
         this.componentOwnerPassword = componentOwnerPassword;
@@ -89,13 +79,7 @@ public class AuthorizationManager {
         return checkOperationAccess(securityRequest, ids);
     }
 
-    public AuthorizationResult checkSMultiplePlatformOperationAccess(SecurityRequest securityRequest, List<String> platformIds) {
-        Set<String> ids = new HashSet<>();
-        ids.addAll(platformIds);
-        return checkOperationAccess(securityRequest, ids);
-    }
-
-    public AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
+    private AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
         if (securityEnabled) {
             log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
@@ -119,7 +103,7 @@ public class AuthorizationManager {
         }
     }
 
-    public Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
+    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
 
@@ -136,28 +120,6 @@ public class AuthorizationManager {
             }
         }
         return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
-    }
-
-    private Map<String, String> getOwnersOfPlatformsFromAAM(Set<String> platformIds) {
-        try {
-            Credentials credentials = new Credentials(componentOwnerName, componentOwnerPassword);
-            GetPlatformOwnersRequest request = new GetPlatformOwnersRequest(credentials, platformIds);
-
-            String ownersOfPlatformsFromAAM = rabbitManager.getOwnersOfPlatformsFromAAM(mapper.writeValueAsString(request));
-            GetPlatformOwnersResponse response = mapper.readValue(ownersOfPlatformsFromAAM, GetPlatformOwnersResponse.class);
-            if (!response.getHttpStatus().is2xxSuccessful()) {
-                log.error("Getting platform owners for aam failed: " + response.getHttpStatus());
-                return new HashMap<>();
-            } else {
-                return response.getplatformsOwners();
-            }
-        } catch (JsonProcessingException e) {
-            log.error(e);
-            return null;
-        } catch (IOException e) {
-            log.error(e);
-            return null;
-        }
     }
 
     public String generateServiceResponse() {

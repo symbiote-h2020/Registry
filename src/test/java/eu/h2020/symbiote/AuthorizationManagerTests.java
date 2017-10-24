@@ -28,7 +28,7 @@ public class AuthorizationManagerTests {
         mockedPlatformRepository = Mockito.mock(PlatformRepository.class);
         RabbitManager rabbitManager = Mockito.mock(RabbitManager.class);
 
-        authorizationManager = new AuthorizationManager(mockedPlatformRepository, rabbitManager, null, null, null, null, null, null, SECURITY_ENABLED);
+        authorizationManager = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, SECURITY_ENABLED);
         ReflectionTestUtils.setField(authorizationManager, "aamAddress", AAM_ADDRESS);
         ReflectionTestUtils.setField(authorizationManager, "clientId", AAM_CLIENT_ID);
         ReflectionTestUtils.setField(authorizationManager, "keystoreName", AAM_KEYSTORE_NAME);

@@ -1032,11 +1032,6 @@ public class RabbitManager {
         }
     }
 
-
-    public String getOwnersOfPlatformsFromAAM(String platformIds) {
-        return sendRpcMessageAndConsumeResponse(aamExchangeName, aamGetPlatformOwners, platformIds);
-    }
-
     /**
      * Method used to send message via RPC (Remote Procedure Call) pattern.
      * Before sending a message, a temporary response queue is declared and its name is passed along with the message.
