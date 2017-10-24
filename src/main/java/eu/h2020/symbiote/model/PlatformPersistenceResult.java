@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.model;
 
-import eu.h2020.symbiote.core.model.Platform;
+import eu.h2020.symbiote.model.mim.Platform;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 /**

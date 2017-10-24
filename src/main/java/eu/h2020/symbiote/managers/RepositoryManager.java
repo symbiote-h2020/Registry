@@ -1,15 +1,15 @@
 package eu.h2020.symbiote.managers;
 
-import eu.h2020.symbiote.core.model.Federation;
-import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.core.model.InterworkingService;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.model.FederationPersistenceResult;
 import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.mim.Federation;
+import eu.h2020.symbiote.model.mim.InformationModel;
+import eu.h2020.symbiote.model.mim.InterworkingService;
+import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
@@ -187,14 +187,14 @@ public class RepositoryManager {
 
     //// TODO: 25.07.2017 test method!
     private Platform copyExistingPlatformData(Platform requestedPlatform, Platform foundPlatform) {
-        if ((requestedPlatform.getComments() == null || requestedPlatform.getComments().isEmpty() || requestedPlatform.getComments().get(0) == null)
-                && foundPlatform.getComments() != null)
-            requestedPlatform.setComments(foundPlatform.getComments());
+        if ((requestedPlatform.getDescription() == null || requestedPlatform.getDescription().isEmpty() || requestedPlatform.getDescription().get(0) == null)
+                && foundPlatform.getDescription() != null)
+            requestedPlatform.setDescription(foundPlatform.getDescription());
         if (requestedPlatform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
             requestedPlatform.setRdfFormat(foundPlatform.getRdfFormat());
-        if ((requestedPlatform.getLabels() == null || requestedPlatform.getLabels().isEmpty() || requestedPlatform.getLabels().get(0) == null)
-                && foundPlatform.getLabels() != null)
-            requestedPlatform.setLabels(foundPlatform.getLabels());
+        if ((requestedPlatform.getName() == null || requestedPlatform.getName().isEmpty())
+                && foundPlatform.getName() != null)
+            requestedPlatform.setName(foundPlatform.getName());
         if (requestedPlatform.getRdf() == null && foundPlatform.getRdf() != null)
             requestedPlatform.setRdf(foundPlatform.getRdf());
         if ((requestedPlatform.getInterworkingServices() == null || requestedPlatform.getInterworkingServices().isEmpty() ||

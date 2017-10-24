@@ -1,9 +1,9 @@
 package eu.h2020.symbiote;
 
 import com.mongodb.MongoException;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
@@ -19,12 +19,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
 
-import static eu.h2020.symbiote.TestSetupConfig.PLATFORM_B_ID;
-import static eu.h2020.symbiote.TestSetupConfig.generateCoreResourceWithoutId;
-import static eu.h2020.symbiote.TestSetupConfig.generatePlatformB;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static eu.h2020.symbiote.TestSetupConfig.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by mateuszl on 30.08.2017.
@@ -128,7 +124,7 @@ public class PlatformRepositoryManagerTests {
     }
 
     @Test
-    public void testmodifyPlatformMongoError(){
+    public void testModifyPlatformMongoError(){
         Platform platform = generatePlatformB();
         doThrow(new MongoException("FAKE MONGO Exception")).when(platformRepository).save(platform);
         Assert.assertNotEquals(200,repositoryManager.modifyPlatform(platform).getStatus());

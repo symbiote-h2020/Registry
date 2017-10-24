@@ -1,9 +1,9 @@
 package eu.h2020.symbiote;
 
 import com.mongodb.MongoException;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;
@@ -18,9 +18,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static eu.h2020.symbiote.TestSetupConfig.addIdToCoreResource;
-import static eu.h2020.symbiote.TestSetupConfig.generateCoreResourceWithoutId;
-import static eu.h2020.symbiote.TestSetupConfig.generateResourceWithoutId;
+import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 

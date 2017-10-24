@@ -4,12 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
-import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
-import eu.h2020.symbiote.core.internal.DescriptionType;
-import eu.h2020.symbiote.core.model.*;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.internal.CoreResourceType;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.internal.*;
+import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.mim.Federation;
+import eu.h2020.symbiote.model.mim.FederationMember;
+import eu.h2020.symbiote.model.mim.InterworkingService;
+import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
@@ -120,8 +120,8 @@ public class TestSetupConfig {
     public static Platform generateSymbiotePlatformA() {
         Platform platform = new Platform();
         platform.setId(PLATFORM_A_ID);
-        platform.setComments(Arrays.asList(PLATFORM_A_DESCRIPTION));
-        platform.setLabels(Arrays.asList(PLATFORM_A_NAME));
+        platform.setDescription(Arrays.asList(PLATFORM_A_DESCRIPTION));
+        platform.setName(PLATFORM_A_NAME);
         InterworkingService interworkingService = new InterworkingService();
         interworkingService.setInformationModelId(INFORMATION_MODEL_ID_A);
         interworkingService.setUrl(INTERWORKING_SERVICE_URL_A);
@@ -134,8 +134,8 @@ public class TestSetupConfig {
     public static Platform generatePlatformB() {
         Platform platform = new Platform();
         platform.setId(PLATFORM_B_ID);
-        platform.setComments(Arrays.asList(PLATFORM_B_DESCRIPTION));
-        platform.setLabels(Arrays.asList(PLATFORM_B_NAME));
+        platform.setDescription(Arrays.asList(PLATFORM_B_DESCRIPTION));
+        platform.setName(PLATFORM_B_NAME);
         InterworkingService interworkingService = new InterworkingService();
         interworkingService.setInformationModelId(INFORMATION_MODEL_ID_B);
         interworkingService.setUrl(INTERWORKING_SERVICE_URL_B);
@@ -180,8 +180,8 @@ public class TestSetupConfig {
     public static CoreResource generateSensor(String label, String comment, String id, String serviceUrl,
                                               String rdfFilename, RDFFormat format, SingleTokenAccessPolicySpecifier specifier) {
         CoreResource res = new CoreResource();
-        res.setComments(Arrays.asList(comment));
-        res.setLabels(Arrays.asList(label));
+        res.setDescription(Arrays.asList(comment));
+        res.setName(label);
         res.setId(id);
         res.setInterworkingServiceURL(serviceUrl);
         res.setRdf(rdfFilename);
@@ -193,8 +193,8 @@ public class TestSetupConfig {
 
     public static Resource generateSensor(String label, String comment, String id, String interworkingServiceUrl) {
         CoreResource res = new CoreResource();
-        res.setComments(Arrays.asList(comment));
-        res.setLabels(Arrays.asList(label));
+        res.setDescription(Arrays.asList(comment));
+        res.setName(label);
         res.setId(id);
         res.setType(CoreResourceType.STATIONARY_SENSOR);
         res.setInterworkingServiceURL(interworkingServiceUrl);
@@ -249,15 +249,15 @@ public class TestSetupConfig {
         return coreResourceRegistryRequest;
     }
 
-    private static Federation.FederationMember generateMemberA() {
-        Federation.FederationMember federationMember = new Federation.FederationMember();
+    private static FederationMember generateMemberA() {
+        FederationMember federationMember = new FederationMember();
         federationMember.setPlatformId(PLATFORM_A_ID);
         federationMember.setInterworkingServiceURL(INTERWORKING_SERVICE_URL_A);
         return federationMember;
     }
 
-    private static Federation.FederationMember generateMemberB() {
-        Federation.FederationMember federationMember = new Federation.FederationMember();
+    private static FederationMember generateMemberB() {
+        FederationMember federationMember = new FederationMember();
         federationMember.setPlatformId(PLATFORM_B_ID);
         federationMember.setInterworkingServiceURL(INTERWORKING_SERVICE_URL_B);
         return federationMember;

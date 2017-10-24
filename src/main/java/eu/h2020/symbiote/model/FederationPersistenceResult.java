@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.model;
 
-import eu.h2020.symbiote.core.model.Federation;
+import eu.h2020.symbiote.model.mim.Federation;
 
 /**
  * Created by mateuszl on 22.08.2017.

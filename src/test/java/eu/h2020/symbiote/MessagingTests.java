@@ -5,21 +5,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
-import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
-import eu.h2020.symbiote.core.internal.CoreResourceRegistryResponse;
-import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
-import eu.h2020.symbiote.core.internal.ResourceListResponse;
-import eu.h2020.symbiote.core.model.InterworkingService;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.RDFFormat;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.resources.Resource;
+import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
+import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.mim.InterworkingService;
+import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
@@ -620,8 +615,8 @@ public class MessagingTests {
         verify(mockedRepository).savePlatform(platformArgumentCaptor.capture());
 
         Assert.assertTrue(platformArgumentCaptor.getValue().getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(platformArgumentCaptor.getValue().getComments().get(0).equals(requestPlatform.getComments().get(0)));
-        Assert.assertTrue(platformArgumentCaptor.getValue().getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getDescription().get(0).equals(requestPlatform.getDescription().get(0)));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getName().equals(requestPlatform.getName()));
         Assert.assertTrue(platformArgumentCaptor.getValue().getInterworkingServices().get(0).getInformationModelId().
                 equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }
@@ -649,8 +644,8 @@ public class MessagingTests {
         verify(mockedRepository).savePlatform(any());
 
         Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
-        Assert.assertTrue(platformResponse.getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformResponse.getDescription().get(0).equals(requestPlatform.getDescription().get(0)));
+        Assert.assertTrue(platformResponse.getName().equals(requestPlatform.getName()));
         Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
                 equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }
@@ -690,11 +685,11 @@ public class MessagingTests {
         Assert.assertNotEquals(platformRegistryResponse.getStatus(), 200);
 
         Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
+        Assert.assertTrue(platformResponse.getDescription().get(0).equals(requestPlatform.getDescription().get(0)));
         Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
                 equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
 
-        Assert.assertNull(platformResponse.getLabels());
+        Assert.assertNull(platformResponse.getName());
 
         verifyZeroInteractions(mockedRepository);
     }
@@ -726,7 +721,7 @@ public class MessagingTests {
     private Platform generatePlatformWithNullLabels() {
         Platform requestPlatform = new Platform();
         requestPlatform.setId(PLATFORM_A_ID);
-        requestPlatform.setComments(Arrays.asList(PLATFORM_A_DESCRIPTION));
+        requestPlatform.setDescription(Arrays.asList(PLATFORM_A_DESCRIPTION));
         InterworkingService interworkingService = new InterworkingService();
         interworkingService.setInformationModelId(INFORMATION_MODEL_ID_A);
         interworkingService.setUrl(INTERWORKING_SERVICE_URL_A);
@@ -788,8 +783,8 @@ public class MessagingTests {
         verify(mockedRepository, timeout(500)).modifyPlatform(argument.capture());
 
         Assert.assertEquals(argument.getValue().getId(),requestPlatform.getId());
-        Assert.assertEquals(argument.getValue().getComments().get(0),requestPlatform.getComments().get(0));
-        Assert.assertEquals(argument.getValue().getLabels().get(0),requestPlatform.getLabels().get(0));
+        Assert.assertEquals(argument.getValue().getDescription().get(0),requestPlatform.getDescription().get(0));
+        Assert.assertEquals(argument.getValue().getName(),requestPlatform.getName());
         Assert.assertEquals(argument.getValue().getInterworkingServices().get(0).getInformationModelId(),requestPlatform.getInterworkingServices().get(0).getInformationModelId());
     }
 
@@ -816,8 +811,8 @@ public class MessagingTests {
         verify(mockedRepository).modifyPlatform(any());
 
         Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
-        Assert.assertTrue(platformResponse.getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformResponse.getDescription().get(0).equals(requestPlatform.getDescription().get(0)));
+        Assert.assertTrue(platformResponse.getName().equals(requestPlatform.getName()));
         Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
                 equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }
@@ -908,8 +903,8 @@ public class MessagingTests {
         verify(mockedRepository).removePlatform(any());
 
         Assert.assertTrue(platformResponse.getId().equals(requestPlatform.getId()));
-        Assert.assertTrue(platformResponse.getComments().get(0).equals(requestPlatform.getComments().get(0)));
-        Assert.assertTrue(platformResponse.getLabels().get(0).equals(requestPlatform.getLabels().get(0)));
+        Assert.assertTrue(platformResponse.getDescription().get(0).equals(requestPlatform.getDescription().get(0)));
+        Assert.assertTrue(platformResponse.getName().equals(requestPlatform.getName()));
         Assert.assertTrue(platformResponse.getInterworkingServices().get(0).getInformationModelId().
                 equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }

@@ -2,10 +2,10 @@ package eu.h2020.symbiote.managers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.core.model.InterworkingService;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.resources.Resource;
 import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.mim.InterworkingService;
+import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
@@ -163,7 +163,7 @@ public class AuthorizationManager {
     public String generateServiceResponse() {
         String serviceResponse = "";
         try {
-            if( securityEnabled ) {
+            if (securityEnabled) {
                 serviceResponse = componentSecurityHandler.generateServiceResponse();
             }
         } catch (SecurityHandlerException e) {
@@ -189,12 +189,12 @@ public class AuthorizationManager {
 
         List<String> platformInterworkingServicesUrls = new ArrayList<>();
         interworkingServices.stream()
-                .map(InterworkingService::getUrl).forEach(serviceUrl -> platformInterworkingServicesUrls.add(serviceUrl.endsWith("/")?serviceUrl:serviceUrl+"/"));
+                .map(InterworkingService::getUrl).forEach(serviceUrl -> platformInterworkingServicesUrls.add(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/"));
 
 
         for (String key : resources.keySet()) {
             String resourceInterworkingServiceUrl = resources.get(key).getInterworkingServiceURL();
-            if( !resourceInterworkingServiceUrl.endsWith("/") ) {
+            if (!resourceInterworkingServiceUrl.endsWith("/")) {
                 resourceInterworkingServiceUrl += "/";
             }
             if (!platformInterworkingServicesUrls.contains(resourceInterworkingServiceUrl)) {

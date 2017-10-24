@@ -1,9 +1,9 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.internal.CoreResourceType;
-import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.core.internal.CoreResource;
+import eu.h2020.symbiote.core.internal.CoreResourceType;
+import eu.h2020.symbiote.model.cim.*;
+import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.junit.After;
@@ -43,8 +43,8 @@ public class RegistryUtilsTests {
         Resource resource = RegistryUtils.convertCoreResourceToResource(coreResource);
 
         Assert.assertTrue(coreResource.getId().equals(resource.getId()));
-        Assert.assertTrue(coreResource.getLabels().equals(resource.getLabels()));
-        Assert.assertTrue(coreResource.getComments().equals(resource.getComments()));
+        Assert.assertTrue(coreResource.getName().equals(resource.getName()));
+        Assert.assertTrue(coreResource.getDescription().equals(resource.getDescription()));
         Assert.assertTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()));
     }
 
@@ -64,8 +64,8 @@ public class RegistryUtilsTests {
 
         for (int i = 0; i < coreResources.size(); i++) {
             Assert.assertTrue(coreResources.get(i).getId().equals(resources.get(i).getId()));
-            Assert.assertTrue(coreResources.get(i).getLabels().equals(resources.get(i).getLabels()));
-            Assert.assertTrue(coreResources.get(i).getComments().equals(resources.get(i).getComments()));
+            Assert.assertTrue(coreResources.get(i).getName().equals(resources.get(i).getName()));
+            Assert.assertTrue(coreResources.get(i).getDescription().equals(resources.get(i).getDescription()));
             Assert.assertTrue(coreResources.get(i).getInterworkingServiceURL().equals(resources.get(i).getInterworkingServiceURL()));
         }
     }
@@ -77,8 +77,8 @@ public class RegistryUtilsTests {
         CoreResource coreResource = RegistryUtils.convertResourceToCoreResource(resource);
 
         Assert.assertTrue(coreResource.getId().equals(resource.getId()));
-        Assert.assertTrue(coreResource.getLabels().equals(resource.getLabels()));
-        Assert.assertTrue(coreResource.getComments().equals(resource.getComments()));
+        Assert.assertTrue(coreResource.getName().equals(resource.getName()));
+        Assert.assertTrue(coreResource.getDescription().equals(resource.getDescription()));
         Assert.assertTrue(coreResource.getInterworkingServiceURL().equals(resource.getInterworkingServiceURL()));
     }
 
@@ -91,21 +91,19 @@ public class RegistryUtilsTests {
     @Test
     public void testPlatformFieldsValidationFail() {
         Platform platform = null;
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
         platform = new Platform();
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
 
-        platform.setComments(new ArrayList<>());
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
-        platform.setLabels(new ArrayList<>());
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
+        platform.setDescription(new ArrayList<>());
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        platform.setName("");
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
         platform.setInterworkingServices(new ArrayList<>());
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
 
-        platform.getComments().add(null);
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
-        platform.getLabels().add(null);
-        Assert.assertTrue(!RegistryUtils.validateFields(platform));
+        platform.getDescription().add(null);
+        Assert.assertFalse(RegistryUtils.validateFields(platform));
         platform.getInterworkingServices().add(null);
         Assert.assertFalse(RegistryUtils.validateFields(platform));
     }
@@ -126,9 +124,9 @@ public class RegistryUtilsTests {
         Assert.assertFalse(RegistryUtils.validateFields(resource));
         resource.setId("");
         Assert.assertFalse(RegistryUtils.validateFields(resource));
-        resource.setLabels(new ArrayList<>());
+        resource.setName("");
         Assert.assertFalse(RegistryUtils.validateFields(resource));
-        resource.setComments(new ArrayList<>());
+        resource.setDescription(new ArrayList<>());
         Assert.assertFalse(RegistryUtils.validateFields(resource));
     }
 
@@ -140,11 +138,6 @@ public class RegistryUtilsTests {
         Assert.assertEquals(CoreResourceType.SERVICE, RegistryUtils.getTypeForResource(resource));
         resource = new Device();
         Assert.assertEquals(CoreResourceType.DEVICE, RegistryUtils.getTypeForResource(resource));
-//        Resource resource1 = new MobileSensor(); //todo update
-//        Assert.assertEquals(CoreResourceType.MOBILE_SENSOR, RegistryUtils.getTypeForResource(resource1));
-        resource = new StationarySensor();
-        Assert.assertEquals(CoreResourceType.STATIONARY_SENSOR, RegistryUtils.getTypeForResource(resource));
-
         Assert.assertNotEquals(CoreResourceType.MOBILE_SENSOR, RegistryUtils.getTypeForResource(resource));
     }
 }

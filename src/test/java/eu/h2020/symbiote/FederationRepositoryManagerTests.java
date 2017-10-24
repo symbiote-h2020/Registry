@@ -1,8 +1,8 @@
 package eu.h2020.symbiote;
 
 import com.mongodb.MongoException;
-import eu.h2020.symbiote.core.model.Federation;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.repository.FederationRepository;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import eu.h2020.symbiote.repository.PlatformRepository;

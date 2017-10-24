@@ -1,8 +1,8 @@
 package eu.h2020.symbiote;
 
-import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.core.model.RDFFormat;
+import eu.h2020.symbiote.core.internal.RDFFormat;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.repository.InformationModelRepository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;

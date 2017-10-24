@@ -1,11 +1,14 @@
 package eu.h2020.symbiote.utils;
 
-import eu.h2020.symbiote.core.model.Federation;
-import eu.h2020.symbiote.core.model.InformationModel;
-import eu.h2020.symbiote.core.model.Platform;
-import eu.h2020.symbiote.core.model.internal.CoreResource;
-import eu.h2020.symbiote.core.model.internal.CoreResourceType;
-import eu.h2020.symbiote.core.model.resources.*;
+import eu.h2020.symbiote.core.internal.CoreResource;
+import eu.h2020.symbiote.core.internal.CoreResourceType;
+import eu.h2020.symbiote.model.cim.Actuator;
+import eu.h2020.symbiote.model.cim.Device;
+import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.cim.Service;
+import eu.h2020.symbiote.model.mim.Federation;
+import eu.h2020.symbiote.model.mim.InformationModel;
+import eu.h2020.symbiote.model.mim.Platform;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -40,15 +43,14 @@ public class RegistryUtils {
             log.info("Given Platform is null");
             return false;
         } else {
-            if (platform.getLabels() == null || platform.getInterworkingServices() == null || platform.getComments() == null) {
+            if (platform.getName() == null || platform.getInterworkingServices() == null || platform.getDescription() == null) {
                 log.info("Given platform has some null fields");
                 return false;
-            } else if (platform.getInterworkingServices().isEmpty() || platform.getLabels().isEmpty()
-                    || platform.getComments().isEmpty()) {
+            } else if (platform.getInterworkingServices().isEmpty() || platform.getName().isEmpty()
+                    || platform.getDescription().isEmpty()) {
                 log.info("Given platform has some empty fields");
                 return false;
-            } else if (platform.getInterworkingServices().contains(null) || platform.getLabels().contains(null)
-                    || platform.getComments().contains(null)) {
+            } else if (platform.getInterworkingServices().contains(null) || platform.getDescription().contains(null)) {
                 log.info("Given platform has some lists with null objects");
                 return false;
             }
@@ -70,13 +72,13 @@ public class RegistryUtils {
             b = false;
         } else {
             if (resource.getInterworkingServiceURL() == null
-                    || resource.getComments() == null
-                    || resource.getLabels() == null) {
+                    || resource.getDescription() == null
+                    || resource.getName() == null) {
                 log.info("Given resource has some null fields");
                 b = false;
             } else if (resource.getInterworkingServiceURL().isEmpty()
-                    || resource.getComments().isEmpty()
-                    || resource.getLabels().isEmpty()) {
+                    || resource.getDescription().isEmpty()
+                    || resource.getName().isEmpty()) {
                 log.info("Given resource has some empty fields");
                 b = false;
             } else {
@@ -117,7 +119,7 @@ public class RegistryUtils {
         return b;
     }
 
-    public static boolean validateNullOrEmptyId(InformationModel informationModel){
+    public static boolean validateNullOrEmptyId(InformationModel informationModel) {
         if (informationModel.getId() == null || informationModel.getId().isEmpty()) return true;
         return false;
     }
@@ -161,8 +163,8 @@ public class RegistryUtils {
     public static Resource convertCoreResourceToResource(CoreResource coreResource) {
         Resource resource = new Resource();
         if (coreResource.getId() != null) resource.setId(coreResource.getId());
-        if (coreResource.getComments() != null) resource.setComments(coreResource.getComments());
-        if (coreResource.getLabels() != null) resource.setLabels(coreResource.getLabels());
+        if (coreResource.getDescription() != null) resource.setDescription(coreResource.getDescription());
+        if (coreResource.getName() != null) resource.setName(coreResource.getName());
         if (coreResource.getInterworkingServiceURL() != null)
             resource.setInterworkingServiceURL(coreResource.getInterworkingServiceURL());
         return resource;
@@ -177,8 +179,8 @@ public class RegistryUtils {
     public static CoreResource convertResourceToCoreResource(Resource resource) {
         CoreResource coreResource = new CoreResource();
         if (resource.getId() != null) coreResource.setId(resource.getId());
-        if (resource.getComments() != null) coreResource.setComments(resource.getComments());
-        if (resource.getLabels() != null) coreResource.setLabels(resource.getLabels());
+        if (resource.getDescription() != null) coreResource.setDescription(resource.getDescription());
+        if (resource.getName() != null) coreResource.setName(resource.getName());
         if (resource.getInterworkingServiceURL() != null)
             coreResource.setInterworkingServiceURL(resource.getInterworkingServiceURL());
         coreResource.setType(getTypeForResource(resource));
@@ -194,10 +196,6 @@ public class RegistryUtils {
             type = CoreResourceType.SERVICE;
         } else if (resource instanceof Device) {
             type = CoreResourceType.DEVICE;
-//        } else if (resource instanceof MobileSensor) {
-//            type = CoreResourceType.MOBILE_SENSOR; //todo check why?
-        } else if (resource instanceof StationarySensor) {
-            type = CoreResourceType.STATIONARY_SENSOR;
         }
         return type;
     }
@@ -221,11 +219,11 @@ public class RegistryUtils {
         if (requestPlatform.getId() != null) {
             convertedPlatform.setId(requestPlatform.getId());
         }
-        if (requestPlatform.getLabels() != null) {
-            convertedPlatform.setLabels(Arrays.asList(requestPlatform.get()));
+        if (requestPlatform.getName() != null) {
+            convertedPlatform.setName(Arrays.asList(requestPlatform.get()));
         }
         if (requestPlatform.getDescription() != null) {
-            convertedPlatform.setComments(Arrays.asList(requestPlatform.getDescription()));
+            convertedPlatform.setDescription(Arrays.asList(requestPlatform.getDescription()));
         }
         if (requestPlatform.getInformationModelId() != null) {
             InterworkingService interworkingService = new InterworkingService();
@@ -253,13 +251,13 @@ public class RegistryUtils {
 
         if (registryPlatform.getId() != null && !registryPlatform.getId().isEmpty())
             platform.setPlatformId(registryPlatform.getId());
-        if (registryPlatform.getLabels() != null && !registryPlatform.getLabels().isEmpty()) {
-            if (registryPlatform.getLabels().get(0) != null)
-                platform.setName(registryPlatform.getLabels().get(0));
+        if (registryPlatform.getName() != null && !registryPlatform.getName().isEmpty()) {
+            if (registryPlatform.getName().get(0) != null)
+                platform.setName(registryPlatform.getName().get(0));
         }
-        if (registryPlatform.getComments() != null && !registryPlatform.getComments().isEmpty()) {
-            if (registryPlatform.getComments().get(0) != null)
-                platform.setDescription(registryPlatform.getComments().get(0));
+        if (registryPlatform.getDescription() != null && !registryPlatform.getDescription().isEmpty()) {
+            if (registryPlatform.getDescription().get(0) != null)
+                platform.setDescription(registryPlatform.getDescription().get(0));
         }
         if (registryPlatform.getInterworkingServices() != null && !registryPlatform.getInterworkingServices().isEmpty()) {
             if (registryPlatform.getInterworkingServices().get(0).getInformationModelId() != null)

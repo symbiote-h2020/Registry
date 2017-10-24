@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.model;
 
-import eu.h2020.symbiote.core.model.internal.CoreResource;
+import eu.h2020.symbiote.core.internal.CoreResource;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 /**

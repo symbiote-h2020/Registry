@@ -10,11 +10,11 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.internal.InformationModelValidationResult;
-import eu.h2020.symbiote.core.model.InformationModel;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.model.mim.InformationModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
