@@ -37,7 +37,7 @@ public class AuthorizationManager {
     private String keystorePass;
     private String componentOwnerName;
     private String componentOwnerPassword;
-    private Boolean securityEnabled = false;
+    private Boolean securityEnabled = true;
 
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
@@ -144,25 +144,30 @@ public class AuthorizationManager {
 
         List<InterworkingService> interworkingServices = registryPlatform.getInterworkingServices();
 
-        if (interworkingServices == null) {
-            log.error("Interworking services list in given platform is null");
-            return new AuthorizationResult("Interworking services list in given platform is null", false);
+        if (interworkingServices == null || interworkingServices.isEmpty()) {
+            log.error("Interworking services list in given platform is null or empty");
+            return new AuthorizationResult("Interworking services list in given platform is null or empty", false);
         }
 
         List<String> platformInterworkingServicesUrls = new ArrayList<>();
         interworkingServices.stream()
                 .map(InterworkingService::getUrl).forEach(serviceUrl -> platformInterworkingServicesUrls.add(serviceUrl.endsWith("/") ? serviceUrl : serviceUrl + "/"));
+        //stream adds slash ("/") at the end of url if there was not one already
 
-
-        for (String key : resources.keySet()) {
-            String resourceInterworkingServiceUrl = resources.get(key).getInterworkingServiceURL();
-            if (!resourceInterworkingServiceUrl.endsWith("/")) {
-                resourceInterworkingServiceUrl += "/";
+        if (resources != null) {
+            for (String key : resources.keySet()) {
+                String resourceInterworkingServiceUrl = resources.get(key).getInterworkingServiceURL();
+                if (!resourceInterworkingServiceUrl.endsWith("/")) {
+                    resourceInterworkingServiceUrl += "/";
+                }
+                if (!platformInterworkingServicesUrls.contains(resourceInterworkingServiceUrl)) {
+                    log.error("Resource does not match with any Interworking Service in given platform!");
+                    return new AuthorizationResult("Resource does not match with any Interworking Service in given platform!", false);
+                }
             }
-            if (!platformInterworkingServicesUrls.contains(resourceInterworkingServiceUrl)) {
-                log.error("Resource does not match with any Interworking Service in given platform! " + resources.get(key));
-                return new AuthorizationResult("Resource does not match with any Interworking Service in given platform!", false);
-            }
+        } else {
+            log.error("Resources Map is null");
+            return new AuthorizationResult("Resources Map is null", false);
         }
 
         log.info("Interworking services check succeed!");
