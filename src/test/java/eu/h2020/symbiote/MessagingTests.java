@@ -37,6 +37,7 @@ import java.util.concurrent.TimeoutException;
 import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -117,6 +118,7 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "aamGetPlatformOwners", AAM_GET_PLATFORM_OWNERS_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "platformResourcesRequestedRoutingKey", RESOURCES_FOR_PLATFORM_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "platformDetailsRequestedRoutingKey", PLATFORM_DETAILS_REQUESTED_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "jsonResourceTranslationRequestedRoutingKey", RESOURCE_TRANSLATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "rdfResourceValidationRequestedRoutingKey", RESOURCE_VALIDATION_REQUESTED_RK);
@@ -1020,4 +1022,46 @@ public class MessagingTests {
         verifyZeroInteractions(mockedRepository);
     }
 
+    @Test
+    public void platformDetailsRequestedConsumerTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformDetailsConsumer();
+        setRabbitManagerMockedManagers();
+
+        Platform platform = generatePlatformB();
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+
+        when(mockedRepository.getPlatformById(platform.getId())).thenReturn(platform);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_DETAILS_REQUESTED_RK, platform.getId());
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        Platform receivedPlatform = platformRegistryResponse.getBody();
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertEquals(platformRegistryResponse.getStatus(), 200);
+        Assert.assertTrue(receivedPlatform.getId().equals(platform.getId()));
+    }
+
+    @Test
+    public void platformDetailsRequestedConsumerWrongPlatformIdTest() throws Exception {
+        rabbitManager.startConsumerOfPlatformDetailsConsumer();
+        setRabbitManagerMockedManagers();
+
+        Platform platform = generatePlatformB();
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+
+        when(mockedRepository.getPlatformById(platform.getId())).thenReturn(null);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, PLATFORM_DETAILS_REQUESTED_RK, platform.getId());
+
+        PlatformRegistryResponse platformRegistryResponse = mapper.readValue(response, PlatformRegistryResponse.class);
+
+        assertNull(platformRegistryResponse.getBody());
+        Assert.assertNotNull(platformRegistryResponse.getMessage());
+        Assert.assertNotEquals(platformRegistryResponse.getStatus(), 200);
+    }
 }

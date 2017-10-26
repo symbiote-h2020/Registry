@@ -61,6 +61,7 @@ public class TestSetupConfig {
     public static final String PLATFORM_RESOURCES_REQUESTED_QUEUE = "symbIoTe-Registry-platformResourcesRequestedQueue";
 
     public static final String RESOURCES_FOR_PLATFORM_REQUESTED_RK = "symbIoTe.platform.resourcesRequested";
+    public static final String PLATFORM_DETAILS_REQUESTED_RK = "symbIoTe.platform.platformDetailsRequested";
 
     public static final String RESOURCE_TRANSLATION_REQUESTED_RK = "symbIoTe.resource.instance.translationRequested";
     public static final String RESOURCE_VALIDATION_REQUESTED_RK = "symbIoTe.resource.instance.validationRequested";

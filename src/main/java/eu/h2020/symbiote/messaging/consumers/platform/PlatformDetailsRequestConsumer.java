@@ -18,9 +18,9 @@ import java.io.IOException;
 /**
  * Created by mateuszl on 13.09.2017.
  */
-public class GetPlatformDetailsRequestConsumer extends DefaultConsumer {
+public class PlatformDetailsRequestConsumer extends DefaultConsumer {
 
-    private static Log log = LogFactory.getLog(GetPlatformDetailsRequestConsumer.class);
+    private static Log log = LogFactory.getLog(PlatformDetailsRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private RepositoryManager repositoryManager;
@@ -32,9 +32,9 @@ public class GetPlatformDetailsRequestConsumer extends DefaultConsumer {
      * @param channel       the channel to which this consumer is attached
      * @param rabbitManager rabbit manager bean passed for access to messages manager
      */
-    public GetPlatformDetailsRequestConsumer(Channel channel,
-                                             RepositoryManager repositoryManager,
-                                             RabbitManager rabbitManager) {
+    public PlatformDetailsRequestConsumer(Channel channel,
+                                          RepositoryManager repositoryManager,
+                                          RabbitManager rabbitManager) {
         super(channel);
         this.rabbitManager = rabbitManager;
         this.repositoryManager = repositoryManager;

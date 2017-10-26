@@ -504,7 +504,7 @@ public class RabbitManager {
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform Details requests.
      */
-    private void startConsumerOfPlatformDetailsConsumer() {
+    public void startConsumerOfPlatformDetailsConsumer() {
         Channel channel;
         try {
             channel = this.connection.createChannel();
@@ -514,7 +514,7 @@ public class RabbitManager {
 
             log.info("Receiver waiting for Get Platform Details messages....");
 
-            Consumer consumer = new GetPlatformDetailsRequestConsumer(channel, repositoryManager, this);
+            Consumer consumer = new PlatformDetailsRequestConsumer(channel, repositoryManager, this);
             channel.basicConsume(PLATFORM_DETAILS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
