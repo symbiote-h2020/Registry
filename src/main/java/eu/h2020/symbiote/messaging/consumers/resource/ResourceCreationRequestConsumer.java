@@ -206,7 +206,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 } else if (resource instanceof Actuator) {
                     services = ((Actuator) resource).getServices();
                 }
-                if (!services.isEmpty()) {
+                if (services!=null&&!services.isEmpty()) {
                     for (Service service : services) {
                         if (!checkId(service)) return false;
                     }
