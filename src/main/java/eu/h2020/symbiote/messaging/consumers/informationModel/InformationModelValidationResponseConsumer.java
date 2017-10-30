@@ -91,20 +91,6 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         }
 
         if (informationModelValidationResult.isSuccess()) {
-
-            /* for future Security updates
-            AuthorizationResult authorizationResult = authorizationManager.checkToken(token);
-
-            if (authorizationResult.isValidated()) {
-                Map<String, ResourcePersistenceResult> persistenceOperationResultsList = makePersistenceOperations(informationModel);
-                prepareContentOfRPCResponse(persistenceOperationResultsList);
-            } else {
-                informationModelResponse.setStatus(400);
-                informationModelResponse.setMessage(authorizationResult.getMessage());
-            }
-            */
-
-
             informationModel = informationModelValidationResult.getObjectDescription();
             log.info("Information Model received from Semantic Manager! IM id: " + informationModel.getId());
 

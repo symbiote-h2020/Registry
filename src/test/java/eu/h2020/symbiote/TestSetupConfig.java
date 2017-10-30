@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.model.mim.Federation;
-import eu.h2020.symbiote.model.mim.FederationMember;
-import eu.h2020.symbiote.model.mim.InterworkingService;
-import eu.h2020.symbiote.model.mim.Platform;
+import eu.h2020.symbiote.model.mim.*;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
@@ -19,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by Mael on 23/01/2017.
+ * Created by Mael and mateuszl
  */
 public class TestSetupConfig {
 
@@ -44,6 +41,7 @@ public class TestSetupConfig {
     public static final String INFORMATION_MODEL_CREATION_REQUESTED_RK = "symbIoTe.platform.model.creationRequested";
     public static final String INFORMATION_MODEL_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.model.modificationRequested";
     public static final String INFORMATION_MODEL_REMOVAL_REQUESTED_RK = "symbIoTe.platform.model.removalRequested";
+    public static final String INFORMATION_MODEL_VALIDATION_REQUESTED_RK = "symbIoTe.platform.model.validationRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
     public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";
@@ -59,6 +57,12 @@ public class TestSetupConfig {
     public static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     public static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
     public static final String PLATFORM_RESOURCES_REQUESTED_QUEUE = "symbIoTe-Registry-platformResourcesRequestedQueue";
+
+    public static final String INFORMATION_MODEL_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-informationModelCreationRequestedQueue";
+    public static final String INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-informationModelModificationRequestedQueue";
+    public static final String INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-informationModelRemovalRequestedQueue";
+
+
 
     public static final String RESOURCES_FOR_PLATFORM_REQUESTED_RK = "symbIoTe.platform.resourcesRequested";
     public static final String PLATFORM_DETAILS_REQUESTED_RK = "symbIoTe.platform.platformDetailsRequested";
@@ -84,6 +88,8 @@ public class TestSetupConfig {
     public static final String PLATFORM_A_URL = "http://somehost1.com/resourceAccessProxy";
     public static final String INTERWORKING_SERVICE_URL_A = "http://somehost1.com/platformA";
     public static final String INFORMATION_MODEL_ID_A = "IM_1";
+
+
 
     public static final String PLATFORM_A_NAME_UPDATED = "Platform1Updated";
     public static final String PLATFORM_A_MODEL_ID_UPDATED = "11Updated";
@@ -285,4 +291,24 @@ public class TestSetupConfig {
         federation.setMembers(Arrays.asList(generateMemberB()));
         return federation;
     }
+
+    public static InformationModel generateInformationModelA(){
+        InformationModel informationModel = new InformationModel();
+        informationModel.setName("IM mocked name");
+        informationModel.setOwner("Some mocked owner");
+        informationModel.setUri("Some Uri/");
+        return informationModel;
+    }
+
+    public static InformationModel generateInformationModelFull(){
+        InformationModel informationModel = new InformationModel();
+        informationModel.setId("SOME ID");
+        informationModel.setRdf("Some mocked RDF");
+        informationModel.setName("IM mocked name");
+        informationModel.setOwner("Some mocked owner");
+        informationModel.setRdfFormat(RDFFormat.JSONLD);
+        informationModel.setUri("Some Uri/");
+        return informationModel;
+    }
+
 }

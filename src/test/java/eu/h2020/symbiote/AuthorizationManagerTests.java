@@ -23,7 +23,7 @@ import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.mockito.Mockito.when;
 
 /**
- * Created by mateuszl on 18.05.2017.
+ * Created by mateuszl
  */
 public class AuthorizationManagerTests {
 

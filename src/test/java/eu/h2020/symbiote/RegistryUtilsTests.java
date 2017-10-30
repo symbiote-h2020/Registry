@@ -17,7 +17,7 @@ import java.util.List;
 import static eu.h2020.symbiote.TestSetupConfig.*;
 
 /**
- * Created by mateuszl on 17.05.2017.
+ * Created by mateuszl
  */
 public class RegistryUtilsTests {
 

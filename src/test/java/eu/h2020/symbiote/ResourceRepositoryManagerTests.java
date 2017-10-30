@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Created by mateuszl on 30.08.2017.
+ * Created by mateuszl
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceRepositoryManagerTests {

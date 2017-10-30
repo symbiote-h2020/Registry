@@ -187,18 +187,15 @@ public class RepositoryManager {
 
     //// TODO: 25.07.2017 test method!
     private Platform copyExistingPlatformData(Platform requestedPlatform, Platform foundPlatform) {
-        if ((requestedPlatform.getDescription() == null || requestedPlatform.getDescription().isEmpty() || requestedPlatform.getDescription().get(0) == null)
-                && foundPlatform.getDescription() != null)
+        if ((requestedPlatform.getDescription() == null || requestedPlatform.getDescription().isEmpty() || requestedPlatform.getDescription().get(0) == null) && foundPlatform.getDescription() != null)
             requestedPlatform.setDescription(foundPlatform.getDescription());
         if (requestedPlatform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
             requestedPlatform.setRdfFormat(foundPlatform.getRdfFormat());
-        if ((requestedPlatform.getName() == null || requestedPlatform.getName().isEmpty())
-                && foundPlatform.getName() != null)
+        if ((requestedPlatform.getName() == null || requestedPlatform.getName().isEmpty()) && foundPlatform.getName() != null)
             requestedPlatform.setName(foundPlatform.getName());
         if (requestedPlatform.getRdf() == null && foundPlatform.getRdf() != null)
             requestedPlatform.setRdf(foundPlatform.getRdf());
-        if ((requestedPlatform.getInterworkingServices() == null || requestedPlatform.getInterworkingServices().isEmpty() ||
-                requestedPlatform.getInterworkingServices().get(0).getUrl() == null) && foundPlatform.getInterworkingServices() != null)
+        if ((requestedPlatform.getInterworkingServices() == null || requestedPlatform.getInterworkingServices().isEmpty() || requestedPlatform.getInterworkingServices().get(0).getUrl() == null) && foundPlatform.getInterworkingServices() != null)
             requestedPlatform.setInterworkingServices(foundPlatform.getInterworkingServices());
 
         return requestedPlatform;

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -13,6 +14,7 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
@@ -35,15 +37,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
- * Created by mateuszl on 16.02.2017.
+ * Created by mateuszl
  */
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingTests {
@@ -103,6 +103,7 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "informationModelCreationRequestedRoutingKey", INFORMATION_MODEL_CREATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "informationModelModificationRequestedRoutingKey", INFORMATION_MODEL_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "informationModelRemovalRequestedRoutingKey", INFORMATION_MODEL_REMOVAL_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "rdfInformationModelValidationRequestedRoutingKey", INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovedRoutingKey", PLATFORM_REMOVED_ROUTING_KEY);
@@ -156,6 +157,10 @@ public class MessagingTests {
                 channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
                 channel.queueDelete(RESOURCES_FOR_PLATFORM_REQUESTED_RK);
                 channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
+                channel.queueDelete(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE);
+                channel.queueDelete(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE);
                 channel.queueDelete(TEMP_QUEUE);
                 channel.close();
                 connection.close();
@@ -784,10 +789,10 @@ public class MessagingTests {
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500)).modifyPlatform(argument.capture());
 
-        Assert.assertEquals(argument.getValue().getId(),requestPlatform.getId());
-        Assert.assertEquals(argument.getValue().getDescription().get(0),requestPlatform.getDescription().get(0));
-        Assert.assertEquals(argument.getValue().getName(),requestPlatform.getName());
-        Assert.assertEquals(argument.getValue().getInterworkingServices().get(0).getInformationModelId(),requestPlatform.getInterworkingServices().get(0).getInformationModelId());
+        Assert.assertEquals(argument.getValue().getId(), requestPlatform.getId());
+        Assert.assertEquals(argument.getValue().getDescription().get(0), requestPlatform.getDescription().get(0));
+        Assert.assertEquals(argument.getValue().getName(), requestPlatform.getName());
+        Assert.assertEquals(argument.getValue().getInterworkingServices().get(0).getInformationModelId(), requestPlatform.getInterworkingServices().get(0).getInformationModelId());
     }
 
     @Test
@@ -1064,4 +1069,115 @@ public class MessagingTests {
         Assert.assertNotNull(platformRegistryResponse.getMessage());
         Assert.assertNotEquals(platformRegistryResponse.getStatus(), 200);
     }
+
+
+
+    //////////////////////////////////////////////////////////////////////////////// // TODO: 30.10.2017
+
+
+
+
+    @Test
+    public void informationModelCreationRequestConsumerHappyPathTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelCreationMessages();
+        setRabbitManagerMockedManagers();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelA();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        System.out.println(message);
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+        mockIMVerificationCommunication(null);
+
+        rabbitManager.sendCustomMessage(INFORMATION_MODEL_EXCHANGE_NAME, INFORMATION_MODEL_CREATION_REQUESTED_RK, message, InformationModelRequest.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+        verify(mockedRepository).saveInformationModel(any());
+    }
+
+    @Test
+    public void informationModelCreationRequestConsumerWithIDFailTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelCreationMessages();
+        setRabbitManagerMockedManagers();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelFull();
+        informationModel.setId("mocked id"); //Information Model should not have an ID to register!
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        System.out.println(message);
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+        mockIMVerificationCommunication(null);
+
+        rabbitManager.sendCustomMessage(INFORMATION_MODEL_EXCHANGE_NAME, INFORMATION_MODEL_CREATION_REQUESTED_RK, message, InformationModelRequest.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+        verifyZeroInteractions(mockedRepository);
+    }
+
+
+    private void mockIMVerificationCommunication(String message) throws IOException {
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        this.channel.queueBind(TEMP_QUEUE, PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
+
+        this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                mockIMVerificationReply(envelope, properties, body, message);
+            }
+        });
+    }
+
+    public void mockIMVerificationReply(Envelope envelope, AMQP.BasicProperties properties, byte[] body, String message) throws IOException {
+        log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
+
+        String messageReceived = "{\"body\":" + new String(body) +"}"; //// todo: 30.10.2017 Hardcoded - find out why it does not work without it!
+
+
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@3333333333333@@@");
+        System.out.println(messageReceived);
+        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@3333333333333@@@@@");
+
+//        assertEquals(message, messageReceived);
+        InformationModelRequest request = mapper.readValue(messageReceived, InformationModelRequest.class);
+
+        assertNotNull(properties);
+        String correlationId = properties.getCorrelationId();
+        String replyQueueName = properties.getReplyTo();
+        assertNotNull(correlationId);
+        assertNotNull(replyQueueName);
+
+        InformationModel informationModel = request.getBody();
+
+
+        InformationModelValidationResult validationResult = new InformationModelValidationResult();
+        validationResult.setSuccess(true);
+        validationResult.setMessage("ok");
+        validationResult.setModelValidated("ok");
+        validationResult.setModelValidatedAgainst("ok");
+        validationResult.setObjectDescription(informationModel);
+
+        byte[] responseBytes = mapper.writeValueAsBytes(validationResult);
+
+        AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                .Builder()
+                .correlationId(properties.getCorrelationId())
+                .build();
+
+        this.channel.basicPublish("", properties.getReplyTo(), replyProps, responseBytes);
+        this.channel.basicAck(envelope.getDeliveryTag(), false);
+        log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED SM REPLY |||||||||||||| ");
+    }
+
 }

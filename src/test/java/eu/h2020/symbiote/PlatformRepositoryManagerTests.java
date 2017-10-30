@@ -14,6 +14,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -23,7 +24,7 @@ import static eu.h2020.symbiote.TestSetupConfig.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Created by mateuszl on 30.08.2017.
+ * Created by mateuszl
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PlatformRepositoryManagerTests {
@@ -153,5 +154,29 @@ public class PlatformRepositoryManagerTests {
                 thenReturn(Arrays.asList(coreResource));
 
         Assert.assertEquals(repositoryManager.getResourcesForPlatform(platform.getId()),Arrays.asList(coreResource));
+    }
+
+    @Test
+    public void testCopyingPlatformData() throws Exception {
+        Platform foundPlatform = generatePlatformB();
+        Platform requestPlatform = new Platform();
+        requestPlatform.setId(foundPlatform.getId());
+        when(platformRepository.save(any(Platform.class))).thenReturn(foundPlatform);
+        when(platformRepository.findOne(requestPlatform.getId())).thenReturn(foundPlatform);
+
+        repositoryManager.modifyPlatform(requestPlatform);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        ArgumentCaptor<Platform> platformArgumentCaptor = ArgumentCaptor.forClass(Platform.class);
+        verify(platformRepository).save(platformArgumentCaptor.capture());
+
+        Assert.assertTrue(platformArgumentCaptor.getValue().getId().equals(requestPlatform.getId()));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getDescription().get(0).equals(requestPlatform.getDescription().get(0)));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getName().equals(requestPlatform.getName()));
+        Assert.assertTrue(platformArgumentCaptor.getValue().getInterworkingServices().get(0).getInformationModelId().
+                equals(requestPlatform.getInterworkingServices().get(0).getInformationModelId()));
     }
 }
