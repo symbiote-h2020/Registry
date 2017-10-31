@@ -292,7 +292,7 @@ public class TestSetupConfig {
         return federation;
     }
 
-    public static InformationModel generateInformationModelA(){
+    public static InformationModel generateInformationModelWithoutID(){
         InformationModel informationModel = new InformationModel();
         informationModel.setName("IM mocked name");
         informationModel.setOwner("Some mocked owner");

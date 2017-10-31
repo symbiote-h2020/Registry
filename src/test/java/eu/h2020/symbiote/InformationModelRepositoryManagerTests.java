@@ -15,7 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static eu.h2020.symbiote.TestSetupConfig.generateInformationModelA;
+import static eu.h2020.symbiote.TestSetupConfig.generateInformationModelWithoutID;
 import static eu.h2020.symbiote.TestSetupConfig.generateInformationModelFull;
 import static org.mockito.Mockito.*;
 
@@ -76,7 +76,7 @@ public class InformationModelRepositoryManagerTests {
 
     @Test
     public void testRemoveInformationModelTriggersRepository() {
-        InformationModel informationModel = generateInformationModelA();
+        InformationModel informationModel = generateInformationModelWithoutID();
         when(informationModelRepository.findOne(informationModel.getId())).thenReturn(informationModel);
 
         repositoryManager.removeInformationModel(informationModel);
@@ -104,7 +104,7 @@ public class InformationModelRepositoryManagerTests {
 
     @Test
     public void testSaveInformationModelMongoError() {
-        InformationModel informationModel = generateInformationModelA();
+        InformationModel informationModel = generateInformationModelWithoutID();
         when(informationModelRepository.save(informationModel)).thenThrow(new MongoException("FAKE MONGO ERROR"));
         Assert.assertNotEquals(200, repositoryManager.saveInformationModel(informationModel).getStatus());
     }
@@ -123,14 +123,14 @@ public class InformationModelRepositoryManagerTests {
 
     @Test
     public void testModifyInformationModelMongoError() {
-        InformationModel informationModel = generateInformationModelA();
+        InformationModel informationModel = generateInformationModelWithoutID();
         doThrow(new MongoException("FAKE MONGO Exception")).when(informationModelRepository).save(informationModel);
         Assert.assertNotEquals(200, repositoryManager.modifyInformationModel(informationModel).getStatus());
     }
 
     @Test
     public void testRemoveInformationModelMongoError() {
-        InformationModel informationModel = generateInformationModelA();
+        InformationModel informationModel = generateInformationModelWithoutID();
         doThrow(new MongoException("FAKE MONGO Exception")).when(informationModelRepository).delete(informationModel.getId());
         Assert.assertNotEquals(200, repositoryManager.removeInformationModel(informationModel).getStatus());
     }

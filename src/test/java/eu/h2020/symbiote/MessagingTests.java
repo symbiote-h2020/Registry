@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import eu.h2020.symbiote.core.cci.InformationModelRequest;
+import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.managers.AuthorizationManager;
@@ -170,10 +171,6 @@ public class MessagingTests {
         }
     }
 
-    private void setRabbitManagerMockedManagers() {
-        ReflectionTestUtils.setField(rabbitManager, "repositoryManager", mockedRepository);
-    }
-
     private AMQP.BasicProperties getProps(Channel channel) throws IOException {
         String replyQueueName = "Queue" + Math.random();
         channel.queueDeclare(replyQueueName, true, false, true, null);
@@ -190,7 +187,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -216,7 +212,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerRPCSemanticContentFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -242,7 +237,6 @@ public class MessagingTests {
 
     public void resourceCreationRequestConsumerRPCNullInterworkingUrlFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -271,7 +265,6 @@ public class MessagingTests {
     @Test
     public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         addIdToResource(resource1);
@@ -295,7 +288,6 @@ public class MessagingTests {
     @Test
     public void resourceRemovalRequestConsumerHappyPathTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(this.mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         addIdToResource(resource1);
@@ -324,7 +316,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerAuthFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -344,7 +335,6 @@ public class MessagingTests {
     @Test
     public void resourceModificationRequestConsumerAuthFailTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -364,7 +354,6 @@ public class MessagingTests {
     @Test
     public void resourceRemovalRequestConsumerAuthFailTest() throws JsonProcessingException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -384,7 +373,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerJsonFailTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         //generating wrong payload for this communication
         Resource resource1 = generateResourceWithoutId();
@@ -400,7 +388,6 @@ public class MessagingTests {
     @Test
     public void resourceModificationRequestConsumerJsonFailTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         //generating wrong payload for this communication
         Resource resource1 = generateResourceWithoutId();
@@ -416,7 +403,6 @@ public class MessagingTests {
     @Test
     public void resourceRemovalRequestConsumerJsonFailTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         //generating wrong payload for this communication
         Resource resource1 = generateResourceWithoutId();
@@ -432,7 +418,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerResourceWithIdFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         //generating resource with ID (should not pass verification in consumer)
         Resource resource1 = generateResourceWithoutId();
@@ -454,7 +439,6 @@ public class MessagingTests {
     @Test
     public void resourceModificationRequestConsumerResourceWithoutIdFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         //generating resource with ID (should not pass verification in consumer)
         Resource resource1 = generateResourceWithoutId();
@@ -475,7 +459,6 @@ public class MessagingTests {
     @Test
     public void resourceRemovalRequestConsumerWithoutIdFailTest() throws JsonProcessingException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -495,7 +478,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerNullBodyFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         Resource resource2 = generateResourceWithoutId();
@@ -603,7 +585,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -631,7 +612,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerRPCTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -660,7 +640,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerNullNameFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generatePlatformWithNullLabels();
 
@@ -677,7 +656,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerNullNameFailRPCTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generatePlatformWithNullLabels();
 
@@ -704,7 +682,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerMongoFailRPCTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generatePlatformB();
 
@@ -741,7 +718,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerJsonFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -756,7 +732,6 @@ public class MessagingTests {
     @Test
     public void platformCreationRequestConsumerJsonFailRPCTest() throws Exception {
         rabbitManager.startConsumerOfPlatformCreationMessages();
-        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -774,7 +749,6 @@ public class MessagingTests {
     @Test
     public void platformModificationRequestConsumerHappyPathTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformModificationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -798,7 +772,6 @@ public class MessagingTests {
     @Test
     public void platformModificationRequestConsumerHappyPathRpcTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformModificationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -827,7 +800,6 @@ public class MessagingTests {
     @Test
     public void platformModificationRequestConsumerMongoFailRPCTest() throws IOException, InterruptedException, TimeoutException {
         rabbitManager.startConsumerOfPlatformModificationMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -851,7 +823,6 @@ public class MessagingTests {
     public void platformModificationRequestConsumerJsonFailRpcTest() throws Exception {
         //// TODO: 20.07.2017 Add consumer for RPC response and verify it in tests!
         rabbitManager.startConsumerOfPlatformModificationMessages();
-        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -869,7 +840,6 @@ public class MessagingTests {
     @Test
     public void platformRemovalRequestConsumerTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformRemovalMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -890,7 +860,6 @@ public class MessagingTests {
     @Test
     public void platformRemovalRequestConsumerRPCTest() throws IOException, InterruptedException {
         rabbitManager.startConsumerOfPlatformRemovalMessages();
-        setRabbitManagerMockedManagers();
 
         Platform requestPlatform = generateSymbiotePlatformA();
         String message = mapper.writeValueAsString(requestPlatform);
@@ -919,7 +888,6 @@ public class MessagingTests {
     @Test
     public void platformRemovalRequestConsumerJsonFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformRemovalMessages();
-        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -934,7 +902,6 @@ public class MessagingTests {
     @Test
     public void platformRemovalRequestConsumerJsonFailRPCTest() throws Exception {
         rabbitManager.startConsumerOfPlatformRemovalMessages();
-        setRabbitManagerMockedManagers();
 
         String message = "[wrong json]";
 
@@ -952,7 +919,6 @@ public class MessagingTests {
     @Test
     public void platformResourcesRequestedConsumerTest() throws Exception {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         addIdToResource(resource1);
@@ -983,7 +949,6 @@ public class MessagingTests {
     @Test
     public void platformResourcesRequestedConsumerJsonFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         String message = "[]";
 
@@ -1002,7 +967,6 @@ public class MessagingTests {
     @Test
     public void platformResourcesRequestedConsumerAuthFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
-        setRabbitManagerMockedManagers();
 
         Resource resource1 = generateResourceWithoutId();
         addIdToResource(resource1);
@@ -1030,7 +994,6 @@ public class MessagingTests {
     @Test
     public void platformDetailsRequestedConsumerTest() throws Exception {
         rabbitManager.startConsumerOfPlatformDetailsConsumer();
-        setRabbitManagerMockedManagers();
 
         Platform platform = generatePlatformB();
 
@@ -1052,7 +1015,6 @@ public class MessagingTests {
     @Test
     public void platformDetailsRequestedConsumerWrongPlatformIdTest() throws Exception {
         rabbitManager.startConsumerOfPlatformDetailsConsumer();
-        setRabbitManagerMockedManagers();
 
         Platform platform = generatePlatformB();
 
@@ -1070,27 +1032,16 @@ public class MessagingTests {
         Assert.assertNotEquals(platformRegistryResponse.getStatus(), 200);
     }
 
-
-
-    //////////////////////////////////////////////////////////////////////////////// // TODO: 30.10.2017
-
-
-
-
     @Test
     public void informationModelCreationRequestConsumerHappyPathTest() throws Exception {
         rabbitManager.startConsumerOfInformationModelCreationMessages();
-        setRabbitManagerMockedManagers();
 
         InformationModelRequest informationModelRequest = new InformationModelRequest();
-        InformationModel informationModel = generateInformationModelA();
+        InformationModel informationModel = generateInformationModelWithoutID();
         informationModelRequest.setBody(informationModel);
 
         String message = mapper.writeValueAsString(informationModelRequest);
 
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        System.out.println(message);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 
         mockIMVerificationCommunication(null);
 
@@ -1102,28 +1053,41 @@ public class MessagingTests {
     }
 
     @Test
-    public void informationModelCreationRequestConsumerWithIDFailTest() throws Exception {
-        rabbitManager.startConsumerOfInformationModelCreationMessages();
-        setRabbitManagerMockedManagers();
+    public void informationModelModificationRequestConsumerHappyPathTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelModificationMessages();
 
         InformationModelRequest informationModelRequest = new InformationModelRequest();
         InformationModel informationModel = generateInformationModelFull();
-        informationModel.setId("mocked id"); //Information Model should not have an ID to register!
         informationModelRequest.setBody(informationModel);
 
         String message = mapper.writeValueAsString(informationModelRequest);
 
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        System.out.println(message);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-
         mockIMVerificationCommunication(null);
 
-        rabbitManager.sendCustomMessage(INFORMATION_MODEL_EXCHANGE_NAME, INFORMATION_MODEL_CREATION_REQUESTED_RK, message, InformationModelRequest.class.getCanonicalName());
+        rabbitManager.sendCustomMessage(INFORMATION_MODEL_EXCHANGE_NAME, INFORMATION_MODEL_MODIFICATION_REQUESTED_RK, message, InformationModelRequest.class.getCanonicalName());
 
         // Sleep to make sure that the message has been delivered
         TimeUnit.MILLISECONDS.sleep(300);
-        verifyZeroInteractions(mockedRepository);
+        verify(mockedRepository).modifyInformationModel(any());
+    }
+
+    @Test
+    public void informationModelRemovalRequestConsumerHappyPathTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelRemovalMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelFull();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        mockIMVerificationCommunication(null);
+
+        rabbitManager.sendCustomMessage(INFORMATION_MODEL_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message, InformationModelRequest.class.getCanonicalName());
+
+        // Sleep to make sure that the message has been delivered
+        TimeUnit.MILLISECONDS.sleep(300);
+        verify(mockedRepository).removeInformationModel(any());
     }
 
 
@@ -1143,11 +1107,6 @@ public class MessagingTests {
         log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
 
         String messageReceived = "{\"body\":" + new String(body) +"}"; //// todo: 30.10.2017 Hardcoded - find out why it does not work without it!
-
-
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@3333333333333@@@");
-        System.out.println(messageReceived);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@3333333333333@@@@@");
 
 //        assertEquals(message, messageReceived);
         InformationModelRequest request = mapper.readValue(messageReceived, InformationModelRequest.class);
@@ -1180,4 +1139,181 @@ public class MessagingTests {
         log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED SM REPLY |||||||||||||| ");
     }
 
+    @Test
+    public void informationModelCreationRequestConsumerWithIDFailTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelCreationMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelFull();
+        informationModel.setId("mocked id"); //Information Model should not have an ID to register!
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_CREATION_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelModificationRequestConsumerWithoutIDFailTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelModificationMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelWithoutID();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_MODIFICATION_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelRemovalRequestConsumerWithoutIDFailTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelRemovalMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelWithoutID();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelCreationRequestConsumerJsonFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelCreationMessages();
+
+        String message = "[wrong json]";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_CREATION_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelModificationRequestConsumerJsonFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelModificationMessages();
+
+        String message = "[wrong json]";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_MODIFICATION_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelRemovalRequestConsumerJsonFailRPCTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelRemovalMessages();
+
+        String message = "[wrong json]";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelCreationRequestConsumerNullFieldsRPCTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelCreationMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = new InformationModel();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_CREATION_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelModificationRequestConsumerNullFieldsRPCTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelModificationMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = new InformationModel();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_MODIFICATION_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
+
+    @Test
+    public void informationModelRemovalRequestConsumerNullFieldsRPCTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelRemovalMessages();
+
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = new InformationModel();
+        informationModelRequest.setBody(informationModel);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+
+        verifyZeroInteractions(mockedRepository);
+    }
 }
