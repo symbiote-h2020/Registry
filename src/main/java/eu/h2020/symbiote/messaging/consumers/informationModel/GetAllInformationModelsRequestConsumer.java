@@ -49,7 +49,6 @@ public class GetAllInformationModelsRequestConsumer extends DefaultConsumer {
 
         InformationModelListResponse informationModelListResponse = new InformationModelListResponse();
         informationModelListResponse.setBody(new ArrayList<>());
-        informationModelListResponse.setStatus(400);
         List<InformationModel> informationModels;
         String message = new String(body, "UTF-8");
         log.info(" [x] Received request to retrieve list of existing Information Models.");

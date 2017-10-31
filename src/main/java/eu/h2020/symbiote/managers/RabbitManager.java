@@ -348,7 +348,7 @@ public class RabbitManager {
         startConsumerOfGetAllFederationsMessages();
 
         startConsumerOfPlatformResourcesRequestsMessages(this.authorizationManager);
-        startConsumerOfListAllInformationModelsRequestsMessages();
+        startConsumerOfGetAllInformationModelsRequestsMessages();
         startConsumerOfPlatformDetailsConsumer();
     }
 
@@ -585,7 +585,7 @@ public class RabbitManager {
         }
     }
 
-    public void startConsumerOfListAllInformationModelsRequestsMessages() {
+    public void startConsumerOfGetAllInformationModelsRequestsMessages() {
         Channel channel;
         try {
             channel = this.connection.createChannel();

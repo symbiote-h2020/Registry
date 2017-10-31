@@ -12,6 +12,7 @@ import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.cim.Resource;
@@ -105,6 +106,8 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "informationModelModificationRequestedRoutingKey", INFORMATION_MODEL_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "informationModelRemovalRequestedRoutingKey", INFORMATION_MODEL_REMOVAL_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "rdfInformationModelValidationRequestedRoutingKey", INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rabbitManager, "informationModelRemovedRoutingKey", "not_important_RK");
+        ReflectionTestUtils.setField(rabbitManager, "informationModelsRequestedRoutingKey", GET_ALL_INFORMATION_MODELS_REQUESTED_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
         ReflectionTestUtils.setField(rabbitManager, "platformRemovedRoutingKey", PLATFORM_REMOVED_ROUTING_KEY);
@@ -162,6 +165,7 @@ public class MessagingTests {
                 channel.queueDelete(INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
                 channel.queueDelete(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE);
                 channel.queueDelete(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE);
+                channel.queueDelete(GET_ALL_INFORMATION_MODELS_REQUESTED_RK);
                 channel.queueDelete(TEMP_QUEUE);
                 channel.close();
                 connection.close();
@@ -1079,17 +1083,46 @@ public class MessagingTests {
         InformationModel informationModel = generateInformationModelFull();
         informationModelRequest.setBody(informationModel);
 
+        InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult(200, "ok", informationModel);
+
+        when(mockedRepository.removeInformationModel(any())).thenReturn(informationModelPersistenceResult);
+
         String message = mapper.writeValueAsString(informationModelRequest);
 
-        mockIMVerificationCommunication(null);
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message);
 
-        rabbitManager.sendCustomMessage(INFORMATION_MODEL_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message, InformationModelRequest.class.getCanonicalName());
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
 
-        // Sleep to make sure that the message has been delivered
-        TimeUnit.MILLISECONDS.sleep(300);
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 200);
+
         verify(mockedRepository).removeInformationModel(any());
     }
+    @Test
+    public void informationModelRemovalRequestConsumerRepoFailTest() throws Exception {
+        rabbitManager.startConsumerOfInformationModelRemovalMessages();
 
+        InformationModelRequest informationModelRequest = new InformationModelRequest();
+        InformationModel informationModel = generateInformationModelFull();
+        informationModelRequest.setBody(informationModel);
+
+        InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult(400, "Mocked repo FAIL", informationModel);
+
+        when(mockedRepository.removeInformationModel(any())).thenReturn(informationModelPersistenceResult);
+
+        String message = mapper.writeValueAsString(informationModelRequest);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_REMOVAL_REQUESTED_RK, message);
+
+        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
+
+        InformationModel informationModelResponseBody = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModelResponseBody);
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 400);
+    }
 
     private void mockIMVerificationCommunication(String message) throws IOException {
         this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
@@ -1315,5 +1348,53 @@ public class MessagingTests {
         Assert.assertEquals(informationModelResponse.getStatus(), 400);
 
         verifyZeroInteractions(mockedRepository);
+    }
+
+
+    @Test
+    public void getAllInformationModelsHappyPathRPCTest() throws Exception {
+        rabbitManager.startConsumerOfGetAllInformationModelsRequestsMessages();
+
+        InformationModel informationModel = generateInformationModelFull();
+        when(mockedRepository.getAllInformationModels()).thenReturn(Arrays.asList(informationModel));
+
+        String message = "some string";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, GET_ALL_INFORMATION_MODELS_REQUESTED_RK, message);
+
+        InformationModelListResponse informationModelResponse = mapper.readValue(response, InformationModelListResponse.class);
+
+        List<InformationModel> informationModels = informationModelResponse.getBody();
+        Assert.assertNotNull(informationModels);
+        Assert.assertFalse(informationModels.isEmpty());
+        Assert.assertNotNull(informationModelResponse.getMessage());
+        Assert.assertEquals(informationModelResponse.getStatus(), 200);
+
+        verify(mockedRepository, times(1)).getAllInformationModels();
+    }
+
+    @Test
+    public void getAllInformationModelsAndCleanRDFsRPCTest() throws Exception {
+        rabbitManager.startConsumerOfGetAllInformationModelsRequestsMessages();
+
+        InformationModel informationModel = generateInformationModelFull();
+        when(mockedRepository.getAllInformationModels()).thenReturn(Arrays.asList(informationModel));
+
+        assertNotNull(informationModel.getRdf());
+
+        String message = "false";
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, GET_ALL_INFORMATION_MODELS_REQUESTED_RK, message);
+
+        InformationModelListResponse informationModelResponse = mapper.readValue(response, InformationModelListResponse.class);
+
+        List<InformationModel> informationModels = informationModelResponse.getBody();
+        assertNotNull(informationModels);
+        assertFalse(informationModels.isEmpty());
+        assertNotNull(informationModelResponse.getMessage());
+        assertNull(informationModels.get(0).getRdf()); //check if RDF content has been removed
+        assertEquals(informationModelResponse.getStatus(), 200);
+
+        verify(mockedRepository, times(1)).getAllInformationModels();
     }
 }

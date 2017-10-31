@@ -42,6 +42,7 @@ public class TestSetupConfig {
     public static final String INFORMATION_MODEL_MODIFICATION_REQUESTED_RK = "symbIoTe.platform.model.modificationRequested";
     public static final String INFORMATION_MODEL_REMOVAL_REQUESTED_RK = "symbIoTe.platform.model.removalRequested";
     public static final String INFORMATION_MODEL_VALIDATION_REQUESTED_RK = "symbIoTe.platform.model.validationRequested";
+    public static final String GET_ALL_INFORMATION_MODELS_REQUESTED_RK = "symbIoTe.informationModel.allInformationModelsRequested";
 
     public static final String PLATFORM_CREATED_ROUTING_KEY = "symbIoTe.platform.created";
     public static final String PLATFORM_MODIFIED_ROUTING_KEY = "symbIoTe.platform.updated";

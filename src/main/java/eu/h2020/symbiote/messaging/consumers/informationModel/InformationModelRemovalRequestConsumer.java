@@ -43,7 +43,7 @@ public class InformationModelRemovalRequestConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received Information Model to create");
+        log.info(" [x] Received Information Model to remove");
 
         InformationModelRequest informationModelRequest;
         InformationModel informationModelReceived;
