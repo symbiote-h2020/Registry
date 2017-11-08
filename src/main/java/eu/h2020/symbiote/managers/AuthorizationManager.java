@@ -140,7 +140,7 @@ public class AuthorizationManager {
             if (securityEnabled) {
                 serviceResponse = componentSecurityHandler.generateServiceResponse();
             }
-        } catch (SecurityHandlerException e) {
+        } catch (Exception e) {
             log.error(e);
         }
         return serviceResponse;

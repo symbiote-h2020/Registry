@@ -62,13 +62,19 @@ public class GetAllFederationsRequestConsumer extends DefaultConsumer {
         FederationListResponse federationResponse = new FederationListResponse();
         federationResponse.setBody(new ArrayList<>());
         List<Federation> federations;
-        //String message = new String(body, "UTF-8"); //unnecessary here
         log.info(" [x] Received request to retrieve all federations");
 
-        federations = repositoryManager.getAllFederations();
-        federationResponse.setStatus(HttpStatus.SC_OK);
-        federationResponse.setMessage("OK. " + federations.size() + " federations found!");
-        federationResponse.setBody(federations);
+        try {
+            federations = repositoryManager.getAllFederations();
+            federationResponse.setStatus(HttpStatus.SC_OK);
+            federationResponse.setMessage("OK. " + federations.size() + " federations found!");
+            federationResponse.setBody(federations);
+        } catch (Exception e) {
+            log.error(e);
+            federationResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            federationResponse.setMessage("Repository error");
+            federationResponse.setBody(new ArrayList<>());
+        }
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(federationResponse));
     }
 }

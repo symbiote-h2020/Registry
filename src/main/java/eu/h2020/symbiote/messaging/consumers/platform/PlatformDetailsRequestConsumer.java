@@ -62,18 +62,24 @@ public class PlatformDetailsRequestConsumer extends DefaultConsumer {
         String requestedPlatformId = new String(body, "UTF-8");
         log.info(" [x] Received request to retrieve a platform with id: " + requestedPlatformId);
 
-        Platform foundPlatform = repositoryManager.getPlatformById(requestedPlatformId);
+        try {
+            Platform foundPlatform = repositoryManager.getPlatformById(requestedPlatformId);
 
-        if (foundPlatform != null) {
-            platformResponse.setStatus(HttpStatus.SC_OK);
-            platformResponse.setMessage("OK. Platform with id '" + foundPlatform.getId() + "' found!");
-        } else {
-            log.debug("There is no Platform with given id (" + requestedPlatformId + ") in the system.");
-            platformResponse.setMessage("There is no Platform with given id (" + requestedPlatformId + ") in the system.");
-            platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+            if (foundPlatform != null) {
+                platformResponse.setStatus(HttpStatus.SC_OK);
+                platformResponse.setMessage("OK. Platform with id '" + foundPlatform.getId() + "' found!");
+            } else {
+                log.debug("There is no Platform with given id (" + requestedPlatformId + ") in the system.");
+                platformResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
+                platformResponse.setMessage("There is no Platform with given id (" + requestedPlatformId + ") in the system.");
+            }
+
+            platformResponse.setBody(foundPlatform);
+        } catch (Exception e) {
+            log.error(e);
+            platformResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            platformResponse.setMessage("Consumer critical error!");
         }
-
-        platformResponse.setBody(foundPlatform);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(platformResponse));
     }
 }

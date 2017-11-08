@@ -112,32 +112,38 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         log.info("[x] Received '" + descriptionType + "' validation result: '" + message + "'");
 
         try {
-            //receive and read message from Semantic Manager
-            resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
-        } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Unable to get resource validation result from Message body!", e);
-            registryResponse.setStatus(500);
-            registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
-        }
-
-        if (resourceInstanceValidationResult.isSuccess()) {
-            coreResources = resourceInstanceValidationResult.getObjectDescription();
-            log.info("CoreResources received from SM! Content: " + coreResources);
-
-            AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
-                    (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
-
-            if (authorizationResult.isValidated()) {
-                Map<String, ResourcePersistenceResult> stringResourcePersistenceResultMap = makePersistenceOperations(coreResources);
-                prepareContentOfMessage(stringResourcePersistenceResultMap);
-            } else {
-                registryResponse.setStatus(400);
-                registryResponse.setMessage(authorizationResult.getMessage());
+            try {
+                //receive and read message from Semantic Manager
+                resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
+            } catch (JsonSyntaxException | JsonMappingException e) {
+                log.error("Unable to get resource validation result from Message body!", e);
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
             }
-        } else {
+
+            if (resourceInstanceValidationResult.isSuccess()) {
+                coreResources = resourceInstanceValidationResult.getObjectDescription();
+                log.info("CoreResources received from SM! Content: " + coreResources);
+
+                AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
+                        (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
+
+                if (authorizationResult.isValidated()) {
+                    Map<String, ResourcePersistenceResult> stringResourcePersistenceResultMap = makePersistenceOperations(coreResources);
+                    prepareContentOfMessage(stringResourcePersistenceResultMap);
+                } else {
+                    registryResponse.setStatus(400);
+                    registryResponse.setMessage(authorizationResult.getMessage());
+                }
+            } else {
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("Validation Error. Semantic Manager message: "
+                        + resourceInstanceValidationResult.getMessage());
+            }
+        } catch (Exception e) {
+            log.error(e);
             registryResponse.setStatus(500);
-            registryResponse.setMessage("Validation Error. Semantic Manager message: "
-                    + resourceInstanceValidationResult.getMessage());
+            registryResponse.setMessage(e.toString());
         }
         sendRpcResponse();
     }
@@ -173,7 +179,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         ResourcePersistenceResult resourceModificationResult =
                                 this.repositoryManager.modifyResource(coreResources.get(key));
                         persistenceOperationResultsMap.put(key, resourceModificationResult);
-                    } catch (Exception e){
+                    } catch (Exception e) {
                         log.error("Couldn't get Access Policies for Core Resource. " + e);
                         persistenceOperationResultsMap.put(key,
                                 new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));

@@ -21,6 +21,7 @@ import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -89,88 +90,89 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
         log.info(" [x] Received resource to remove");
 
         try {
-            request = mapper.readValue(message, CoreResourceRegistryRequest.class);
-        } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occurred during getting Operation Request from Json", e);
-            response.setStatus(400);
-            response.setMessage("Error occurred during getting Operation Request from Json");
-        }
-
-        if (request != null) {
-            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
-            if (!tokenAuthorizationResult.isValidated()){
-                log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+            try {
+                request = mapper.readValue(message, CoreResourceRegistryRequest.class);
+            } catch (JsonSyntaxException | JsonMappingException e) {
+                log.error("Error occurred during getting Operation Request from Json", e);
                 response.setStatus(400);
-                response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                response.setMessage("Error occurred during getting Operation Request from Json");
+            }
+
+            if (request != null) {
+                AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getPlatformId());
+                if (!tokenAuthorizationResult.isValidated()){
+                    log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                    response.setStatus(400);
+                    response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                    response.setServiceResponse(authorizationManager.generateServiceResponse());
+                    rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                            mapper.writeValueAsString(response));
+                    return;
+                }
+            } else {
+                log.error("Request is null");
+                response.setStatus(400);
+                response.setMessage("Request is null");
                 response.setServiceResponse(authorizationManager.generateServiceResponse());
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                        mapper.writeValueAsString(response));
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
                 return;
             }
-        } else {
-            log.error("Request is null");
-            response.setStatus(400);
-            response.setMessage("Request is null");
-            response.setServiceResponse(authorizationManager.generateServiceResponse());
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-            return;
-        }
 
-        try {
-            resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
-            });
-        } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occurred during getting Resources from Json", e);
-            response.setStatus(400);
-            response.setMessage("Error occurred during getting Resources from Json");
-        }
-
-        AuthorizationResult resourcesAccessAuthorizationResult =
-                authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId());
-
-        if (!resourcesAccessAuthorizationResult.isValidated()) {
-            log.error(resourcesAccessAuthorizationResult.getMessage() + resources);
-            response.setMessage(resourcesAccessAuthorizationResult.getMessage() + resources);
-            response.setStatus(400);
-            response.setServiceResponse(authorizationManager.generateServiceResponse());
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-            return;
-        }
-
-        for (String key : resources.keySet()) {
-            if (resources.get(key) == null) {
-                log.error("Resources list contains a NULL resource!" + resources);
-                response.setMessage("Resources list contains a NULL resource!" + resources);
-                response.setStatus(410);
-            } else {
-                if (resources.get(key).getId() != null || !resources.get(key).getId().isEmpty()) {
-                    resourceRemovalResult = this.repositoryManager.removeResource(resources.get(key));
-                } else {
-                    log.error("Given Resource has id null or empty");
-                    resourceRemovalResult.setMessage("Given Resource has ID null or empty");
-                    resourceRemovalResult.setStatus(400);
-                }
-                resourceRemovalMap.put(key,resourceRemovalResult);
+            try {
+                resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
+                });
+            } catch (JsonSyntaxException | JsonMappingException e) {
+                log.error("Error occurred during getting Resources from Json", e);
+                response.setStatus(400);
+                response.setMessage("Error occurred during getting Resources from Json");
             }
-        }
 
-        if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resources)) {
-            sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
+            AuthorizationResult resourcesAccessAuthorizationResult =
+                    authorizationManager.checkIfResourcesBelongToPlatform(resources, request.getPlatformId());
 
-            response.setMessage("Success");
-            response.setStatus(200);
-            response.setDescriptionType(DescriptionType.BASIC);
-        } else {
-            response.setMessage("Operation not performed");
-            response.setStatus(410);
-            response.setDescriptionType(DescriptionType.BASIC);
-        }
+            if (!resourcesAccessAuthorizationResult.isValidated()) {
+                log.error(resourcesAccessAuthorizationResult.getMessage() + resources);
+                response.setMessage(resourcesAccessAuthorizationResult.getMessage() + resources);
+                response.setStatus(400);
+                response.setServiceResponse(authorizationManager.generateServiceResponse());
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                return;
+            }
 
-        Map<String,Resource> resourcesDeletedMap = new HashMap<>();
-        for( String key: resourceRemovalMap.keySet() ) {
-            resourcesDeletedMap.put(key,RegistryUtils.convertCoreResourceToResource(resourceRemovalMap.get(key).getResource()));
+            for (String key : resources.keySet()) {
+                if (resources.get(key) == null) {
+                    log.error("Resources list contains a NULL resource!" + resources);
+                    response.setMessage("Resources list contains a NULL resource!" + resources);
+                    response.setStatus(410);
+                } else {
+                    if (resources.get(key).getId() != null || !resources.get(key).getId().isEmpty()) {
+                        resourceRemovalResult = this.repositoryManager.removeResource(resources.get(key));
+                    } else {
+                        log.error("Given Resource has id null or empty");
+                        resourceRemovalResult.setMessage("Given Resource has ID null or empty");
+                        resourceRemovalResult.setStatus(400);
+                    }
+                    resourceRemovalMap.put(key,resourceRemovalResult);
+                }
+            }
 
-        }
+            if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resources)) {
+                sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
+
+                response.setMessage("Success");
+                response.setStatus(200);
+                response.setDescriptionType(DescriptionType.BASIC);
+            } else {
+                response.setMessage("Operation not performed");
+                response.setStatus(410);
+                response.setDescriptionType(DescriptionType.BASIC);
+            }
+
+            Map<String,Resource> resourcesDeletedMap = new HashMap<>();
+            for( String key: resourceRemovalMap.keySet() ) {
+                resourcesDeletedMap.put(key,RegistryUtils.convertCoreResourceToResource(resourceRemovalMap.get(key).getResource()));
+
+            }
 
 //        List<Resource> resourceList = resourceRemovalResultList.stream()
 //                .map(resourcePersistenceResult ->
@@ -180,12 +182,19 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
 
 //        resourceList.stream().forEach(res -> resourcesDeletedMap.put(res.getId(),res));
 
-        response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
-        }).writeValueAsString(resourcesDeletedMap));
-        response.setServiceResponse(authorizationManager.generateServiceResponse());
-        System.out.println(response.getBody());
+            response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
+            }).writeValueAsString(resourcesDeletedMap));
+            response.setServiceResponse(authorizationManager.generateServiceResponse());
+            System.out.println(response.getBody());
 
-        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+        } catch (Exception e) {
+            log.error(e);
+            response.setMessage("Consumer critical exception!");
+            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            response.setDescriptionType(DescriptionType.BASIC);
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+        }
     }
 
     private void sendFanoutMessage(List<ResourcePersistenceResult> resourceRemovalResultList) {

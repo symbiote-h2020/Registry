@@ -82,27 +82,32 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         log.info("[x] Received IM validation result");
 
         try {
-            //receive and read message from Semantic Manager
-            informationModelValidationResult = mapper.readValue(message, InformationModelValidationResult.class);
-        } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Unable to get Information Model validation result from Message body!", e);
+            try {
+                //receive and read message from Semantic Manager
+                informationModelValidationResult = mapper.readValue(message, InformationModelValidationResult.class);
+            } catch (JsonSyntaxException | JsonMappingException e) {
+                log.error("Unable to get Information Model validation result from Message body!", e);
+                informationModelResponse.setStatus(500);
+                informationModelResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
+            }
+
+            if (informationModelValidationResult.isSuccess()) {
+                informationModel = informationModelValidationResult.getObjectDescription();
+                log.info("Information Model received from Semantic Manager! IM id: " + informationModel.getId());
+
+                InformationModelPersistenceResult informationModelPersistenceResult = makePersistenceOperations(informationModel);
+                prepareContentOfRPCResponse(informationModelPersistenceResult);
+
+            } else {
+                informationModelResponse.setStatus(500);
+                informationModelResponse.setMessage("Validation Error. Semantic Manager message: "
+                        + informationModelValidationResult.getMessage());
+            }
+        } catch (Exception e) {
+            log.error(e);
             informationModelResponse.setStatus(500);
-            informationModelResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
+            informationModelResponse.setMessage("Consumer critical error!");
         }
-
-        if (informationModelValidationResult.isSuccess()) {
-            informationModel = informationModelValidationResult.getObjectDescription();
-            log.info("Information Model received from Semantic Manager! IM id: " + informationModel.getId());
-
-            InformationModelPersistenceResult informationModelPersistenceResult = makePersistenceOperations(informationModel);
-            prepareContentOfRPCResponse(informationModelPersistenceResult);
-
-        } else {
-            informationModelResponse.setStatus(500);
-            informationModelResponse.setMessage("Validation Error. Semantic Manager message: "
-                    + informationModelValidationResult.getMessage());
-        }
-
         sendRpcResponse();
     }
 

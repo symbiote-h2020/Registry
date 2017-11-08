@@ -53,15 +53,21 @@ public class GetAllInformationModelsRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received request to retrieve list of existing Information Models.");
 
-        informationModels = repositoryManager.getAllInformationModels();
+        try {
+            informationModels = repositoryManager.getAllInformationModels();
 
-        if (message.equalsIgnoreCase("false")) {
-            clearRDFInfoFromModels(informationModels);
+            if (message.equalsIgnoreCase("false")) {
+                clearRDFInfoFromModels(informationModels);
+            }
+
+            informationModelListResponse.setStatus(HttpStatus.SC_OK);
+            informationModelListResponse.setMessage("OK. " + informationModels.size() + " Information Models found!");
+            informationModelListResponse.setBody(informationModels);
+        } catch (Exception e) {
+            log.error(e);
+            informationModelListResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            informationModelListResponse.setMessage("Repository error!");
         }
-
-        informationModelListResponse.setStatus(HttpStatus.SC_OK);
-        informationModelListResponse.setMessage("OK. " + informationModels.size() + " Information Models found!");
-        informationModelListResponse.setBody(informationModels);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(informationModelListResponse));
     }
 
