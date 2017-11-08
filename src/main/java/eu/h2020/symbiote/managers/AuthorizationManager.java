@@ -89,9 +89,13 @@ public class AuthorizationManager {
             if (platformIds == null) {
                 return new AuthorizationResult("Platform Ids is null", false);
             }
-
-            Set<String> checkedPolicies = checkPolicies(securityRequest, platformIds);
-
+            Set<String> checkedPolicies;
+            try {
+                checkedPolicies = checkPolicies(securityRequest, platformIds);
+            } catch (Exception e) {
+                log.error("Component Security Handler Exception " + e);
+                return new AuthorizationResult("Component Security Handler Exception " + e, false);
+            }
             if (platformIds.size() == checkedPolicies.size()) {
                 return new AuthorizationResult("ok", true);
             } else {
@@ -103,9 +107,10 @@ public class AuthorizationManager {
         }
     }
 
-    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) {
+    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) throws Exception {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
+        Set<String> satisfiedPoliciesIdentifiers;
 
         String rhComponentId = "reghandler";
 
@@ -119,7 +124,14 @@ public class AuthorizationManager {
                 log.error(e);
             }
         }
-        return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+        try {
+            satisfiedPoliciesIdentifiers = componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+        } catch (Exception e) {
+            log.error("Component Security Handler Exception " + e);
+            throw e;
+        }
+
+        return satisfiedPoliciesIdentifiers;
     }
 
     public String generateServiceResponse() {
