@@ -14,18 +14,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories
 class AppConfig extends AbstractMongoConfiguration {
 
-    @Value("${aam.environment.coreInterfaceAddress}")
-    private String coreAAMUrl;
-
-    @Value("${rabbit.host}")
-    private String rabbitHost;
-
-    @Value("${rabbit.username}")
-    private String rabbitUsername;
-
-    @Value("${rabbit.password}")
-    private String rabbitPassword;
-
     @Value("${symbiote.mongo.dbname.registry}")
     private String databaseName;
 
