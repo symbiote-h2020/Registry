@@ -9,10 +9,7 @@ import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.messaging.consumers.federation.*;
 import eu.h2020.symbiote.messaging.consumers.informationModel.*;
 import eu.h2020.symbiote.messaging.consumers.platform.*;
-import eu.h2020.symbiote.messaging.consumers.resource.ResourceCreationRequestConsumer;
-import eu.h2020.symbiote.messaging.consumers.resource.ResourceModificationRequestConsumer;
-import eu.h2020.symbiote.messaging.consumers.resource.ResourceRemovalRequestConsumer;
-import eu.h2020.symbiote.messaging.consumers.resource.ResourceValidationResponseConsumer;
+import eu.h2020.symbiote.messaging.consumers.resource.*;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
@@ -50,6 +47,7 @@ public class RabbitManager {
     private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
     private static final String RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceModificationRequestedQueue";
     private static final String RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-resourceRemovalRequestedQueue";
+    private static final String RESOURCE_CLEAR_DATA_REQUESTED_QUEUE = "symbIoTe-Registry-resourceClearDataRequestedQueue";
     private static final String PLATFORM_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformCreationRequestedQueue";
     private static final String PLATFORM_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-platformModificationRequestedQueue";
     private static final String PLATFORM_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-platformRemovalRequestedQueue";
@@ -121,6 +119,8 @@ public class RabbitManager {
     private String resourceCreatedRoutingKey;
     @Value("${rabbit.routingKey.resource.removalRequested}")
     private String resourceRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.resource.clearDataRequested}")
+    private String resourceClearDataRequestedRoutingKey;
     @Value("${rabbit.routingKey.resource.removed}")
     private String resourceRemovedRoutingKey;
     @Value("${rabbit.routingKey.resource.modificationRequested}")
@@ -332,6 +332,7 @@ public class RabbitManager {
         startConsumerOfResourceCreationMessages(this.authorizationManager);
         startConsumerOfResourceModificationMessages(this.authorizationManager);
         startConsumerOfResourceRemovalMessages(this.authorizationManager);
+        startConsumerOfClearDataMessages(this.authorizationManager);
 
         startConsumerOfPlatformCreationMessages();
         startConsumerOfPlatformModificationMessages();
@@ -411,6 +412,27 @@ public class RabbitManager {
 
             Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
             channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
+     */
+    public void startConsumerOfClearDataMessages(AuthorizationManager authorizationManager) {
+        Channel channel;
+        try {
+            channel = this.connection.createChannel();
+            channel.queueDeclare(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE, true, false, false, null);
+            channel.queueBind(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceClearDataRequestedRoutingKey);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+
+            log.info("Receiver waiting for Clear Data messages....");
+
+            Consumer consumer = new ResourceClearDataRequestConsumer(channel, repositoryManager, this, authorizationManager);
+            channel.basicConsume(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
