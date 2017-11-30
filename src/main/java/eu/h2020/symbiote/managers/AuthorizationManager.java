@@ -37,10 +37,12 @@ public class AuthorizationManager {
     private String keystorePass;
     private String componentOwnerName;
     private String componentOwnerPassword;
+    private Boolean alwaysUseLocalAAMForValidation;
     private Boolean securityEnabled = true;
 
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
+
 
     @Autowired
     public AuthorizationManager(PlatformRepository platformRepository,
@@ -50,6 +52,7 @@ public class AuthorizationManager {
                                 @Value("${aam.environment.clientId}") String clientId,
                                 @Value("${aam.environment.keystoreName}") String keystoreName,
                                 @Value("${aam.environment.keystorePass}") String keystorePass,
+                                @Value("${symbIoTe.validation.localaam}") Boolean alwaysUseLocalAAMForValidation,
                                 @Value("${registry.security.enabled}") Boolean securityEnabled) throws SecurityHandlerException {
         this.platformRepository = platformRepository;
         this.componentOwnerName = componentOwnerName;
@@ -58,6 +61,7 @@ public class AuthorizationManager {
         this.clientId = clientId;
         this.keystoreName = keystoreName;
         this.keystorePass = keystorePass;
+        this.alwaysUseLocalAAMForValidation = alwaysUseLocalAAMForValidation;
         this.securityEnabled = securityEnabled;
 
         if (securityEnabled) {
@@ -67,7 +71,7 @@ public class AuthorizationManager {
                     this.keystorePass,
                     this.clientId,
                     this.aamAddress,
-                    false,
+                    this.alwaysUseLocalAAMForValidation,
                     this.componentOwnerName,
                     this.componentOwnerPassword);
         }
