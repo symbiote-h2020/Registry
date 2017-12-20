@@ -17,7 +17,7 @@ import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,7 +50,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private DescriptionType descriptionType;
     private String response;
     private AuthorizationManager authorizationManager;
-    private Map<String, SingleTokenAccessPolicySpecifier> policiesMap;
+    private Map<String, IAccessPolicySpecifier> policiesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -70,7 +70,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                                               RegistryOperationType operationType,
                                               DescriptionType descriptionType,
                                               AuthorizationManager authorizationManager,
-                                              Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
+                                              Map<String, IAccessPolicySpecifier> policiesMap) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;

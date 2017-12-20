@@ -18,7 +18,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.cim.*;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -42,7 +42,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
-    private Map<String, SingleTokenAccessPolicySpecifier> policiesMap;
+    private Map<String, IAccessPolicySpecifier> policiesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.

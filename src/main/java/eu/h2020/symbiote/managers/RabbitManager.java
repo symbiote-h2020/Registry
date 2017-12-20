@@ -14,7 +14,7 @@ import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -811,7 +811,7 @@ public class RabbitManager {
                                                     String platformId,
                                                     RegistryOperationType operationType,
                                                     AuthorizationManager authorizationManager,
-                                                    Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
+                                                    Map<String, IAccessPolicySpecifier> policiesMap) {
         sendResourceValidationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.rdfResourceValidationRequestedRoutingKey,
@@ -831,7 +831,7 @@ public class RabbitManager {
                                                       String platformId,
                                                       RegistryOperationType operationType,
                                                       AuthorizationManager authorizationManager,
-                                                      Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
+                                                      Map<String, IAccessPolicySpecifier> policiesMap) {
         sendResourceValidationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.resourceExchangeName,
                 this.jsonResourceTranslationRequestedRoutingKey,
@@ -873,7 +873,7 @@ public class RabbitManager {
                                                                    Envelope rpcEnvelope, String exchangeName, String routingKey,
                                                                    DescriptionType descriptionType, RegistryOperationType operationType,
                                                                    String message, String platformId, AuthorizationManager authorizationManager,
-                                                                   Map<String, SingleTokenAccessPolicySpecifier> policiesMap) {
+                                                                   Map<String, IAccessPolicySpecifier> policiesMap) {
         try {
             String replyQueueName = rpcChannel.queueDeclare().getQueue();
 

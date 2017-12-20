@@ -8,6 +8,8 @@ import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.*;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.AccessPolicyType;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 
@@ -186,7 +188,7 @@ public class TestSetupConfig {
     }
 
     public static CoreResource generateSensor(String label, String comment, String id, String serviceUrl,
-                                              String rdfFilename, RDFFormat format, SingleTokenAccessPolicySpecifier specifier) {
+                                              String rdfFilename, RDFFormat format, IAccessPolicySpecifier specifier) {
         CoreResource res = new CoreResource();
         res.setDescription(Arrays.asList(comment));
         res.setName(label);
@@ -226,11 +228,11 @@ public class TestSetupConfig {
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);
 
-        Map<String, SingleTokenAccessPolicySpecifier> filteringPolicies = new HashMap<>();
+        Map<String, IAccessPolicySpecifier> filteringPolicies = new HashMap<>();
         Map<String, String> claims = new HashMap<>();
         claims.put("a","a");
-        filteringPolicies.put("1", new SingleTokenAccessPolicySpecifier(SingleTokenAccessPolicySpecifier.SingleTokenAccessPolicyType.PUBLIC, null));
-        filteringPolicies.put("2", new SingleTokenAccessPolicySpecifier(SingleTokenAccessPolicySpecifier.SingleTokenAccessPolicyType.PUBLIC, null));
+        filteringPolicies.put("1", new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
+        filteringPolicies.put("2", new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
 
         coreResourceRegistryRequest.setFilteringPolicies(filteringPolicies);
 
