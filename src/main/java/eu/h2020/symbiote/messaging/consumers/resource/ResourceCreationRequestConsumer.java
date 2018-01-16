@@ -80,6 +80,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryResponse registryResponse = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
         log.info(" [x] Received resources to create (CoreResourceRegistryRequest)");
+        log.info("Content: " + message);
 
         try {
             try {
@@ -125,7 +126,8 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                                         request.getPlatformId(),
                                         RegistryOperationType.CREATION,
                                         authorizationManager,
-                                        this.policiesMap);
+                                        this.policiesMap,
+                                        request.getBody());
                             } else {
                                 log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
                                 registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);

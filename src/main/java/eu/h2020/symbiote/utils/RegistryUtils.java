@@ -1,17 +1,18 @@
 package eu.h2020.symbiote.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.internal.CoreResource;
+import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceType;
-import eu.h2020.symbiote.model.cim.Actuator;
-import eu.h2020.symbiote.model.cim.Device;
-import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.model.cim.Service;
+import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -196,6 +197,10 @@ public class RegistryUtils {
             type = CoreResourceType.SERVICE;
         } else if (resource instanceof Device) {
             type = CoreResourceType.DEVICE;
+        } else if (resource instanceof MobileSensor) {
+            type = CoreResourceType.MOBILE_SENSOR;
+        } else if (resource instanceof StationarySensor) {
+            type = CoreResourceType.STATIONARY_SENSOR;
         }
         return type;
     }
@@ -205,6 +210,12 @@ public class RegistryUtils {
         if (federation.getId() == null || federation.getId().isEmpty()) return false;
         if (federation.getName() == null || federation.getName().isEmpty()) return false;
         return true;
+    }
+
+    public static Map<String, Resource> getMapFromRequestBody(CoreResourceRegistryRequest request) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
+        });
     }
 
     /* Deprecated ////////////////////

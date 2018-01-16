@@ -234,7 +234,6 @@ public class TestSetupConfig {
 
         coreResourceRegistryRequest.setFilteringPolicies(filteringPolicies);
 
-
         return coreResourceRegistryRequest;
     }
 
