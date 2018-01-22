@@ -127,18 +127,13 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
             try {
                 requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {});
-                log.info("-11-1-1-1-1: " + requestedResourcesMap);
             } catch (Exception e) {
-                log.error("Unable to get resources from request body!", e);
+                log.error("Unable to get resources from request body! ", e);
             }
 
             if (resourceInstanceValidationResult.isSuccess()) {
                 coreResources = resourceInstanceValidationResult.getObjectDescription();
                 log.info("CoreResources received from SM! Content: " + coreResources);
-
-                for (String key:coreResources.keySet()) {
-                    log.debug("......Core resource id: " + coreResources.get(key).getId());
-                }
 
                 AuthorizationResult authorizationResult = authorizationManager.checkIfResourcesBelongToPlatform
                         (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);

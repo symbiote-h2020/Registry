@@ -201,6 +201,8 @@ public class RegistryUtils {
             type = CoreResourceType.MOBILE_SENSOR;
         } else if (resource instanceof StationarySensor) {
             type = CoreResourceType.STATIONARY_SENSOR;
+        } else {
+            System.out.println("9782828282" + resource.getClass().getName());
         }
         return type;
     }
