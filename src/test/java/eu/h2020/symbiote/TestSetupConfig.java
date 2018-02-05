@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.model.mim.*;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
@@ -176,9 +177,14 @@ public class TestSetupConfig {
     }
 
     public static CoreResource generateStationarySensor() throws InvalidArgumentsException {
-        return generateSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
+        return generateSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, null,
                 PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD,
                 new SingleTokenAccessPolicySpecifier("mock", "mock"));
+    }
+
+    public static Resource generateStationaryResourceSensor() throws InvalidArgumentsException {
+        return generateResourceSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, null,
+                PLATFORM_A_URL);
     }
 
     public static CoreResource generateModifiedStationarySensor() throws InvalidArgumentsException {
@@ -198,6 +204,15 @@ public class TestSetupConfig {
         res.setRdfFormat(format);
         res.setType(CoreResourceType.STATIONARY_SENSOR);
         res.setPolicySpecifier(specifier);
+        return res;
+    }
+
+    public static Resource generateResourceSensor(String label, String comment, String id, String serviceUrl) {
+        Resource res = new StationarySensor();
+        res.setDescription(Arrays.asList(comment));
+        res.setName(label);
+        res.setId(id);
+        res.setInterworkingServiceURL(serviceUrl);
         return res;
     }
 
@@ -235,7 +250,6 @@ public class TestSetupConfig {
         filteringPolicies.put("2", new SingleTokenAccessPolicySpecifier(AccessPolicyType.PUBLIC, null));
 
         coreResourceRegistryRequest.setFilteringPolicies(filteringPolicies);
-
 
         return coreResourceRegistryRequest;
     }

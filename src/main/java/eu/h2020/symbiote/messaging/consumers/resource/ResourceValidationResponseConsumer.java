@@ -51,6 +51,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private String response;
     private AuthorizationManager authorizationManager;
     private Map<String, IAccessPolicySpecifier> policiesMap;
+    private String requestBody;
+    Map<String, Resource> requestedResourcesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -70,7 +72,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                                               RegistryOperationType operationType,
                                               DescriptionType descriptionType,
                                               AuthorizationManager authorizationManager,
-                                              Map<String, IAccessPolicySpecifier> policiesMap) {
+                                              Map<String, IAccessPolicySpecifier> policiesMap,
+                                              String requestBody) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -82,6 +85,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.descriptionType = descriptionType;
         this.authorizationManager = authorizationManager;
         this.policiesMap = policiesMap;
+        this.requestBody = requestBody;
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreResourceRegistryResponse();
         response = "";
@@ -121,6 +125,12 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
             }
 
+            try {
+                requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {});
+            } catch (Exception e) {
+                log.error("Unable to get resources from request body! ", e);
+            }
+
             if (resourceInstanceValidationResult.isSuccess()) {
                 coreResources = resourceInstanceValidationResult.getObjectDescription();
                 log.info("CoreResources received from SM! Content: " + coreResources);
@@ -129,8 +139,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                         (RegistryUtils.convertCoreResourcesToResourcesMap(coreResources), resourcesPlatformId);
 
                 if (authorizationResult.isValidated()) {
-                    Map<String, ResourcePersistenceResult> stringResourcePersistenceResultMap = makePersistenceOperations(coreResources);
-                    prepareContentOfMessage(stringResourcePersistenceResultMap);
+                    Map<String, ResourcePersistenceResult> persistenceResultMap = makePersistenceOperations(coreResources);
+                    prepareContentOfMessage(persistenceResultMap);
                 } else {
                     registryResponse.setStatus(400);
                     registryResponse.setMessage(authorizationResult.getMessage());
@@ -208,9 +218,13 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         Map<String, Resource> savedResourcesMap = new HashMap<>();
         if (bulkRequestSuccess) {
             for (String key : persistenceOperationResultsMap.keySet()) {
-                ResourcePersistenceResult resourcePersistenceResult = persistenceOperationResultsMap.get(key);
-                savedCoreResourcesList.add(resourcePersistenceResult.getResource());
-                savedResourcesMap.put(key, RegistryUtils.convertCoreResourceToResource(resourcePersistenceResult.getResource()));
+                CoreResource persistenceResultResource = persistenceOperationResultsMap.get(key).getResource();
+                Resource requestedResource = requestedResourcesMap.get(key);
+
+                savedCoreResourcesList.add(persistenceResultResource);
+
+                requestedResource.setId(persistenceResultResource.getId());
+                savedResourcesMap.put(key, requestedResource);
             }
             sendFanoutMessage(savedCoreResourcesList);
 

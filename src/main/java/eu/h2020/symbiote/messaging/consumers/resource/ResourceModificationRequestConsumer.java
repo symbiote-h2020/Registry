@@ -144,7 +144,8 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                                 request.getPlatformId(),
                                 RegistryOperationType.MODIFICATION,
                                 authorizationManager,
-                                this.policiesMap);
+                                this.policiesMap,
+                                request.getBody());
                     }
                     break;
             }

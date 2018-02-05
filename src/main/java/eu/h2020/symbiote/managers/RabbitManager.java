@@ -15,6 +15,7 @@ import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
+import javax.ws.rs.HEAD;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -803,7 +805,19 @@ public class RabbitManager {
         sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
                 resourcesIds.getClass().getCanonicalName());
     }
-
+    /**
+     * Triggers method for contact with Semantic Manager to verify RDF Resources (with RDF description type)
+     * and translate to JSON Core Resources.
+     *
+     * @param rpcConsumer rabbit consumer that received the request
+     * @param rpcProperties properties of request message received
+     * @param rpcEnvelope envelope of request message received
+     * @param message body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param platformId id of a platform corresponding to request
+     * @param operationType type of request - creation or modification
+     * @param authorizationManager - authorization manager bean
+     * @param policiesMap - map with security policies
+     */
     public void sendResourceRdfValidationRpcMessage(DefaultConsumer rpcConsumer,
                                                     AMQP.BasicProperties rpcProperties,
                                                     Envelope rpcEnvelope,
@@ -812,18 +826,31 @@ public class RabbitManager {
                                                     RegistryOperationType operationType,
                                                     AuthorizationManager authorizationManager,
                                                     Map<String, IAccessPolicySpecifier> policiesMap) {
-        sendResourceValidationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
-                this.resourceExchangeName,
+        sendResourceOperationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.rdfResourceValidationRequestedRoutingKey,
                 RDF,
                 operationType,
                 message,
                 platformId,
                 authorizationManager,
-                policiesMap);
+                policiesMap,
+                null); //// TODO: 15.01.2018
         log.info("- rdf resource to validation message sent");
     }
 
+    /**
+     * Triggers method for contact with Semantic Manager to translate JSON Resources (BASIC description type) to RDFs.
+     *
+     * @param rpcConsumer rabbit consumer that received the request
+     * @param rpcProperties properties of request message received
+     * @param rpcEnvelope envelope of request message received
+     * @param message body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param platformId id of a platform corresponding to request
+     * @param operationType type of request - creation or modification
+     * @param authorizationManager - authorization manager bean
+     * @param policiesMap - map with security policies
+     * @param requestBody body from received request in form of a JSON String with a Map of a String and Resource
+     */
     public void sendResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
                                                       AMQP.BasicProperties rpcProperties,
                                                       Envelope rpcEnvelope,
@@ -831,16 +858,17 @@ public class RabbitManager {
                                                       String platformId,
                                                       RegistryOperationType operationType,
                                                       AuthorizationManager authorizationManager,
-                                                      Map<String, IAccessPolicySpecifier> policiesMap) {
-        sendResourceValidationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
-                this.resourceExchangeName,
+                                                      Map<String, IAccessPolicySpecifier> policiesMap,
+                                                      String requestBody) {
+        sendResourceOperationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.jsonResourceTranslationRequestedRoutingKey,
                 BASIC,
                 operationType,
                 message,
                 platformId,
                 authorizationManager,
-                policiesMap);
+                policiesMap,
+                requestBody);
     }
 
     /**
@@ -869,11 +897,27 @@ public class RabbitManager {
         consumer.getChannel().basicAck(envelope.getDeliveryTag(), false);
     }
 
-    private void sendResourceValidationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties,
-                                                                   Envelope rpcEnvelope, String exchangeName, String routingKey,
-                                                                   DescriptionType descriptionType, RegistryOperationType operationType,
-                                                                   String message, String platformId, AuthorizationManager authorizationManager,
-                                                                   Map<String, IAccessPolicySpecifier> policiesMap) {
+    /**
+     * Publishes message on chosen routing key and creates a consumer waiting for responses.
+     *
+     * @param rpcConsumer rabbit consumer that received the request
+     * @param rpcProperties properties of request message received
+     * @param rpcEnvelope envelope of request message received
+     * @param routingKey routing key that is supposed to be used to publish the message on
+     * @param descriptionType BASIC (json) or RDF descrption type of content
+     * @param message body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param platformId id of a platform corresponding to request
+     * @param operationType type of request - creation or modification
+     * @param authorizationManager - authorization manager bean
+     * @param policiesMap - map with security policies
+     * @param requestBody body from received request in form of a JSON String with a Map of a String and Resource
+     */
+    private void sendResourceOperationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
+                                                                  String routingKey,
+                                                                  DescriptionType descriptionType, RegistryOperationType operationType,
+                                                                  String message, String platformId, AuthorizationManager authorizationManager,
+                                                                  Map<String, IAccessPolicySpecifier> policiesMap,
+                                                                  String requestBody) {
         try {
             String replyQueueName = rpcChannel.queueDeclare().getQueue();
 
@@ -887,14 +931,14 @@ public class RabbitManager {
             ResourceValidationResponseConsumer responseConsumer =
                     new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             rpcChannel, repositoryManager, this, platformId, operationType, descriptionType,
-                            authorizationManager, policiesMap);
+                            authorizationManager, policiesMap, requestBody);
 
             rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
-                    + exchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
+                    + this.resourceExchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
 
-            rpcChannel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
+            rpcChannel.basicPublish(this.resourceExchangeName, routingKey, true, props, message.getBytes());
 
         } catch (IOException e) {
             log.error(e);
@@ -1104,6 +1148,7 @@ public class RabbitManager {
                 if (delivery.getProperties().getCorrelationId().equals(correlationId)) {
                     log.debug("Got reply with correlationId: " + correlationId);
                     responseMsg = new String(delivery.getBody());
+                    log.debug("reply content: " + responseMsg);
                     break;
                 } else {
                     log.debug("Got answer with wrong correlationId... should be " + correlationId + " but got " + delivery.getProperties().getCorrelationId());

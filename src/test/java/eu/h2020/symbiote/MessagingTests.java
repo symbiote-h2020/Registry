@@ -39,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
+import static eu.h2020.symbiote.utils.RegistryUtils.convertResourceToCoreResource;
+import static eu.h2020.symbiote.utils.RegistryUtils.getTypeForResource;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -211,6 +213,53 @@ public class MessagingTests {
 
         // Timeout to make sure that the message has been delivered
         verify(mockedRepository, timeout(500).times(2)).saveResource(any());
+    }
+
+    @Test
+    public void resourceCreationRPCHappyPathTest() throws Exception {
+        rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
+
+        Resource resource1 = generateStationaryResourceSensor();
+        Resource resource2 = generateStationaryResourceSensor();
+        CoreResourceRegistryRequest coreResourceRegistryRequestWithResources = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
+        CoreResource coreResource1 = convertResourceToCoreResource(resource1);
+        CoreResource coreResource2 = convertResourceToCoreResource(resource2);
+        CoreResourceRegistryRequest coreResourceRegistryRequestWithCoreResources = generateCoreResourceRegistryRequestBasicType(coreResource1, coreResource2);
+        String resourcesMessage = mapper.writeValueAsString(coreResourceRegistryRequestWithResources);
+        String coreResourcesMessage = mapper.writeValueAsString(coreResourceRegistryRequestWithCoreResources);
+
+        when(mockedAuthorizationManager.checkSinglePlatformOperationAccess(any(), any())).thenReturn(new AuthorizationResult("", true));
+        when(mockedAuthorizationManager.checkIfResourcesBelongToPlatform(any(), anyString())).thenReturn(new AuthorizationResult("ok", true));
+        addIdToResource(resource1);
+        when(mockedRepository.saveResource(any())).thenReturn(new ResourcePersistenceResult(200, "ok", RegistryUtils.convertResourceToCoreResource(resource1)));
+
+        mockSemanticManagerResourceTranslationCommunication(coreResourcesMessage);
+
+        String response = rabbitManager.sendRpcMessageAndConsumeResponse(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, resourcesMessage);
+
+        CoreResourceRegistryResponse resourceRegistryResponse = mapper.readValue(response, CoreResourceRegistryResponse.class);
+
+        String resourceMapString = resourceRegistryResponse.getBody();
+        Map<String, Resource> responseResourceMap = mapper.readValue(resourceMapString, new TypeReference<Map<String, Resource>>() {
+        });
+
+        Assert.assertNotNull(resourceRegistryResponse.getMessage());
+        Assert.assertEquals(resourceRegistryResponse.getStatus(), 200);
+
+        verify(mockedRepository, times(2)).saveResource(any());
+
+        Map<String, Resource> requestResourceMap = mapper.readValue(coreResourceRegistryRequestWithResources.getBody(), new TypeReference<Map<String, Resource>>() {
+        });
+
+        for (String key : responseResourceMap.keySet()) {
+            Assert.assertTrue(responseResourceMap.get(key) != null);
+            Assert.assertTrue(responseResourceMap.get(key).getId() != null);
+            log.debug("- Received in response Resource with key: " + key + " : " + responseResourceMap.get(key).toString());
+            CoreResourceType typeForRequestedResource = getTypeForResource(requestResourceMap.get(key));
+            Assert.assertNotNull(typeForRequestedResource);
+            Assert.assertNotNull(getTypeForResource(responseResourceMap.get(key)));
+            Assert.assertTrue(getTypeForResource(responseResourceMap.get(key)).equals(typeForRequestedResource));
+        }
     }
 
     @Test
@@ -515,7 +564,7 @@ public class MessagingTests {
         log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
 
         String messageReceived = new String(body);
-        assertEquals(message, messageReceived);
+//        assertEquals(message, messageReceived);
         CoreResourceRegistryRequest request = mapper.readValue(messageReceived, CoreResourceRegistryRequest.class);
 
         assertNotNull(properties);
@@ -524,13 +573,22 @@ public class MessagingTests {
         assertNotNull(correlationId);
         assertNotNull(replyQueueName);
 
-        Map<String, CoreResource> resources = new HashMap<>();
+        Map<String, CoreResource> coreResourcesMap = new HashMap<>();
+
+        Map<String, Resource> resourcesMap = new HashMap<>();
         try {
-            resources = mapper.readValue(request.getBody(), new TypeReference<Map<String, CoreResource>>() {
+            resourcesMap = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
             });
         } catch (IOException e) {
-            log.error("Could not deserialize content of request!" + e);
+            log.error("Could not deserialize content of request! " + e);
             throw e;
+        }
+
+        for (String key : resourcesMap.keySet()) {
+            Resource resource = resourcesMap.get(key);
+            resource.setId("some generated id " + key);
+            CoreResource coreResource = convertResourceToCoreResource(resource);
+            coreResourcesMap.put(key, coreResource);
         }
 
         ResourceInstanceValidationResult validationResult = new ResourceInstanceValidationResult();
@@ -538,7 +596,7 @@ public class MessagingTests {
         validationResult.setMessage("ok");
         validationResult.setModelValidated("ok");
         validationResult.setModelValidatedAgainst("ok");
-        validationResult.setObjectDescription(resources);
+        validationResult.setObjectDescription(coreResourcesMap);
 
         byte[] responseBytes = mapper.writeValueAsBytes(validationResult);
 
@@ -1100,6 +1158,7 @@ public class MessagingTests {
 
         verify(mockedRepository).removeInformationModel(any());
     }
+
     @Test
     public void informationModelRemovalRequestConsumerRepoFailTest() throws Exception {
         rabbitManager.startConsumerOfInformationModelRemovalMessages();
@@ -1139,7 +1198,7 @@ public class MessagingTests {
     public void mockIMVerificationReply(Envelope envelope, AMQP.BasicProperties properties, byte[] body, String message) throws IOException {
         log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
 
-        String messageReceived = "{\"body\":" + new String(body) +"}"; //// todo: 30.10.2017 Hardcoded - find out why it does not work without it!
+        String messageReceived = "{\"body\":" + new String(body) + "}"; //// todo: 30.10.2017 Hardcoded - find out why it does not work without it!
 
 //        assertEquals(message, messageReceived);
         InformationModelRequest request = mapper.readValue(messageReceived, InformationModelRequest.class);
