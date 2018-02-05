@@ -119,14 +119,16 @@ public class FederationRepositoryManagerTests {
     @Test
     public void testModifyFederationWithEmptySlaDefinition() throws Exception {
         Federation federation = generateFederationA();
-        federation.setSlaDefinition("");
+        //FIXME set null for SLA in order to be able to build
+        federation.setSlaConstraints(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyFederation(federation).getStatus());
     }
 
     @Test
     public void testModifyFederationWithSlaDefinition() throws Exception {
         Federation federation = generateFederationA();
-        federation.setSlaDefinition(null);
+        //FIXME set null for SLA in order to be able to build
+        federation.setSlaConstraints(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyFederation(federation).getStatus());
     }
 

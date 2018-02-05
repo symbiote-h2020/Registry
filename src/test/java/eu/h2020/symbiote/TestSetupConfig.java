@@ -293,7 +293,8 @@ public class TestSetupConfig {
         federation.setName("FederationA");
         federation.setId("A");
         federation.setPublic(true);
-        federation.setSlaDefinition("defA");
+        //FIXME set null for SLA in order to be able to build
+        federation.setSlaConstraints(null);
         federation.setMembers(Arrays.asList(generateMemberA()));
 
         return federation;
@@ -304,7 +305,8 @@ public class TestSetupConfig {
         federation.setName("FederationB");
         federation.setId("B");
         federation.setPublic(false);
-        federation.setSlaDefinition("defB");
+        //FIXME set null for SLA in order to be able to build
+        federation.setSlaConstraints(null);
         federation.setMembers(Arrays.asList(generateMemberB()));
         return federation;
     }
