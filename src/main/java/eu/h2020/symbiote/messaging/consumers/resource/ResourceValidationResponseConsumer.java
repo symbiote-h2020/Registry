@@ -91,8 +91,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         response = "";
     }
 
-    //fixme when creating resources, reply could include original list of resources with added IDs instead of list with new resources
-
     /**
      * Called when a <code><b>basic.deliver</b></code> is received for this consumer.
      *

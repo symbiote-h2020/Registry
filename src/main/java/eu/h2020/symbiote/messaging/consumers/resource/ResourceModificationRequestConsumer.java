@@ -78,8 +78,6 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
         CoreResourceRegistryResponse response = new CoreResourceRegistryResponse();
         String message = new String(body, "UTF-8");
 
-        //// TODO: 16.08.2017 UPDATE to Interworking Service checking similar to CREATION!
-
         log.info(" [x] Received resources to modify (CoreResourceRegistryRequest)");
 
         try {
@@ -159,10 +157,10 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     }
 
     /**
-     * Checks if given request consists of resources, which does not have any content in ID field.
+     * Checks if given request consists of resources, which all have an ID.
      *
      * @param request
-     * @return true if given resources don't have an ID.
+     * @return true if any of given resources does not have an ID.
      */
     private boolean checkIfResourcesHaveNullOrEmptyId(CoreResourceRegistryRequest request) {
         Map<String, Resource> resourceMap = new HashMap<>();
@@ -173,14 +171,17 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             log.error("Could not deserialize content of request!" + e);
         }
         List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
-        return checkIds(resources);
+        return checkIfEveryResourceHasId(resources);
     }
 
-    private boolean checkIds(List<Resource> resources) {
-
+    /**
+     * @param resources list with resources to check
+     * @return True if every of resources in list has an id. False if any of resources has not an id.
+     */
+    private boolean checkIfEveryResourceHasId(List<Resource> resources) {
         try {
             for (Resource resource : resources) {
-                if (!checkId(resource)) return false;
+                if (!checkIfResourceHasId(resource)) return false;
                 List<Service> services = new ArrayList<>();
                 if (resource instanceof Device) {
                     services = ((Device) resource).getServices();
@@ -189,9 +190,9 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 } else if (resource instanceof Actuator) {
                     services = ((Actuator) resource).getServices();
                 }
-                if (!services.isEmpty()) {
+                if (services.isEmpty()) {
                     for (Service service : services) {
-                        if (!checkId(service)) return false;
+                        if (!checkIfResourceHasId(service)) return false;
                     }
                 }
             }
@@ -199,15 +200,18 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
             log.error(e);
             return false;
         }
-
         return true;
     }
 
-    private boolean checkId(Resource resource) {
+    /**
+     * @param resource
+     * @return True if resource has an ID.
+     */
+    private boolean checkIfResourceHasId(Resource resource) {
         if (resource.getId() != null && !resource.getId().isEmpty()) {
-            log.error("One of the resources (or actuating services) has an ID!");
-            return false;
+            return true;
         }
-        return true;
+        log.error("One of the resources (or actuating services) has ID field empty or null!");
+        return false;
     }
 }
