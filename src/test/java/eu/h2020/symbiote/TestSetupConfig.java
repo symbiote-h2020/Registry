@@ -157,13 +157,13 @@ public class TestSetupConfig {
     }
 
     public static CoreResource generateCoreResourceWithoutId() throws InvalidArgumentsException {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
+        return generateCoreResourceSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B,
                 RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD,
                 new SingleTokenAccessPolicySpecifier("mock", "mock"));
     }
 
-    public static Resource generateResourceWithoutId() {
-        return generateSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B);
+    public static Resource generateCoreResourceSensorWithoutId() {
+        return generateCoreResourceSensor(RESOURCE_101_LABEL, RESOURCE_101_COMMENT, null, INTERWORKING_SERVICE_URL_B);
     }
 
     public static CoreResource addIdToCoreResource(CoreResource coreResource) {
@@ -177,7 +177,7 @@ public class TestSetupConfig {
     }
 
     public static CoreResource generateStationarySensor() throws InvalidArgumentsException {
-        return generateSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, null,
+        return generateCoreResourceSensor(RESOURCE_STATIONARY_LABEL, RESOURCE_STATIONARY_COMMENT, null,
                 PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME, RDFFormat.JSONLD,
                 new SingleTokenAccessPolicySpecifier("mock", "mock"));
     }
@@ -188,13 +188,13 @@ public class TestSetupConfig {
     }
 
     public static CoreResource generateModifiedStationarySensor() throws InvalidArgumentsException {
-        return generateSensor(RESOURCE_STATIONARY_LABEL_MODIFIED, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
+        return generateCoreResourceSensor(RESOURCE_STATIONARY_LABEL_MODIFIED, RESOURCE_STATIONARY_COMMENT, RESOURCE_STATIONARY_ID,
                 PLATFORM_A_URL, RESOURCE_STATIONARY_FILENAME_MODIFIED, RDFFormat.JSONLD,
                 new SingleTokenAccessPolicySpecifier("mock", "mock"));
     }
 
-    public static CoreResource generateSensor(String label, String comment, String id, String serviceUrl,
-                                              String rdfFilename, RDFFormat format, IAccessPolicySpecifier specifier) {
+    public static CoreResource generateCoreResourceSensor(String label, String comment, String id, String serviceUrl,
+                                                          String rdfFilename, RDFFormat format, IAccessPolicySpecifier specifier) {
         CoreResource res = new CoreResource();
         res.setDescription(Arrays.asList(comment));
         res.setName(label);
@@ -216,7 +216,7 @@ public class TestSetupConfig {
         return res;
     }
 
-    public static Resource generateSensor(String label, String comment, String id, String interworkingServiceUrl) {
+    public static Resource generateCoreResourceSensor(String label, String comment, String id, String interworkingServiceUrl) {
         CoreResource res = new CoreResource();
         res.setDescription(Arrays.asList(comment));
         res.setName(label);

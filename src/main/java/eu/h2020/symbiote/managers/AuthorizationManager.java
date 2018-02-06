@@ -31,13 +31,6 @@ import java.util.*;
 public class AuthorizationManager {
 
     private static Log log = LogFactory.getLog(AuthorizationManager.class);
-    private String aamAddress;
-    private String clientId;
-    private String keystoreName;
-    private String keystorePass;
-    private String componentOwnerName;
-    private String componentOwnerPassword;
-    private Boolean alwaysUseLocalAAMForValidation;
     private Boolean securityEnabled = true;
 
     private IComponentSecurityHandler componentSecurityHandler;
@@ -52,35 +45,29 @@ public class AuthorizationManager {
                                 @Value("${aam.environment.clientId}") String clientId,
                                 @Value("${aam.environment.keystoreName}") String keystoreName,
                                 @Value("${aam.environment.keystorePass}") String keystorePass,
-                                @Value("${symbIoTe.validation.localaam}") Boolean alwaysUseLocalAAMForValidation,
                                 @Value("${registry.security.enabled}") Boolean securityEnabled) throws SecurityHandlerException {
         this.platformRepository = platformRepository;
-        this.componentOwnerName = componentOwnerName;
-        this.componentOwnerPassword = componentOwnerPassword;
-        this.aamAddress = aamAddress;
-        this.clientId = clientId;
-        this.keystoreName = keystoreName;
-        this.keystorePass = keystorePass;
-        this.alwaysUseLocalAAMForValidation = alwaysUseLocalAAMForValidation;
         this.securityEnabled = securityEnabled;
 
         if (securityEnabled) {
             componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(
-                    this.aamAddress,
-                    this.keystoreName,
-                    this.keystorePass,
-                    this.clientId,
-                    this.aamAddress,
-                    this.alwaysUseLocalAAMForValidation,
-                    this.componentOwnerName,
-                    this.componentOwnerPassword);
+                    keystoreName,
+                    keystorePass,
+                    clientId,
+                    aamAddress,
+                    componentOwnerName,
+                    componentOwnerPassword);
         }
     }
 
     public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {
         Set<String> ids = new HashSet<>();
-        ids.add(platformId);
-        return checkOperationAccess(securityRequest, ids);
+        if (platformId == null) {
+            return new AuthorizationResult("Platform Id is null!", false);
+        } else {
+            ids.add(platformId);
+            return checkOperationAccess(securityRequest, ids);
+        }
     }
 
     private AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
@@ -90,7 +77,7 @@ public class AuthorizationManager {
             if (securityRequest == null) {
                 return new AuthorizationResult("SecurityRequest is null", false);
             }
-            if (platformIds == null) {
+            if (platformIds == null || platformIds.isEmpty()) {
                 return new AuthorizationResult("Platform Ids is null", false);
             }
             Set<String> checkedPolicies;
@@ -100,7 +87,7 @@ public class AuthorizationManager {
                 log.error("Component Security Handler Exception " + e);
                 return new AuthorizationResult("Component Security Handler Exception " + e, false);
             }
-            if (platformIds.size() == checkedPolicies.size()) {
+            if (!checkedPolicies.isEmpty()) {
                 return new AuthorizationResult("ok", true);
             } else {
                 return new AuthorizationResult("Provided Policies does not match with needed to perform operation.", false);
@@ -116,7 +103,7 @@ public class AuthorizationManager {
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
         Set<String> satisfiedPoliciesIdentifiers;
 
-        String rhComponentId = "reghandler";
+        final String rhComponentId = "reghandler";
 
         for (String platformId : platformIds) {
             try {

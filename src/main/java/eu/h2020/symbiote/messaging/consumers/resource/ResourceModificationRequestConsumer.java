@@ -128,13 +128,13 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                     break;
                 case BASIC:
                     if (checkIfResourcesHaveNullOrEmptyId(request)) {
+                        log.info(request.getBody());
                         log.error("One of the resources has no ID or list with resources is invalid. Resources not modified!");
                         response.setStatus(HttpStatus.SC_BAD_REQUEST);
                         response.setMessage("One of the resources has no ID or list with resources is invalid. Resources not modified!");
                         rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                                 mapper.writeValueAsString(response));
                     } else {
-
                         log.info("Message to Semantic Manager Sent. Content Type : BASIC. Request: " + request.getBody());
                         //sending JSON content to Semantic Manager and passing responsibility to another consumer
                         rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,
@@ -181,7 +181,10 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
     private boolean checkIfEveryResourceHasId(List<Resource> resources) {
         try {
             for (Resource resource : resources) {
-                if (!checkIfResourceHasId(resource)) return false;
+                if (!checkIfResourceHasId(resource)) {
+                    log.error("One of resources does not have an id!");
+                    return false;
+                }
                 List<Service> services = new ArrayList<>();
                 if (resource instanceof Device) {
                     services = ((Device) resource).getServices();
@@ -190,9 +193,12 @@ public class ResourceModificationRequestConsumer extends DefaultConsumer {
                 } else if (resource instanceof Actuator) {
                     services = ((Actuator) resource).getServices();
                 }
-                if (services.isEmpty()) {
+                if (!services.isEmpty()) {
                     for (Service service : services) {
-                        if (!checkIfResourceHasId(service)) return false;
+                        if (!checkIfResourceHasId(service)) {
+                            log.error("One of services does not have an id!");
+                            return false;
+                        }
                     }
                 }
             }

@@ -154,20 +154,20 @@ public class ResourceRepositoryManagerTests {
 
     @Test
     public void testRemoveResourceWithoutId() throws Exception {
-        Resource resource = generateResourceWithoutId();
+        Resource resource = generateCoreResourceSensorWithoutId();
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
     }
 
     @Test
     public void testRemoveResourceWithWrongId() throws Exception {
-        Resource resource = generateResourceWithoutId();
+        Resource resource = generateCoreResourceSensorWithoutId();
         resource.setId("");
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());
     }
 
     @Test
     public void testRemoveResourceThatDoesNotExist() throws Exception {
-        Resource resource = generateResourceWithoutId();
+        Resource resource = generateCoreResourceSensorWithoutId();
         resource.setId("1234");
         when(resourceRepository.findOne(resource.getId())).thenReturn(null);
         Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeResource(resource).getStatus());

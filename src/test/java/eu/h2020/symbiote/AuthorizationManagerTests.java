@@ -35,7 +35,7 @@ public class AuthorizationManagerTests {
         mockedPlatformRepository = Mockito.mock(PlatformRepository.class);
         RabbitManager rabbitManager = Mockito.mock(RabbitManager.class);
 
-        authorizationManager = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, true, SECURITY_ENABLED); //security enabled = false stands for DISABLING security
+        authorizationManager = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, SECURITY_ENABLED); //security enabled = false stands for DISABLING security
         ReflectionTestUtils.setField(authorizationManager, "aamAddress", AAM_ADDRESS);
         ReflectionTestUtils.setField(authorizationManager, "clientId", AAM_CLIENT_ID);
         ReflectionTestUtils.setField(authorizationManager, "keystoreName", AAM_KEYSTORE_NAME);
@@ -61,7 +61,7 @@ public class AuthorizationManagerTests {
 
         AuthorizationManager authorizationManager1 = null;
         try {
-            authorizationManager1 = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, true, true);
+            authorizationManager1 = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, true);
             //security enabled = true stands for ENABLING security
         } catch (Exception e){
             System.out.println(e);
@@ -76,7 +76,7 @@ public class AuthorizationManagerTests {
         when(mockedPlatformRepository.findOne(platformB.getId())).thenReturn(platformB);
 
         HashMap<String, Resource> resources = new HashMap<>();
-        resources.put("1", generateResourceWithoutId());
+        resources.put("1", generateCoreResourceSensorWithoutId());
 
         Assert.assertTrue(authorizationManager.checkIfResourcesBelongToPlatform(resources, platformB.getId()).isValidated());
     }
@@ -119,7 +119,7 @@ public class AuthorizationManagerTests {
         when(mockedPlatformRepository.findOne(platformB.getId())).thenReturn(platformB);
 
         HashMap<String, Resource> resources = new HashMap<>();
-        resources.put("1", generateResourceWithoutId());
+        resources.put("1", generateCoreResourceSensorWithoutId());
 
         Assert.assertFalse(authorizationManager.checkIfResourcesBelongToPlatform(resources, platformB.getId()).isValidated());
     }

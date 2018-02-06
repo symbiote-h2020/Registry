@@ -72,7 +72,7 @@ public class RegistryUtilsTests {
 
     @Test
     public void testResourceToCoreResourceConverter() {
-        Resource resource = generateResourceWithoutId();
+        Resource resource = generateCoreResourceSensorWithoutId();
         addIdToResource(resource);
         CoreResource coreResource = RegistryUtils.convertResourceToCoreResource(resource);
 
@@ -110,7 +110,7 @@ public class RegistryUtilsTests {
 
     @Test
     public void testResourceFieldsValidation() {
-        Resource resource = generateResourceWithoutId();
+        Resource resource = generateCoreResourceSensorWithoutId();
         Assert.assertTrue(RegistryUtils.validateFields(resource));
     }
 

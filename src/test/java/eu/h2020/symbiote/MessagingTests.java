@@ -194,8 +194,8 @@ public class MessagingTests {
     public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -266,8 +266,8 @@ public class MessagingTests {
     public void resourceCreationRequestConsumerRPCSemanticContentFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -291,8 +291,8 @@ public class MessagingTests {
     public void resourceCreationRequestConsumerRPCNullInterworkingUrlFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestRdfType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -319,9 +319,9 @@ public class MessagingTests {
     public void resourceModificationRequestConsumerHappyPathTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateStationaryResourceSensor();
         addIdToResource(resource1);
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource2 = generateStationaryResourceSensor();
         addIdToResource(resource2);
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
@@ -342,9 +342,9 @@ public class MessagingTests {
     public void resourceRemovalRequestConsumerHappyPathTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(this.mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         addIdToResource(resource1);
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         addIdToResource(resource2);
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
 
@@ -370,8 +370,8 @@ public class MessagingTests {
     public void resourceCreationRequestConsumerAuthFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -389,8 +389,8 @@ public class MessagingTests {
     public void resourceModificationRequestConsumerAuthFailTest() throws InterruptedException, IOException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -408,8 +408,8 @@ public class MessagingTests {
     public void resourceRemovalRequestConsumerAuthFailTest() throws JsonProcessingException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -428,7 +428,7 @@ public class MessagingTests {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
         //generating wrong payload for this communication
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         String message = mapper.writeValueAsString(resource1);
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
@@ -443,7 +443,7 @@ public class MessagingTests {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
 
         //generating wrong payload for this communication
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         String message = mapper.writeValueAsString(resource1);
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_MODIFICATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
@@ -458,7 +458,7 @@ public class MessagingTests {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
 
         //generating wrong payload for this communication
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         String message = mapper.writeValueAsString(resource1);
 
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_REMOVAL_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
@@ -473,9 +473,9 @@ public class MessagingTests {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
         //generating resource with ID (should not pass verification in consumer)
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         resource1 = addIdToResource(resource1);
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -494,8 +494,8 @@ public class MessagingTests {
         rabbitManager.startConsumerOfResourceModificationMessages(mockedAuthorizationManager);
 
         //generating resource with ID (should not pass verification in consumer)
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -513,8 +513,8 @@ public class MessagingTests {
     public void resourceRemovalRequestConsumerWithoutIdFailTest() throws JsonProcessingException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceRemovalMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
 
@@ -532,8 +532,8 @@ public class MessagingTests {
     public void resourceCreationRequestConsumerNullBodyFailTest() throws IOException, InterruptedException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
         coreResourceRegistryRequest.setBody(null);
         String message = mapper.writeValueAsString(coreResourceRegistryRequest);
@@ -982,9 +982,9 @@ public class MessagingTests {
     public void platformResourcesRequestedConsumerTest() throws Exception {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         addIdToResource(resource1);
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         addIdToResource(resource2);
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
 
@@ -1030,9 +1030,9 @@ public class MessagingTests {
     public void platformResourcesRequestedConsumerAuthFailTest() throws Exception {
         rabbitManager.startConsumerOfPlatformResourcesRequestsMessages(mockedAuthorizationManager);
 
-        Resource resource1 = generateResourceWithoutId();
+        Resource resource1 = generateCoreResourceSensorWithoutId();
         addIdToResource(resource1);
-        Resource resource2 = generateResourceWithoutId();
+        Resource resource2 = generateCoreResourceSensorWithoutId();
         addIdToResource(resource2);
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
 
