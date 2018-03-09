@@ -202,7 +202,7 @@ public class RegistryUtils {
         } else if (resource instanceof StationarySensor) {
             type = CoreResourceType.STATIONARY_SENSOR;
         } else {
-            System.out.println("9782828282" + resource.getClass().getName());
+            log.error("Unrecognized type of Resource retrieved!");
         }
         return type;
     }

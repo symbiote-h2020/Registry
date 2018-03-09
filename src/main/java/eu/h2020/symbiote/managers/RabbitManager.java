@@ -15,7 +15,6 @@ import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
-import javax.ws.rs.HEAD;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -193,8 +191,6 @@ public class RabbitManager {
 
     @Value("${rabbit.exchange.aam.name}")
     private String aamExchangeName;
-    @Value("${rabbit.routingKey.get.platform.owners.names}")
-    private String aamGetPlatformOwners;
 
     @Autowired
     public RabbitManager(RepositoryManager repositoryManager, @Lazy AuthorizationManager authorizationManager) {
