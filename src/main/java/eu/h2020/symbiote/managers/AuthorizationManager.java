@@ -36,6 +36,14 @@ public class AuthorizationManager {
     private IComponentSecurityHandler componentSecurityHandler;
     private PlatformRepository platformRepository;
 
+    // Fields for tests purposes
+    private String aamAddress;
+    private String clientId;
+    private String keystoreName;
+    private String keystorePass;
+    private String componentOwnerName;
+    private String componentOwnerPassword;
+    // do not remove even if seems not needed
 
     @Autowired
     public AuthorizationManager(PlatformRepository platformRepository,
@@ -49,14 +57,23 @@ public class AuthorizationManager {
         this.platformRepository = platformRepository;
         this.securityEnabled = securityEnabled;
 
+        // Fields for tests purposes
+        this.componentOwnerName = componentOwnerName;
+        this.componentOwnerPassword = componentOwnerPassword;
+        this.aamAddress = aamAddress;
+        this.clientId = clientId;
+        this.keystoreName = keystoreName;
+        this.keystorePass = keystorePass;
+        // do not remove even if seems not needed
+
         if (securityEnabled) {
             componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(
-                    keystoreName,
-                    keystorePass,
-                    clientId,
-                    aamAddress,
-                    componentOwnerName,
-                    componentOwnerPassword);
+                    this.keystoreName,
+                    this.keystorePass,
+                    this.clientId,
+                    this.aamAddress,
+                    this.componentOwnerName,
+                    this.componentOwnerPassword);
         }
     }
 

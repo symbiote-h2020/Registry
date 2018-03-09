@@ -122,7 +122,6 @@ public class MessagingTests {
         ReflectionTestUtils.setField(rabbitManager, "federationRequestedRoutingKey", GET_FEDERATION_FOR_PLATFORM_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "aamExchangeName", AAM_EXCHANGE_NAME);
-        ReflectionTestUtils.setField(rabbitManager, "aamGetPlatformOwners", AAM_GET_PLATFORM_OWNERS_RK);
 
         ReflectionTestUtils.setField(rabbitManager, "platformResourcesRequestedRoutingKey", RESOURCES_FOR_PLATFORM_REQUESTED_RK);
         ReflectionTestUtils.setField(rabbitManager, "platformDetailsRequestedRoutingKey", PLATFORM_DETAILS_REQUESTED_RK);
