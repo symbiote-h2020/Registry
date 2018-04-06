@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,13 +55,15 @@ public class MessagingTests {
 
     public static final String TEMP_QUEUE = "RPCqueue";
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
-    private RepositoryManager mockedRepository;
     private ObjectMapper mapper;
+    private Connection connection;
+    private Channel channel;
+    @Mock
+    private RepositoryManager mockedRepository;
+    @Mock
     private AuthorizationManager mockedAuthorizationManager;
     @InjectMocks
     private RabbitManager rabbitManager;
-    private Connection connection;
-    private Channel channel;
 
     @Before
     public void setup() throws IOException, TimeoutException {
@@ -131,14 +134,9 @@ public class MessagingTests {
 
         ReflectionTestUtils.invokeMethod(rabbitManager, "init");
 
-        mockedRepository = mock(RepositoryManager.class);
-        mockedAuthorizationManager = mock(AuthorizationManager.class);
         mapper = new ObjectMapper();
         connection = rabbitManager.getConnection();
         channel = connection.createChannel();
-
-        ReflectionTestUtils.setField(rabbitManager, "repositoryManager", mockedRepository);
-
     }
 
     @After
