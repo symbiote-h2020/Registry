@@ -7,8 +7,7 @@ import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
-import eu.h2020.symbiote.security.accesspolicies.common.SingleTokenAccessPolicyFactory;
-import eu.h2020.symbiote.security.accesspolicies.common.singletoken.SingleTokenAccessPolicySpecifier;
+import eu.h2020.symbiote.security.accesspolicies.common.singletoken.ComponentHomeTokenAccessPolicy;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
@@ -123,13 +122,12 @@ public class AuthorizationManager {
         final String rhComponentId = "reghandler";
 
         for (String platformId : platformIds) {
-            try {
-                SingleTokenAccessPolicySpecifier specifier = new SingleTokenAccessPolicySpecifier(rhComponentId, platformId);
-                accessPoliciesMap.put(
-                        platformId, SingleTokenAccessPolicyFactory.getSingleTokenAccessPolicy(specifier));
 
+            try {
+                ComponentHomeTokenAccessPolicy componentHomeTokenAccessPolicy = new ComponentHomeTokenAccessPolicy(platformId, rhComponentId, null);
+                accessPoliciesMap.put(platformId, componentHomeTokenAccessPolicy);
             } catch (InvalidArgumentsException e) {
-                log.error(e);
+                log.error("Single Token Access Policy Specifier error: " + e);
             }
         }
         try {
