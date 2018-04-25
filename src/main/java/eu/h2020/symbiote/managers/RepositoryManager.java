@@ -32,8 +32,8 @@ import java.util.List;
 @Component
 public class RepositoryManager {
 
-    private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID!";
-    private static final String IM_HAS_NULL_OR_EMPTY_ID = "Information Model has null or empty ID!";
+    private static final String RESOURCE_HAS_NULL_OR_EMPTY_ID = "Resource has null or empty ID and has not been saved!";
+    private static final String IM_HAS_NULL_OR_EMPTY_ID = "Information Model has null or empty ID and has not been saved!";
     private static final String FEDERATION_HAS_NULL_OR_EMPTY_ID = "Federation has null or empty ID!";
     private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
     private static Log log = LogFactory.getLog(RepositoryManager.class);

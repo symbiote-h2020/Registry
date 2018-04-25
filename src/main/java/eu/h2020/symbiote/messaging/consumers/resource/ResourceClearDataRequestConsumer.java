@@ -1,6 +1,5 @@
 package eu.h2020.symbiote.messaging.consumers.resource;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
@@ -8,7 +7,9 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.internal.*;
+import eu.h2020.symbiote.core.internal.ClearDataRequest;
+import eu.h2020.symbiote.core.internal.ClearDataResponse;
+import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
@@ -121,7 +122,7 @@ public class ResourceClearDataRequestConsumer  extends DefaultConsumer {
 
                 //List all resources of a platform
                 resourceList = repositoryManager.getResourcesForPlatform(request.getBody());
-                log.debug("Found resources: " + (resourceList==null?"resourceList is null":resourceList.size() + " size" ));
+                log.debug("Found resources number: " + (resourceList==null?"resourceList is null":resourceList.size()));
                 if( resourceList != null ) {
                 }
 

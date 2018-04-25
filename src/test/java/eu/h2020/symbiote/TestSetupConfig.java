@@ -33,6 +33,7 @@ public class TestSetupConfig {
     public static final String RESOURCE_CREATION_REQUESTED_RK = "symbIoTe.resource.creationRequested";
     public static final String RESOURCE_MODIFICATION_REQUESTED_RK = "symbIoTe.resource.modificationRequested";
     public static final String RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.resource.removalRequested";
+    public static final String RESOURCE_CLEAR_DATA_REQUESTED_RK = "resource.clearDataRequested";
 
     public static final String FEDERATION_EXCHANGE_NAME = "symbIoTe.federation";
     public static final String INFORMATION_MODEL_EXCHANGE_NAME = "symbIoTe.platform";
@@ -221,7 +222,7 @@ public class TestSetupConfig {
         res.setDescription(Arrays.asList(comment));
         res.setName(label);
         res.setId(id);
-        res.setType(CoreResourceType.STATIONARY_SENSOR);
+        res.setType(CoreResourceType.ACTUATOR);
         res.setInterworkingServiceURL(interworkingServiceUrl);
         return res;
     }
@@ -238,7 +239,7 @@ public class TestSetupConfig {
         }).writeValueAsString(resourceMap);
 
         CoreResourceRegistryRequest coreResourceRegistryRequest = new CoreResourceRegistryRequest();
-        coreResourceRegistryRequest.setPlatformId(PLATFORM_A_ID);
+        coreResourceRegistryRequest.setPlatformId(PLATFORM_B_ID);
         coreResourceRegistryRequest.setSecurityRequest(SECURITY_REQUEST);
         coreResourceRegistryRequest.setDescriptionType(DescriptionType.BASIC);
         coreResourceRegistryRequest.setBody(resources);

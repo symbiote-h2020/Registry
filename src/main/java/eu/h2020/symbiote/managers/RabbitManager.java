@@ -801,18 +801,19 @@ public class RabbitManager {
         sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
                 resourcesIds.getClass().getCanonicalName());
     }
+
     /**
      * Triggers method for contact with Semantic Manager to verify RDF Resources (with RDF description type)
      * and translate to JSON Core Resources.
      *
-     * @param rpcConsumer rabbit consumer that received the request
-     * @param rpcProperties properties of request message received
-     * @param rpcEnvelope envelope of request message received
-     * @param message body of message in form of a JSON String with a CoreResourceRegistryRequest
-     * @param platformId id of a platform corresponding to request
-     * @param operationType type of request - creation or modification
+     * @param rpcConsumer          rabbit consumer that received the request
+     * @param rpcProperties        properties of request message received
+     * @param rpcEnvelope          envelope of request message received
+     * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param platformId           id of a platform corresponding to request
+     * @param operationType        type of request - creation or modification
      * @param authorizationManager - authorization manager bean
-     * @param policiesMap - map with security policies
+     * @param policiesMap          - map with security policies
      */
     public void sendResourceRdfValidationRpcMessage(DefaultConsumer rpcConsumer,
                                                     AMQP.BasicProperties rpcProperties,
@@ -837,15 +838,15 @@ public class RabbitManager {
     /**
      * Triggers method for contact with Semantic Manager to translate JSON Resources (BASIC description type) to RDFs.
      *
-     * @param rpcConsumer rabbit consumer that received the request
-     * @param rpcProperties properties of request message received
-     * @param rpcEnvelope envelope of request message received
-     * @param message body of message in form of a JSON String with a CoreResourceRegistryRequest
-     * @param platformId id of a platform corresponding to request
-     * @param operationType type of request - creation or modification
+     * @param rpcConsumer          rabbit consumer that received the request
+     * @param rpcProperties        properties of request message received
+     * @param rpcEnvelope          envelope of request message received
+     * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param platformId           id of a platform corresponding to request
+     * @param operationType        type of request - creation or modification
      * @param authorizationManager - authorization manager bean
-     * @param policiesMap - map with security policies
-     * @param requestBody body from received request in form of a JSON String with a Map of a String and Resource
+     * @param policiesMap          - map with security policies
+     * @param requestBody          body from received request in form of a JSON String with a Map of a String and Resource
      */
     public void sendResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
                                                       AMQP.BasicProperties rpcProperties,
@@ -896,17 +897,17 @@ public class RabbitManager {
     /**
      * Publishes message on chosen routing key and creates a consumer waiting for responses.
      *
-     * @param rpcConsumer rabbit consumer that received the request
-     * @param rpcProperties properties of request message received
-     * @param rpcEnvelope envelope of request message received
-     * @param routingKey routing key that is supposed to be used to publish the message on
-     * @param descriptionType BASIC (json) or RDF descrption type of content
-     * @param message body of message in form of a JSON String with a CoreResourceRegistryRequest
-     * @param platformId id of a platform corresponding to request
-     * @param operationType type of request - creation or modification
+     * @param rpcConsumer          rabbit consumer that received the request
+     * @param rpcProperties        properties of request message received
+     * @param rpcEnvelope          envelope of request message received
+     * @param routingKey           routing key that is supposed to be used to publish the message on
+     * @param descriptionType      BASIC (json) or RDF descrption type of content
+     * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param platformId           id of a platform corresponding to request
+     * @param operationType        type of request - creation or modification
      * @param authorizationManager - authorization manager bean
-     * @param policiesMap - map with security policies
-     * @param requestBody body from received request in form of a JSON String with a Map of a String and Resource
+     * @param policiesMap          - map with security policies
+     * @param requestBody          body from received request in form of a JSON String with a Map of a String and Resource
      */
     private void sendResourceOperationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
                                                                   String routingKey,
@@ -937,7 +938,15 @@ public class RabbitManager {
             rpcChannel.basicPublish(this.resourceExchangeName, routingKey, true, props, message.getBytes());
 
         } catch (IOException e) {
-            log.error(e);
+            log.error("Unable to send message. Params: \n RPC consumer: " + rpcConsumer +
+                    "\nRpc props: " + rpcProperties +
+                    "\nrpc envelope: " + rpcEnvelope +
+                    "\nrouting key: " + routingKey +
+                    "\nmessage: " + message +
+                    "\nplatform id: " + platformId +
+                    this.resourceExchangeName + "  -  " + routingKey +
+                    "\nerror message: " + e.getMessage() +
+                    "\nerror cause:" + e.getCause());
         }
     }
 

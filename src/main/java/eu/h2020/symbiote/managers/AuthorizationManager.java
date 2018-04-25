@@ -156,8 +156,8 @@ public class AuthorizationManager {
         Platform registryPlatform = platformRepository.findOne(platformId);
 
         if (registryPlatform == null) {
-            log.error("Given platform does not exists in database");
-            return new AuthorizationResult("Given platform does not exists in database", false);
+            log.error("Given platform does not exists in database. Platform ID: " + platformId);
+            return new AuthorizationResult("Given platform does not exists in database. Platform ID: ", false);
         }
 
         List<InterworkingService> interworkingServices = registryPlatform.getInterworkingServices();

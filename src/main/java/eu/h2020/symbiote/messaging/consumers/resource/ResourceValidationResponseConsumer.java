@@ -89,6 +89,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreResourceRegistryResponse();
         response = "";
+        log.info("Resource Validation Response Consumer created - waiting for answers from SM!");
     }
 
     /**
