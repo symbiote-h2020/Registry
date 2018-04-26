@@ -19,7 +19,6 @@ import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,10 +29,10 @@ import java.util.stream.Collectors;
 
 /**
  * Consumer responsible for executing clearData request, which deletes all resources of a given platform.
- *
+ * <p>
  * Created by Szymon Mueller on 09/11/2017.
  */
-public class ResourceClearDataRequestConsumer  extends DefaultConsumer {
+public class ResourceClearDataRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceClearDataRequestConsumer.class);
     ObjectMapper mapper;
@@ -50,9 +49,9 @@ public class ResourceClearDataRequestConsumer  extends DefaultConsumer {
      * @param repositoryManager repository manager bean passed for persistence actions
      */
     public ResourceClearDataRequestConsumer(Channel channel,
-                                          RepositoryManager repositoryManager,
-                                          RabbitManager rabbitManager,
-                                          AuthorizationManager authorizationManager) {
+                                            RepositoryManager repositoryManager,
+                                            RabbitManager rabbitManager,
+                                            AuthorizationManager authorizationManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
@@ -74,13 +73,12 @@ public class ResourceClearDataRequestConsumer  extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Map<String,ResourcePersistenceResult> resourceRemovalMap = new HashMap<>();
+        Map<String, ResourcePersistenceResult> resourceRemovalMap = new HashMap<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
-//        Map<String, Resource> resources = new HashMap<>();
         List<CoreResource> resourceList;
 
         ClearDataRequest request = null;
-        ClearDataResponse response = new ClearDataResponse();
+        ClearDataResponse response;
         ResourcePersistenceResult resourceRemovalResult;
 
         String message = new String(body, "UTF-8");
@@ -91,72 +89,67 @@ public class ResourceClearDataRequestConsumer  extends DefaultConsumer {
                 request = mapper.readValue(message, ClearDataRequest.class);
             } catch (JsonSyntaxException | JsonMappingException e) {
                 log.error("Error occurred during getting Operation Request from Json", e);
-                response.setStatus(400);
-                response.setMessage("Error occurred during getting Operation Request from Json");
-                response.setServiceResponse(authorizationManager.generateServiceResponse());
-            }
-
-            if (request != null) {
-                if( request.getSecurityRequest() != null ) {
-                    //This happens if request came from external server, this check is skipped for internal communication from Admin
-                    AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getBody());
-                    if (!tokenAuthorizationResult.isValidated()) {
-                        log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                        response.setStatus(400);
-                        response.setMessage("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\" could not clear data for a platform");
-                        response.setServiceResponse(authorizationManager.generateServiceResponse());
-                        rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                                mapper.writeValueAsString(response));
-                        return;
-                    }
-                }
-            } else {
-                log.error("Request is null for clear data");
-                response.setStatus(400);
-                response.setMessage("Request is null");
-                response.setServiceResponse(authorizationManager.generateServiceResponse());
+                response = new ClearDataResponse(400, "Error occurred during getting Operation Request from Json", getServiceResponse());
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
                 return;
             }
 
+            if (request == null) {
+                log.error("Request for clear data is null");
+                response = new ClearDataResponse(400, "Request for clear data is null", getServiceResponse());
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                return;
+            }
 
-                //List all resources of a platform
-                resourceList = repositoryManager.getResourcesForPlatform(request.getBody());
-                log.debug("Found resources number: " + (resourceList==null?"resourceList is null":resourceList.size()));
-                if( resourceList != null ) {
+            if (request.getSecurityRequest() != null) {
+                //This happens if request came from external server, this check is skipped for internal communication from Admin
+                AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getBody());
+                if (!tokenAuthorizationResult.isValidated()) {
+                    log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                    response = new ClearDataResponse(400, "Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\" could not clear data for a platform", getServiceResponse());
+                    rabbitManager.sendRPCReplyMessage(this, properties, envelope,
+                            mapper.writeValueAsString(response));
+                    return;
                 }
+            }
 
-            for(CoreResource res: resourceList ) {
-                if( res == null ) {
-                    log.error("Resources list contains a NULL resource!" );
-                    response.setMessage("Resources list contains a NULL resource!");
-                    response.setStatus(410);
+            //List all resources of a platform
+            resourceList = repositoryManager.getResourcesForPlatform(request.getBody());
+            log.debug("Found resources number: " + resourceList.size());
+
+            if (resourceList.isEmpty()) {
+                log.error("Request to clear the data - there are no resources to remove.");
+                response = new ClearDataResponse(400, "Request to clear the data - there are no resources to remove.", getServiceResponse());
+                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+                return;
+            }
+
+            for (CoreResource res : resourceList) {
+                if (res == null) {
+                    log.error("Resources list contains a NULL resource!");
                 } else {
-                    resourceRemovalResult =this.repositoryManager.removeResource(RegistryUtils.convertCoreResourceToResource(res));
-                    resourceRemovalMap.put(res.getId(),resourceRemovalResult);
+                    resourceRemovalResult = this.repositoryManager.removeResource(RegistryUtils.convertCoreResourceToResource(res));
+                    resourceRemovalMap.put(res.getId(), resourceRemovalResult);
                 }
             }
 
             if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resourceList)) {
                 sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
-                response.setMessage("Success");
-                response.setBody("Success");
-                response.setStatus(200);
+                response = new ClearDataResponse(200, "Success", getServiceResponse());
             } else {
-                response.setMessage("Operation not performed");
-                response.setBody("Operation failed");
-                response.setStatus(410);
+                response = new ClearDataResponse(410, "Operation not performed", getServiceResponse());
             }
-
-            response.setServiceResponse(authorizationManager.generateServiceResponse());;
 
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         } catch (Exception e) {
             log.error(e);
-            response.setMessage("Consumer critical exception!");
-            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            response = new ClearDataResponse(500, "Consumer critical exception!", getServiceResponse());
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }
+    }
+
+    private String getServiceResponse() {
+        return authorizationManager.generateServiceResponse();
     }
 
     private void sendFanoutMessage(List<ResourcePersistenceResult> resourceRemovalResultList) {
@@ -190,5 +183,4 @@ public class ResourceClearDataRequestConsumer  extends DefaultConsumer {
             log.info("Removed resources rollback performed.");
         }
     }
-
 }
