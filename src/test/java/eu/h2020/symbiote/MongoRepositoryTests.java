@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -43,8 +42,6 @@ import static org.junit.Assert.assertNotNull;
         properties = {"key=value"})
 @Ignore //tests only for bugs debugging purposes
 public class MongoRepositoryTests {
-
-
     public static final String TEMP_QUEUE = "RPCqueue";
     private static Logger log = LoggerFactory.getLogger(MessagingTests.class);
     @Autowired
@@ -60,114 +57,16 @@ public class MongoRepositoryTests {
 
     @Before
     public void setup() throws IOException, TimeoutException {
-
-        ReflectionTestUtils.setField(rabbitManager, "rabbitHost", "localhost");
-        ReflectionTestUtils.setField(rabbitManager, "rabbitUsername", "guest");
-        ReflectionTestUtils.setField(rabbitManager, "rabbitPassword", "guest");
-
-        ReflectionTestUtils.setField(rabbitManager, "platformExchangeName", PLATFORM_EXCHANGE_NAME);
-        ReflectionTestUtils.setField(rabbitManager, "platformExchangeType", "topic");
-        ReflectionTestUtils.setField(rabbitManager, "plaftormExchangeDurable", true);
-        ReflectionTestUtils.setField(rabbitManager, "platformExchangeAutodelete", false);
-        ReflectionTestUtils.setField(rabbitManager, "platformExchangeInternal", false);
-
-        ReflectionTestUtils.setField(rabbitManager, "resourceExchangeName", RESOURCE_EXCHANGE_NAME);
-        ReflectionTestUtils.setField(rabbitManager, "resourceExchangeType", "topic");
-        ReflectionTestUtils.setField(rabbitManager, "resourceExchangeDurable", true);
-        ReflectionTestUtils.setField(rabbitManager, "resourceExchangeAutodelete", false);
-        ReflectionTestUtils.setField(rabbitManager, "resourceExchangeInternal", false);
-
-        ReflectionTestUtils.setField(rabbitManager, "federationExchangeName", FEDERATION_EXCHANGE_NAME);
-        ReflectionTestUtils.setField(rabbitManager, "federationExchangeType", "topic");
-        ReflectionTestUtils.setField(rabbitManager, "federationExchangeDurable", true);
-        ReflectionTestUtils.setField(rabbitManager, "federationExchangeAutodelete", false);
-        ReflectionTestUtils.setField(rabbitManager, "federationExchangeInternal", false);
-
-        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeName", INFORMATION_MODEL_EXCHANGE_NAME);
-        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeType", "topic");
-        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeDurable", true);
-        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeAutodelete", false);
-        ReflectionTestUtils.setField(rabbitManager, "informationModelExchangeInternal", false);
-
-        ReflectionTestUtils.setField(rabbitManager, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "resourceCreationRequestedRoutingKey", RESOURCE_CREATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "resourceModificationRequestedRoutingKey", RESOURCE_MODIFICATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "resourceRemovalRequestedRoutingKey", RESOURCE_REMOVAL_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "resourceClearDataRequestedRoutingKey", RESOURCE_CLEAR_DATA_REQUESTED_RK);
-
-        ReflectionTestUtils.setField(rabbitManager, "federationCreationRequestedRoutingKey", FEDERATION_CREATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "federationModificationRequestedRoutingKey", FEDERATION_MODIFICATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "federationRemovalRequestedRoutingKey", FEDERATION_REMOVAL_REQUESTED_RK);
-
-        ReflectionTestUtils.setField(rabbitManager, "informationModelCreationRequestedRoutingKey", INFORMATION_MODEL_CREATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "informationModelModificationRequestedRoutingKey", INFORMATION_MODEL_MODIFICATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "informationModelRemovalRequestedRoutingKey", INFORMATION_MODEL_REMOVAL_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "rdfInformationModelValidationRequestedRoutingKey", INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "informationModelRemovedRoutingKey", "not_important_RK");
-        ReflectionTestUtils.setField(rabbitManager, "informationModelsRequestedRoutingKey", GET_ALL_INFORMATION_MODELS_REQUESTED_RK);
-
-        ReflectionTestUtils.setField(rabbitManager, "platformCreatedRoutingKey", PLATFORM_CREATED_ROUTING_KEY);
-        ReflectionTestUtils.setField(rabbitManager, "platformRemovedRoutingKey", PLATFORM_REMOVED_ROUTING_KEY);
-        ReflectionTestUtils.setField(rabbitManager, "platformModifiedRoutingKey", PLATFORM_MODIFIED_ROUTING_KEY);
-        ReflectionTestUtils.setField(rabbitManager, "resourceCreatedRoutingKey", RESOURCE_CREATED_ROUTING_KEY);
-        ReflectionTestUtils.setField(rabbitManager, "resourceRemovedRoutingKey", RESOURCE_REMOVED_ROUTING_KEY);
-        ReflectionTestUtils.setField(rabbitManager, "resourceModifiedRoutingKey", RESOURCE_MODIFIED_ROUTING_KEY);
-
-        ReflectionTestUtils.setField(rabbitManager, "federationsRequestedRoutingKey", GET_ALL_FEDERATIONS_RK);
-        ReflectionTestUtils.setField(rabbitManager, "federationRequestedRoutingKey", GET_FEDERATION_FOR_PLATFORM_RK);
-
-        ReflectionTestUtils.setField(rabbitManager, "aamExchangeName", AAM_EXCHANGE_NAME);
-
-        ReflectionTestUtils.setField(rabbitManager, "platformResourcesRequestedRoutingKey", RESOURCES_FOR_PLATFORM_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "platformDetailsRequestedRoutingKey", PLATFORM_DETAILS_REQUESTED_RK);
-
-        ReflectionTestUtils.setField(rabbitManager, "jsonResourceTranslationRequestedRoutingKey", RESOURCE_TRANSLATION_REQUESTED_RK);
-        ReflectionTestUtils.setField(rabbitManager, "rdfResourceValidationRequestedRoutingKey", RESOURCE_VALIDATION_REQUESTED_RK);
-
-        ReflectionTestUtils.invokeMethod(rabbitManager, "init");
-
+        initializeRabbitManager(rabbitManager);
         mapper = new ObjectMapper();
         connection = rabbitManager.getConnection();
         channel = connection.createChannel();
-
     }
 
     @After
     public void teardown() {
+        deleteRabbitQueues(rabbitManager);
         log.info("Rabbit cleaned!");
-        try {
-            connection = rabbitManager.getConnection();
-            if (connection != null && connection.isOpen()) {
-                channel = connection.createChannel();
-                channel.queueDelete(PLATFORM_CREATION_REQUESTED_RK);
-                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_RK);
-                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_RK);
-                channel.queueDelete(RESOURCE_CREATION_REQUESTED_RK);
-                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_RK);
-                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_RK);
-                channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
-                channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
-                channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
-                channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
-                channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
-                channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
-                channel.queueDelete(RESOURCES_FOR_PLATFORM_REQUESTED_RK);
-                channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
-                channel.queueDelete(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE);
-                channel.queueDelete(INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
-                channel.queueDelete(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE);
-                channel.queueDelete(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE);
-                channel.queueDelete(GET_ALL_INFORMATION_MODELS_REQUESTED_RK);
-                channel.queueDelete(TEMP_QUEUE);
-                channel.close();
-                connection.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
     public void addResourceAndPlatformToDb() throws InvalidArgumentsException {
@@ -187,8 +86,6 @@ public class MongoRepositoryTests {
 
         repositoryManager.savePlatform(generatePlatformB());
 
-        System.out.println("TEST 111111111111111111111111111111");
-
         Resource resource1 = generateCoreResourceSensorWithoutId();
         Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);
@@ -199,13 +96,11 @@ public class MongoRepositoryTests {
         rabbitManager.sendCustomMessage(RESOURCE_EXCHANGE_NAME, RESOURCE_CREATION_REQUESTED_RK, message, CoreResourceRegistryRequest.class.getCanonicalName());
 
         TimeUnit.MILLISECONDS.sleep(1000);
-        System.out.println("TEST END !!!!!!!!!!!!!!!!!!!");
     }
 
     @Test
-    public void testRemovingResources() throws InvalidArgumentsException, JsonProcessingException {
+    public void testClearResourcesDataRequest() throws InvalidArgumentsException, JsonProcessingException {
         rabbitManager.startConsumerOfClearDataMessages(authorizationManager);
-        System.out.println("TEST 22222222222222222222");
 
         addResourceAndPlatformToDb();
 
@@ -281,19 +176,7 @@ public class MongoRepositoryTests {
         log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED SM REPLY |||||||||||||| ");
     }
 
-    private void mockSemanticManagerResourceValidationCommunication(String message) throws IOException {
-        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
-        this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_VALIDATION_REQUESTED_RK);
-
-        this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
-            @Override
-            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                mockSemanticManagerResourceValidationReply(envelope, properties, body, message);
-            }
-        });
-    }
-
-    public void mockSemanticManagerResourceValidationReply(Envelope envelope, AMQP.BasicProperties properties, byte[] body, String message) throws IOException {
+    public void mockSemanticManagerResourceValidationReply(Envelope envelope, AMQP.BasicProperties properties) throws IOException {
         log.debug("\n|||||||| //MOCKED  SM REPLY ............ \nSemantic Manager received request!");
 
         String correlationId = properties.getCorrelationId();
@@ -314,6 +197,4 @@ public class MongoRepositoryTests {
         this.channel.basicAck(envelope.getDeliveryTag(), false);
         log.debug("-> Semantic Manager replied: \n" + validationResult.toString() + "\n......... //MOCKED SM REPLY |||||||||||||| ");
     }
-
-
 }

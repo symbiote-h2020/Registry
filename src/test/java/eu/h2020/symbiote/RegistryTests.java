@@ -1,33 +1,39 @@
 package eu.h2020.symbiote;
 
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by mateuszl
  */
 @RunWith(SpringRunner.class)
-@ContextConfiguration
 @SpringBootTest
 @DirtiesContext
+@TestPropertySource(
+        locations = {"classpath:test.properties"},
+        properties = {"key=value"})
 public class RegistryTests {
 
     @Autowired
-    protected RabbitTemplate rabbitTemplate;
+    RabbitManager rabbitManager;
 
     @Autowired
-    protected RabbitManager rabbitManager;
+    AuthorizationManager authorizationManager;
+
+    @Autowired
+    RepositoryManager repositoryManager;
 
     @Before
     public void setUp() throws Exception {
@@ -38,16 +44,12 @@ public class RegistryTests {
 
     }
 
+
     @Test
-    public void startupTest() {/*
-        Assert.assertNotNull(rabbitManager);
-        Assert.assertNotNull(rabbitTemplate);
-        Assert.assertNotNull(authorizationManager);
-        */;
+    public void contextLoads() throws Exception {
+        assertThat(rabbitManager).isNotNull();
+        assertThat(repositoryManager).isNotNull();
+        assertThat(authorizationManager).isNotNull();
     }
 
-    @Configuration
-    @ComponentScan(basePackages = {"eu.h2020.symbiote"})
-    static class ContextConfiguration {
-    }
 }
