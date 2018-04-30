@@ -5,6 +5,7 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +45,11 @@ public class RegistryTests {
 
     }
 
-
+    @Ignore
     @Test
     public void contextLoads() throws Exception {
         assertThat(rabbitManager).isNotNull();
         assertThat(repositoryManager).isNotNull();
         assertThat(authorizationManager).isNotNull();
     }
-
 }
