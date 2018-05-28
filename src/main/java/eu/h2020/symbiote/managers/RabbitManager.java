@@ -14,6 +14,7 @@ import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
+import eu.h2020.symbiote.model.mim.SmartSpace;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,6 +43,7 @@ import static eu.h2020.symbiote.core.internal.DescriptionType.RDF;
 @Component
 public class RabbitManager {
 
+    /* Queues names */
     private static final String RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE = "rdfResourceValidationRequestedQueue";
     private static final String JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE = "jsonResourceTranslationRequestedQueue";
     private static final String RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-resourceCreationRequestedQueue";
@@ -61,8 +63,18 @@ public class RabbitManager {
     private static final String FEDERATION_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-federationRemovalRequestedQueue";
     private static final String FEDERATION_REQUESTED_QUEUE = "symbIoTe-Registry-federationRequestedQueue";
     private static final String FEDERATIONS_REQUESTED_QUEUE = "symbIoTe-Registry-federationsRequestedQueue";
+    private static final String SSP_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspCreationRequestedQueue";
+    private static final String SSP_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspModificationRequestedQueue";
+    private static final String SSP_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspRemovalRequestedQueue";
+    private static final String SSP_SDEV_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevCreationRequestedQueue";
+    private static final String SSP_SDEV_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevModificationRequestedQueue";
+    private static final String SSP_SDEV_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevRemovalRequestedQueue";
+    private static final String SSP_SDEV_RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceCreationRequestedQueue";
+    private static final String SSP_SDEV_RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceModificationRequestedQueue";
+    private static final String SSP_SDEV_RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceRemovalRequestedQueue";
     private static final String PLATFORM_DETAILS_REQUESTED_QUEUE = "symbIoTe-Registry-platformDetailsRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
+    /* Queues names */
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
     private AuthorizationManager authorizationManager;
@@ -70,12 +82,16 @@ public class RabbitManager {
     private Connection connection;
     private Channel rpcChannel;
 
+    /* Connection Params */
     @Value("${rabbit.host}")
     private String rabbitHost;
     @Value("${rabbit.username}")
     private String rabbitUsername;
     @Value("${rabbit.password}")
     private String rabbitPassword;
+    /* Connection Params */
+
+    /* Exchanges Params */
     @Value("${rabbit.exchange.platform.name}")
     private String platformExchangeName;
     @Value("${rabbit.exchange.platform.type}")
@@ -86,6 +102,45 @@ public class RabbitManager {
     private boolean platformExchangeAutodelete;
     @Value("${rabbit.exchange.platform.internal}")
     private boolean platformExchangeInternal;
+
+    @Value("${rabbit.exchange.platform.name}")
+    private String informationModelExchangeName;
+    @Value("${rabbit.exchange.platform.type}")
+    private String informationModelExchangeType;
+    @Value("${rabbit.exchange.platform.durable}")
+    private boolean informationModelExchangeDurable;
+    @Value("${rabbit.exchange.platform.autodelete}")
+    private boolean informationModelExchangeAutodelete;
+    @Value("${rabbit.exchange.platform.internal}")
+    private boolean informationModelExchangeInternal;
+
+    @Value("${rabbit.exchange.federation.name}")
+    private String federationExchangeName;
+    @Value("${rabbit.exchange.federation.type}")
+    private String federationExchangeType;
+    @Value("${rabbit.exchange.federation.durable}")
+    private boolean federationExchangeDurable;
+    @Value("${rabbit.exchange.federation.autodelete}")
+    private boolean federationExchangeAutodelete;
+    @Value("${rabbit.exchange.federation.internal}")
+    private boolean federationExchangeInternal;
+
+    @Value("${rabbit.exchange.ssp.name}")
+    private String sspExchangeName;
+    @Value("${rabbit.exchange.ssp.type}")
+    private String sspExchangeType;
+    @Value("${rabbit.exchange.ssp.durable}")
+    private boolean sspExchangeDurable;
+    @Value("${rabbit.exchange.ssp.autodelete}")
+    private boolean sspExchangeAutodelete;
+    @Value("${rabbit.exchange.ssp.internal}")
+    private boolean sspExchangeInternal;
+
+    @Value("${rabbit.exchange.aam.name}")
+    private String aamExchangeName;
+    /* Exchanges Params */
+
+    /* Platform messages Params */
     @Value("${rabbit.routingKey.platform.creationRequested}")
     private String platformCreationRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.created}")
@@ -102,7 +157,9 @@ public class RabbitManager {
     private String platformResourcesRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.platformDetailsRequested}")
     private String platformDetailsRequestedRoutingKey;
+    /* Platform messages Params */
 
+    /* Resource messages Params */
     @Value("${rabbit.exchange.resource.name}")
     private String resourceExchangeName;
     @Value("${rabbit.exchange.resource.type}")
@@ -127,18 +184,9 @@ public class RabbitManager {
     private String resourceModificationRequestedRoutingKey;
     @Value("${rabbit.routingKey.resource.modified}")
     private String resourceModifiedRoutingKey;
+    /* Resource messages Params */
 
-    @Value("${rabbit.exchange.platform.name}")
-    private String informationModelExchangeName;
-    @Value("${rabbit.exchange.platform.type}")
-    private String informationModelExchangeType;
-    @Value("${rabbit.exchange.platform.durable}")
-    private boolean informationModelExchangeDurable;
-    @Value("${rabbit.exchange.platform.autodelete}")
-    private boolean informationModelExchangeAutodelete;
-    @Value("${rabbit.exchange.platform.internal}")
-    private boolean informationModelExchangeInternal;
-
+    /* Information Model messages Params */
     @Value("${rabbit.routingKey.platform.model.creationRequested}")
     private String informationModelCreationRequestedRoutingKey;
     @Value("${rabbit.routingKey.platform.model.created}")
@@ -153,44 +201,80 @@ public class RabbitManager {
     private String informationModelModifiedRoutingKey;
     @Value("${rabbit.routingKey.platform.model.allInformationModelsRequested}")
     private String informationModelsRequestedRoutingKey;
+    /* Information Model messages Params */
 
+    /* Federation messages Params */
+    @Value("${rabbit.routingKey.federation.creationRequested}")
+    private String federationCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.created}")
+    private String federationCreatedRoutingKey;
+    @Value("${rabbit.routingKey.federation.modificationRequested}")
+    private String federationModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.modified}")
+    private String federationModifiedRoutingKey;
+    @Value("${rabbit.routingKey.federation.removalRequested}")
+    private String federationRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.removed}")
+    private String federationRemovedRoutingKey;
+    @Value("${rabbit.routingKey.federation.getFederationForPlatform}")
+    private String federationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.federation.getAllFederations}")
+    private String federationsRequestedRoutingKey;
+    /* Federation messages Params */
+
+    /* Smart Space messages Params */
+    @Value("${rabbit.routingKey.ssp.creationRequested}")
+    private String sspCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.created}")
+    private String sspCreatedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.modificationRequested}")
+    private String sspModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.modified}")
+    private String sspModifiedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.removalRequested}")
+    private String sspRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.removed}")
+    private String sspRemovedRoutingKey;
+    /* Smart Space messages Params */
+
+    /* Smart Device messages Params */
+    @Value("${rabbit.routingKey.ssp.sdev.creationRequested}")
+    private String sspSdevCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.created}")
+    private String sspSdevCreatedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.modificationRequested}")
+    private String sspSdevModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.modified}")
+    private String sspSdevModifiedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.removalRequested}")
+    private String sspSdevRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.removed}")
+    private String sspSdevRemovedRoutingKey;
+    /* Smart Device messages Params */
+
+    /* Smart Space Resource messages Params */
+    @Value("${rabbit.routingKey.ssp.sdev.resource.creationRequested}")
+    private String sspSdevResourceCreationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.resource.created}")
+    private String sspSdevResourceCreatedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.resource.modificationRequested}")
+    private String sspSdevResourceModificationRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.resource.modified}")
+    private String sspSdevResourceModifiedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.resource.removalRequested}")
+    private String sspSdevResourceRemovalRequestedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sdev.resource.removed}")
+    private String sspSdevResourceRemovedRoutingKey;
+    /* Smart Space Resource messages Params */
+
+    /* RDF translation/validation messages Params */
     @Value("${rabbit.routingKey.resource.instance.translationRequested}")
     private String jsonResourceTranslationRequestedRoutingKey; //dla JSONów
     @Value("${rabbit.routingKey.resource.instance.validationRequested}")
     private String rdfResourceValidationRequestedRoutingKey; //dla RDFów
     @Value("${rabbit.routingKey.platform.model.validationRequested}")
     private String rdfInformationModelValidationRequestedRoutingKey;
-
-    @Value("${rabbit.exchange.federation.name}")
-    private String federationExchangeName;
-    @Value("${rabbit.exchange.federation.type}")
-    private String federationExchangeType;
-    @Value("${rabbit.exchange.federation.durable}")
-    private boolean federationExchangeDurable;
-    @Value("${rabbit.exchange.federation.autodelete}")
-    private boolean federationExchangeAutodelete;
-    @Value("${rabbit.exchange.federation.internal}")
-    private boolean federationExchangeInternal;
-
-    @Value("${rabbit.routingKey.federation.creationRequested}")
-    private String federationCreationRequestedRoutingKey;
-    @Value("${rabbit.routingKey.federation.created}")
-    private String federationCreatedRoutingKey;
-    @Value("${rabbit.routingKey.federation.removalRequested}")
-    private String federationRemovalRequestedRoutingKey;
-    @Value("${rabbit.routingKey.federation.removed}")
-    private String federationRemovedRoutingKey;
-    @Value("${rabbit.routingKey.federation.modificationRequested}")
-    private String federationModificationRequestedRoutingKey;
-    @Value("${rabbit.routingKey.federation.modified}")
-    private String federationModifiedRoutingKey;
-    @Value("${rabbit.routingKey.federation.getFederationForPlatform}")
-    private String federationRequestedRoutingKey;
-    @Value("${rabbit.routingKey.federation.getAllFederations}")
-    private String federationsRequestedRoutingKey;
-
-    @Value("${rabbit.exchange.aam.name}")
-    private String aamExchangeName;
+    /* RDF translation/validation messages Params */
 
     @Autowired
     public RabbitManager(RepositoryManager repositoryManager, @Lazy AuthorizationManager authorizationManager) {
@@ -800,6 +884,40 @@ public class RabbitManager {
         }
         sendMessage(this.resourceExchangeName, this.resourceRemovedRoutingKey, message,
                 resourcesIds.getClass().getCanonicalName());
+    }
+
+    /**
+     * Triggers sending message containing Smart Space accordingly to Operation Type.
+     *
+     * @param ssp
+     * @param operationType
+     */
+    public void sendSspOperationMessage(SmartSpace ssp, RegistryOperationType operationType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(ssp);
+
+            switch (operationType) {
+                case CREATION:
+                    sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
+                            ssp.getClass().getCanonicalName());
+                    log.info("- ssp created message sent");
+                    break;
+                case MODIFICATION:
+                    sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message,
+                            ssp.getClass().getCanonicalName());
+                    log.info("- ssp modified message sent");
+                    break;
+                case REMOVAL:
+                    sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message,
+                            ssp.getClass().getCanonicalName());
+                    log.info("- ssp removed message sent");
+                    break;
+            }
+
+        } catch (JsonProcessingException e) {
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + ssp, e);
+        }
     }
 
     /**

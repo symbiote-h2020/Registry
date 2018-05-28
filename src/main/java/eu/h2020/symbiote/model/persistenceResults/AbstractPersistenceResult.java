@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.model;
+package eu.h2020.symbiote.model.persistenceResults;
 
 /**
  * Created by mateuszl on 07.08.2017.

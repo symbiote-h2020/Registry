@@ -1,19 +1,10 @@
 package eu.h2020.symbiote.managers;
 
 import eu.h2020.symbiote.core.internal.CoreResource;
-import eu.h2020.symbiote.model.FederationPersistenceResult;
-import eu.h2020.symbiote.model.InformationModelPersistenceResult;
-import eu.h2020.symbiote.model.PlatformPersistenceResult;
-import eu.h2020.symbiote.model.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.model.mim.Federation;
-import eu.h2020.symbiote.model.mim.InformationModel;
-import eu.h2020.symbiote.model.mim.InterworkingService;
-import eu.h2020.symbiote.model.mim.Platform;
-import eu.h2020.symbiote.repository.FederationRepository;
-import eu.h2020.symbiote.repository.InformationModelRepository;
-import eu.h2020.symbiote.repository.PlatformRepository;
-import eu.h2020.symbiote.repository.ResourceRepository;
+import eu.h2020.symbiote.model.mim.*;
+import eu.h2020.symbiote.model.persistenceResults.*;
+import eu.h2020.symbiote.repository.*;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,21 +27,25 @@ public class RepositoryManager {
     private static final String IM_HAS_NULL_OR_EMPTY_ID = "Information Model has null or empty ID and has not been saved!";
     private static final String FEDERATION_HAS_NULL_OR_EMPTY_ID = "Federation has null or empty ID!";
     private static final String GIVEN_PLATFORM_DOES_NOT_EXIST_IN_DATABASE = "Given platform does not exist in database!";
+
     private static Log log = LogFactory.getLog(RepositoryManager.class);
     private PlatformRepository platformRepository;
     private ResourceRepository resourceRepository;
     private InformationModelRepository informationModelRepository;
     private FederationRepository federationRepository;
+    private SspRepository sspRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
                              ResourceRepository resourceRepository,
                              InformationModelRepository informationModelRepository,
-                             FederationRepository federationRepository) {
+                             FederationRepository federationRepository,
+                             SspRepository sspRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
         this.informationModelRepository = informationModelRepository;
         this.federationRepository = federationRepository;
+        this.sspRepository = sspRepository;
     }
 
     /**
@@ -60,7 +55,7 @@ public class RepositoryManager {
      * If saving in DB goes wrong it returns 'internal server error' status.
      * Url of given platform is appended with "/" if it does not end with it.
      *
-     * @param platformToSave Platform to save - in JSON format
+     * @param platformToSave Platform to save
      * @return PlatformRegistryResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
      */
     public PlatformPersistenceResult savePlatform(Platform platformToSave) {
@@ -105,8 +100,8 @@ public class RepositoryManager {
      * If there is no Platform in database with ID same as given one, it returns 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
-     * @param platformToModify Platform to remove - in JSON format
-     * @return PlatformRegistryResponse with Http status code and modified Platform object - in JSON format
+     * @param platformToModify Platform to remove
+     * @return PlatformRegistryResponse with Http status code and modified Platform object
      */
     public PlatformPersistenceResult modifyPlatform(Platform platformToModify) {
         PlatformPersistenceResult platformModifyingResult = new PlatformPersistenceResult();
@@ -153,8 +148,8 @@ public class RepositoryManager {
      * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
-     * @param platformToRemove Platform to remove - in JSON format
-     * @return PlatformRegistryResponse with Http status code and removed Platform object - in JSON format
+     * @param platformToRemove Platform to remove
+     * @return PlatformRegistryResponse with Http status code and removed Platform object
      */
     public PlatformPersistenceResult removePlatform(Platform platformToRemove) {
         PlatformPersistenceResult platformRemovingResult = new PlatformPersistenceResult();
@@ -208,9 +203,8 @@ public class RepositoryManager {
      * If in database there is no Platform with given URL same as in given Resource, the method will return 'bad request'.
      * If saving in DB goes wrong it returns 'internal server error' status.
      *
-     * @param resource Resource with given properties in JSON format
-     * @return ResourceSavingResult containing Http status code and Resource with added 'Id' (generated in MongoDB),
-     * in JSON format
+     * @param resource Resource with given properties
+     * @return ResourceSavingResult containing Http status code and Resource with added 'Id' (generated in MongoDB)
      */
     public ResourcePersistenceResult saveResource(CoreResource resource) {
         ResourcePersistenceResult resourceSavingResult = new ResourcePersistenceResult();
@@ -248,8 +242,8 @@ public class RepositoryManager {
      * Modifies given resource in MongoDB. If given resource does not consist some of the fields, empty ones are
      * fulfilled with data from the database.
      *
-     * @param resource Resource with given properties in JSON format
-     * @return ResourceSavingResult containing Http status code and Modified Resource, in JSON format
+     * @param resource Resource with given properties
+     * @return ResourceSavingResult containing Http status code and Modified Resource
      */
     public ResourcePersistenceResult modifyResource(CoreResource resource) {
         ResourcePersistenceResult resourceSavingResult = new ResourcePersistenceResult();
@@ -299,8 +293,8 @@ public class RepositoryManager {
     /**
      * Deletes resource from MongoDB
      *
-     * @param resource Resource with given properties in JSON format
-     * @return ResourceSavingResult containing Http status code and Deleted Resource, in JSON format
+     * @param resource Resource with given properties
+     * @return ResourceSavingResult containing Http status code and Deleted Resource
      */
     public ResourcePersistenceResult removeResource(Resource resource) {
         ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
@@ -513,6 +507,164 @@ public class RepositoryManager {
         }
         return federationPersistenceResult;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// TODO: 28.05.2018
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Saves given SmartSpace in MongoDB. It triggers save action in SmartSpace Repository and if it ends successfully
+     * it returns http status '200' and SmartSpace object with generated ID field.
+     * If given SmartSpace is null or it already has an id the method will return 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
+     * Url of given platform is appended with "/" if it does not end with it.
+     *
+     * @param smartSpaceReceived SmartSpace to save
+     * @return SspRegistryResponse with Http status code and Platform object with unique "id" (generated in MongoDB)
+     */
+    public SspPersistenceResult saveSsp(SmartSpace smartSpaceReceived) {
+        SspPersistenceResult sspSavingResult = new SspPersistenceResult();
+        SmartSpace savedSsp;
+        sspSavingResult.setSmartSpace(smartSpaceReceived);
+
+        log.info("Received Smart Space to save: " + smartSpaceReceived);
+
+        if (smartSpaceReceived.getId() == null || smartSpaceReceived.getId().isEmpty()) {
+            log.error("Given smartSpace has null or empty id!");
+            sspSavingResult.setMessage("Given smartSpace has null or empty id!");
+            sspSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            if (sspSavingResult.getStatus() != HttpStatus.SC_BAD_REQUEST) {
+                try {
+                    log.info("Saving smart space: " + smartSpaceReceived.getId());
+
+                    savedSsp = sspRepository.save(smartSpaceReceived);
+                    log.info("SmartSpace \"" + savedSsp + "\" saved !");
+                    sspSavingResult.setStatus(HttpStatus.SC_OK);
+                    sspSavingResult.setMessage("OK");
+                    sspSavingResult.setSmartSpace(savedSsp);
+                } catch (Exception e) {
+                    log.error("Error occurred during SmartSpace saving to db", e);
+                    sspSavingResult.setMessage("Error occurred during SmartSpace saving to db");
+                    sspSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                }
+            }
+        }
+        return sspSavingResult;
+    }
+
+    /**
+     * Modifies (existing in mongodb) SmartSpace accordingly to fields in given SmartSpace.
+     * It triggers delete and save actions in SmartSpace Repository and if it ends successfully,
+     * it returns http status '200' and new modified SmartSpace object.
+     * Url of given platform is appended with "/" if it does not end with it.
+     * If given platform has any null field, it is retrieved from DB and fulfilled.
+     * If given platform has no ID or has an empty 'id' field the method will return 'bad request' status.
+     * If there is no SmartSpace in database with ID same as given one, it returns 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
+     *
+     * @param sspToModify SmartSpace to remove
+     * @return SmartSpaceRegistryResponse with Http status code and modified SmartSpace object
+     */
+    public SspPersistenceResult modifySsp(SmartSpace sspToModify) {
+        SspPersistenceResult sspModifyingResult = new SspPersistenceResult();
+        sspModifyingResult.setSmartSpace(sspToModify);
+
+        SmartSpace foundSsp = null;
+        if (sspToModify.getId() == null || sspToModify.getId().isEmpty()) {
+            log.error("Given Smart Space has empty ID!");
+            sspModifyingResult.setMessage("Given Smart Space has empty PlatformId!");
+            sspModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            foundSsp = sspRepository.findOne(sspToModify.getId());
+        }
+
+        if (foundSsp == null) {
+            log.error("Given Smart Space does not exist in DB!");
+            sspModifyingResult.setMessage("Given Smart Space does not exist in DB!");
+            sspModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            try {
+                //fulfilment of empty Smart Space fields before saving
+                SmartSpace modifiedSsp = copyExistingSspData(sspToModify, foundSsp);
+
+                sspRepository.save(modifiedSsp);
+                log.info("Smart Space with id: " + modifiedSsp.getId() + " modified !");
+
+                sspModifyingResult.setStatus(HttpStatus.SC_OK);
+                sspModifyingResult.setMessage("OK");
+                sspModifyingResult.setSmartSpace(modifiedSsp);
+            } catch (Exception e) {
+                log.error("Error occurred during Smart Space modifying in db", e);
+                sspModifyingResult.setMessage("Error occurred during Smart Space modifying in db");
+                sspModifyingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return sspModifyingResult;
+    }
+
+    /**
+     * Removes given SmartSpace from MongoDB. It triggers delete action in SmartSpace Repository and if it ends successfully
+     * it returns http status '200' and removed SmartSpace object.
+     * If given platform is null or it has no id or has an empty 'id' field the method will return 'bad request' status.
+     * If saving in DB goes wrong it returns 'internal server error' status.
+     *
+     * @param sspToRemove SmartSpace to remove
+     * @return SmartSpaceRegistryResponse with Http status code and removed SmartSpace object
+     */
+    public SspPersistenceResult removeSsp(SmartSpace sspToRemove) {
+        SspPersistenceResult sspRemovingResult = new SspPersistenceResult();
+        sspRemovingResult.setSmartSpace(sspToRemove);
+
+        if (sspToRemove == null || sspToRemove.getId() == null || sspToRemove.getId().isEmpty()) {
+            log.error("Given Smart Space is null or has empty id!");
+            sspRemovingResult.setMessage("Given Smart Space is null or has empty PlatformId!");
+            sspRemovingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+//        } else if (resourceRepository.findByInterworkingServiceURL(sspToRemove.getId()) != null
+//                && !resourceRepository.findByInterworkingServiceURL(sspToRemove.getId()).isEmpty()) {
+//            log.error("Given Smart Space has registered resources. Take care of resources first.");
+//            sspRemovingResult.setMessage("Given Smart Space has registered resources. Take care of resources first.");
+//            sspRemovingResult.setStatus(HttpStatus.SC_CONFLICT);
+            //todo is there similar mechanism in Ssp like in Platform needed?
+        } else {
+            try {
+                platformRepository.delete(sspToRemove.getId());
+                log.info("Smart Space with id: " + sspToRemove.getId() + " removed !");
+
+                sspRemovingResult.setStatus(HttpStatus.SC_OK);
+                sspRemovingResult.setMessage("OK");
+            } catch (Exception e) {
+                log.error("Error occurred during Smart Space removing from db", e);
+                sspRemovingResult.setMessage("Error occurred during Smart Space removing from db");
+                sspRemovingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return sspRemovingResult;
+    }
+
+    //// TODO: 25.07.2017 test method!
+    private SmartSpace copyExistingSspData(SmartSpace requestedSmartSpace, SmartSpace foundSmartSpace) {
+        if ((requestedSmartSpace.getDescription() == null || requestedSmartSpace.getDescription().isEmpty() || requestedSmartSpace.getDescription().get(0) == null) && foundSmartSpace.getDescription() != null)
+            requestedSmartSpace.setDescription(foundSmartSpace.getDescription());
+        if (requestedSmartSpace.getRdfFormat() == null && foundSmartSpace.getRdfFormat() != null)
+            requestedSmartSpace.setRdfFormat(foundSmartSpace.getRdfFormat());
+        if ((requestedSmartSpace.getName() == null || requestedSmartSpace.getName().isEmpty()) && foundSmartSpace.getName() != null)
+            requestedSmartSpace.setName(foundSmartSpace.getName());
+        if (requestedSmartSpace.getRdf() == null && foundSmartSpace.getRdf() != null)
+            requestedSmartSpace.setRdf(foundSmartSpace.getRdf());
+        if ((requestedSmartSpace.getInterworkingServices() == null || requestedSmartSpace.getInterworkingServices().isEmpty() || requestedSmartSpace.getInterworkingServices().get(0).getUrl() == null) && foundSmartSpace.getInterworkingServices() != null)
+            requestedSmartSpace.setInterworkingServices(foundSmartSpace.getInterworkingServices());
+
+        return requestedSmartSpace;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         Platform platform = platformRepository.findOne(platformId);

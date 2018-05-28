@@ -9,6 +9,7 @@ import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
+import eu.h2020.symbiote.model.mim.SmartSpace;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -208,9 +209,16 @@ public class RegistryUtils {
     }
 
     public static boolean validateFields(Federation federation) {
-        //// TODO: 23.08.2017 should i check some more information?
+        //// TODO: should i check some more information?
         if (federation.getId() == null || federation.getId().isEmpty()) return false;
         if (federation.getName() == null || federation.getName().isEmpty()) return false;
+        return true;
+    }
+
+    public static boolean validateFields(SmartSpace smartSpace) {
+        //// TODO: should i check some more information?
+        if (smartSpace.getId() == null || smartSpace.getId().isEmpty()) return false;
+        if (smartSpace.getName() == null || smartSpace.getName().isEmpty()) return false;
         return true;
     }
 

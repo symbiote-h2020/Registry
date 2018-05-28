@@ -11,7 +11,7 @@ import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.InformationModelPersistenceResult;
+import eu.h2020.symbiote.model.persistenceResults.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.utils.RegistryUtils;

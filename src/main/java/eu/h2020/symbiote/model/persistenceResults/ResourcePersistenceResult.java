@@ -1,10 +1,10 @@
-package eu.h2020.symbiote.model;
+package eu.h2020.symbiote.model.persistenceResults;
 
 import eu.h2020.symbiote.core.internal.CoreResource;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 
 /**
- * Class used as a response to RPC call requesting resource actions
+ * Class used for repository actions results for resource objects
  *
  * Created by mateuszl
  */

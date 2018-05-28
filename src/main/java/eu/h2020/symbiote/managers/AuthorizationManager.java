@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.managers;
 
-import eu.h2020.symbiote.model.AuthorizationResult;
+import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;

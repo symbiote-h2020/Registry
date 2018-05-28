@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.model;
+package eu.h2020.symbiote.model.persistenceResults;
 
 import eu.h2020.symbiote.model.mim.Federation;
 
