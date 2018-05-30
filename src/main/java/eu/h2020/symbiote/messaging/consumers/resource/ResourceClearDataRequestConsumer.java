@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 public class ResourceClearDataRequestConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceClearDataRequestConsumer.class);
-    ObjectMapper mapper;
+    private ObjectMapper mapper;
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;

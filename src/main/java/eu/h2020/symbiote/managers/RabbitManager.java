@@ -10,6 +10,7 @@ import eu.h2020.symbiote.messaging.consumers.federation.*;
 import eu.h2020.symbiote.messaging.consumers.informationModel.*;
 import eu.h2020.symbiote.messaging.consumers.platform.*;
 import eu.h2020.symbiote.messaging.consumers.resource.*;
+import eu.h2020.symbiote.messaging.consumers.sspResource.SspResourceTranslationResponseConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
@@ -899,17 +900,17 @@ public class RabbitManager {
 
             switch (operationType) {
                 case CREATION:
-                    sendMessage(this.platformExchangeName, this.platformCreatedRoutingKey, message,
+                    sendMessage(this.sspExchangeName, this.sspCreatedRoutingKey, message,
                             ssp.getClass().getCanonicalName());
                     log.info("- ssp created message sent");
                     break;
                 case MODIFICATION:
-                    sendMessage(this.platformExchangeName, this.platformModifiedRoutingKey, message,
+                    sendMessage(this.sspExchangeName, this.sspModifiedRoutingKey, message,
                             ssp.getClass().getCanonicalName());
                     log.info("- ssp modified message sent");
                     break;
                 case REMOVAL:
-                    sendMessage(this.platformExchangeName, this.platformRemovedRoutingKey, message,
+                    sendMessage(this.sspExchangeName, this.sspRemovedRoutingKey, message,
                             ssp.getClass().getCanonicalName());
                     log.info("- ssp removed message sent");
                     break;
@@ -987,6 +988,39 @@ public class RabbitManager {
     }
 
     /**
+     * Triggers method for contact with Semantic Manager to translate JSON Resources (BASIC description type) to RDFs.
+     *
+     * @param rpcConsumer          rabbit consumer that received the request
+     * @param rpcProperties        properties of request message received
+     * @param rpcEnvelope          envelope of request message received
+     * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param sDevId               id of a platform corresponding to request
+     * @param operationType        type of request - creation or modification
+     * @param authorizationManager - authorization manager bean
+     * @param policiesMap          - map with security policies
+     * @param requestBodyString    body from received request in form of a JSON String with a Map of a String and Resource
+     */
+    public void sendSspResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
+                                                         AMQP.BasicProperties rpcProperties,
+                                                         Envelope rpcEnvelope,
+                                                         String message,
+                                                         String sDevId,
+                                                         RegistryOperationType operationType,
+                                                         AuthorizationManager authorizationManager,
+                                                         Map<String, IAccessPolicySpecifier> policiesMap,
+                                                         String requestBodyString) {
+
+        sendSspResourceOperationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
+                this.jsonResourceTranslationRequestedRoutingKey,
+                operationType,
+                message,
+                sDevId,
+                authorizationManager,
+                policiesMap,
+                requestBodyString);
+    }
+
+    /**
      * Sends reply message with given body to rabbit queue, for specified RPC sender.
      *
      * @param consumer
@@ -1020,7 +1054,7 @@ public class RabbitManager {
      * @param rpcEnvelope          envelope of request message received
      * @param routingKey           routing key that is supposed to be used to publish the message on
      * @param descriptionType      BASIC (json) or RDF descrption type of content
-     * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param message              request in form of a JSON String (a CoreResourceRegistryRequest)
      * @param platformId           id of a platform corresponding to request
      * @param operationType        type of request - creation or modification
      * @param authorizationManager - authorization manager bean
@@ -1047,6 +1081,65 @@ public class RabbitManager {
                     new ResourceValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             rpcChannel, repositoryManager, this, platformId, operationType, descriptionType,
                             authorizationManager, policiesMap, requestBody);
+
+            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
+
+            log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
+                    + this.resourceExchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
+
+            rpcChannel.basicPublish(this.resourceExchangeName, routingKey, true, props, message.getBytes());
+
+        } catch (IOException e) {
+            log.error("Unable to send message. Params: \n RPC consumer: " + rpcConsumer +
+                    "\nRpc props: " + rpcProperties +
+                    "\nrpc envelope: " + rpcEnvelope +
+                    "\nrouting key: " + routingKey +
+                    "\nmessage: " + message +
+                    "\nplatform id: " + platformId +
+                    this.resourceExchangeName + "  -  " + routingKey +
+                    "\nerror message: " + e.getMessage() +
+                    "\nerror cause:" + e.getCause());
+        }
+    }
+
+    /**
+     * Publishes message on chosen routing key and creates a consumer waiting for responses.
+     *
+     * @param rpcConsumer          rabbit consumer that received the request
+     * @param rpcProperties        properties of request message received
+     * @param rpcEnvelope          envelope of request message received
+     * @param routingKey           routing key that is supposed to be used to publish the message on
+     * @param message              request in form of a JSON String (a CoreResourceRegistryRequest)
+     * @param platformId           id of a platform corresponding to request
+     * @param operationType        type of request - creation or modification
+     * @param authorizationManager - authorization manager bean
+     * @param policiesMap          - map with security policies
+     * @param requestBody          body from received request in form of a JSON String with a Map of a String and Resource
+     */
+
+    private void sendSspResourceOperationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
+                                                                     String routingKey, RegistryOperationType operationType,
+                                                                     String message, String platformId, AuthorizationManager authorizationManager,
+                                                                     Map<String, IAccessPolicySpecifier> policiesMap,
+                                                                     String requestBody) {
+
+        //// TODO: 30.05.2018 todo!
+
+        try {
+            String replyQueueName = rpcChannel.queueDeclare().getQueue();
+
+            String correlationId = UUID.randomUUID().toString();
+            AMQP.BasicProperties props = new AMQP.BasicProperties()
+                    .builder()
+                    .correlationId(correlationId)
+                    .replyTo(replyQueueName)
+                    .build();
+
+            ResourceValidationResponseConsumer responseConsumer = new SspResourceTranslationResponseConsumer(
+                    rpcConsumer, rpcProperties, rpcEnvelope,
+                    rpcChannel, repositoryManager, this, platformId, operationType,
+                    authorizationManager, policiesMap, requestBody
+            );
 
             rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
 

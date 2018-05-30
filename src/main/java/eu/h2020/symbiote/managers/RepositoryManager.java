@@ -508,11 +508,6 @@ public class RepositoryManager {
         return federationPersistenceResult;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// TODO: 28.05.2018
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /**
      * Saves given SmartSpace in MongoDB. It triggers save action in SmartSpace Repository and if it ends successfully
      * it returns http status '200' and SmartSpace object with generated ID field.
@@ -574,7 +569,7 @@ public class RepositoryManager {
         SmartSpace foundSsp = null;
         if (sspToModify.getId() == null || sspToModify.getId().isEmpty()) {
             log.error("Given Smart Space has empty ID!");
-            sspModifyingResult.setMessage("Given Smart Space has empty PlatformId!");
+            sspModifyingResult.setMessage("Given Smart Space has empty Id!");
             sspModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
         } else {
             foundSsp = sspRepository.findOne(sspToModify.getId());
@@ -643,9 +638,10 @@ public class RepositoryManager {
         return sspRemovingResult;
     }
 
-    //// TODO: 25.07.2017 test method!
+    //// TODO: 25.07.2017 check method!
     private SmartSpace copyExistingSspData(SmartSpace requestedSmartSpace, SmartSpace foundSmartSpace) {
-        if ((requestedSmartSpace.getDescription() == null || requestedSmartSpace.getDescription().isEmpty() || requestedSmartSpace.getDescription().get(0) == null) && foundSmartSpace.getDescription() != null)
+        if ((requestedSmartSpace.getDescription() == null || requestedSmartSpace.getDescription().isEmpty() ||
+                requestedSmartSpace.getDescription().get(0) == null) && foundSmartSpace.getDescription() != null)
             requestedSmartSpace.setDescription(foundSmartSpace.getDescription());
         if (requestedSmartSpace.getRdfFormat() == null && foundSmartSpace.getRdfFormat() != null)
             requestedSmartSpace.setRdfFormat(foundSmartSpace.getRdfFormat());
@@ -653,18 +649,12 @@ public class RepositoryManager {
             requestedSmartSpace.setName(foundSmartSpace.getName());
         if (requestedSmartSpace.getRdf() == null && foundSmartSpace.getRdf() != null)
             requestedSmartSpace.setRdf(foundSmartSpace.getRdf());
-        if ((requestedSmartSpace.getInterworkingServices() == null || requestedSmartSpace.getInterworkingServices().isEmpty() || requestedSmartSpace.getInterworkingServices().get(0).getUrl() == null) && foundSmartSpace.getInterworkingServices() != null)
+        if ((requestedSmartSpace.getInterworkingServices() == null || requestedSmartSpace.getInterworkingServices().isEmpty() ||
+                requestedSmartSpace.getInterworkingServices().get(0).getUrl() == null) && foundSmartSpace.getInterworkingServices() != null)
             requestedSmartSpace.setInterworkingServices(foundSmartSpace.getInterworkingServices());
 
         return requestedSmartSpace;
     }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public List<CoreResource> getResourcesForPlatform(String platformId) {
         Platform platform = platformRepository.findOne(platformId);

@@ -1,9 +1,9 @@
 package eu.h2020.symbiote.managers;
 
-import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;
+import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
@@ -84,6 +84,10 @@ public class AuthorizationManager {
             ids.add(platformId);
             return checkOperationAccess(securityRequest, ids);
         }
+    }
+
+    public AuthorizationResult checkSdevOperationAccess(SecurityRequest securityRequest, String sDevId) {
+        return new AuthorizationResult("MOCKED!", true); //// TODO: 30.05.2018 MOCKED!!! FIX!!
     }
 
     private AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
