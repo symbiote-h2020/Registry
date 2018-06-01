@@ -1,6 +1,7 @@
 package eu.h2020.symbiote.managers;
 
 import eu.h2020.symbiote.core.internal.CoreResource;
+import eu.h2020.symbiote.model.CoreSspResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.*;
 import eu.h2020.symbiote.model.persistenceResults.*;
@@ -34,6 +35,7 @@ public class RepositoryManager {
     private InformationModelRepository informationModelRepository;
     private FederationRepository federationRepository;
     private SspRepository sspRepository;
+    private CoreSspResourceRepository coreSspResourceRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
@@ -710,9 +712,7 @@ public class RepositoryManager {
     }
 
     public List<Federation> getFederationsForPlatform(Platform platform) {
-        List<Federation> federations = new ArrayList<>();
-        federations = federationRepository.findByMembersPlatformId(platform.getId()); //// TODO: 28.08.2017 check!
-        return federations;
+        return federationRepository.findByMembersPlatformId(platform.getId()); //// TODO: 28.08.2017 check!
     }
 
     public List<Federation> getAllFederations() {
@@ -721,5 +721,53 @@ public class RepositoryManager {
 
     public Platform getPlatformById(String id) {
         return platformRepository.findOne(id);
+    }
+
+    public CoreSspResourcePersistenceResult saveCoreSspResource(CoreSspResource sspResource) {
+        CoreSspResourcePersistenceResult resourceSavingResult = new CoreSspResourcePersistenceResult();
+        resourceSavingResult.setCoreSspResource(sspResource);
+        CoreResource resource = sspResource.getResource();
+
+        if (sspResource.getSdevId() == null || sspResource.getSdevId().isEmpty()) {
+            log.error("CoreSspResource has empty or null sDevId!");
+            resourceSavingResult.setMessage("CoreSspResource has empty or null sDevId!");
+            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        } else {
+            if (resource.getId() == null || resource.getId().isEmpty()) {
+                log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
+                resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
+                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            } else if (resource.getInterworkingServiceURL() == null || resource.getInterworkingServiceURL().isEmpty()) {
+                log.error("Given resource has null or empty Interworking service URL!");
+                resourceSavingResult.setMessage("Given resource has null or empty Interworking service URL!");
+                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+            } else {
+                try {
+                    normalizeResourceInterworkingServiceUrl(resource);
+                    log.info("Saving CoreSsp Resource: " + resource.toString());
+
+                    CoreSspResource savedResource = coreSspResourceRepository.save(sspResource);
+                    log.info("CoreSsp Resource with id: " + savedResource.getId() + " saved !");
+
+                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
+                    resourceSavingResult.setMessage("OK");
+                    resourceSavingResult.setCoreSspResource(savedResource);
+                } catch (Exception e) {
+                    log.error("Error occurred during CoreSsp Resource saving in db", e);
+                    resourceSavingResult.setMessage("Error occurred during CoreSsp Resource saving in db");
+                    resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                }
+            }
+        }
+        return resourceSavingResult;
+    }
+
+    public CoreSspResourcePersistenceResult modifyCoreSspResource(CoreSspResource coreSspResource) {
+        // TODO: 01.06.2018 todo 
+        return null;
+    }
+
+    public void removeCoreSspResource(CoreSspResource resource) {
+        // TODO: 01.06.2018
     }
 }

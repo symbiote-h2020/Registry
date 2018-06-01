@@ -227,5 +227,4 @@ public class RegistryUtils {
         return mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
         });
     }
-
 }

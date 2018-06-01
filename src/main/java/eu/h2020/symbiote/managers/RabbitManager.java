@@ -12,6 +12,7 @@ import eu.h2020.symbiote.messaging.consumers.platform.*;
 import eu.h2020.symbiote.messaging.consumers.resource.*;
 import eu.h2020.symbiote.messaging.consumers.sspResource.SspResourceTranslationResponseConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
@@ -996,9 +997,8 @@ public class RabbitManager {
      * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
      * @param sDevId               id of a platform corresponding to request
      * @param operationType        type of request - creation or modification
-     * @param authorizationManager - authorization manager bean
      * @param policiesMap          - map with security policies
-     * @param requestBodyString    body from received request in form of a JSON String with a Map of a String and Resource
+     * @param requestResourcesMap    body from received request - Map of a String and Resource
      */
     public void sendSspResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
                                                          AMQP.BasicProperties rpcProperties,
@@ -1006,9 +1006,8 @@ public class RabbitManager {
                                                          String message,
                                                          String sDevId,
                                                          RegistryOperationType operationType,
-                                                         AuthorizationManager authorizationManager,
                                                          Map<String, IAccessPolicySpecifier> policiesMap,
-                                                         String requestBodyString) {
+                                                         Map<String, Resource> requestResourcesMap) {
 
         sendSspResourceOperationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
                 this.jsonResourceTranslationRequestedRoutingKey,
@@ -1017,7 +1016,7 @@ public class RabbitManager {
                 sDevId,
                 authorizationManager,
                 policiesMap,
-                requestBodyString);
+                requestResourcesMap);
     }
 
     /**
@@ -1032,7 +1031,6 @@ public class RabbitManager {
     public void sendRPCReplyMessage(DefaultConsumer consumer, AMQP.BasicProperties properties, Envelope envelope,
                                     String response) throws IOException {
         if (properties.getReplyTo() != null || properties.getCorrelationId() != null) {
-
             AMQP.BasicProperties replyProps = new AMQP.BasicProperties
                     .Builder()
                     .correlationId(properties.getCorrelationId())
@@ -1110,21 +1108,18 @@ public class RabbitManager {
      * @param rpcEnvelope          envelope of request message received
      * @param routingKey           routing key that is supposed to be used to publish the message on
      * @param message              request in form of a JSON String (a CoreResourceRegistryRequest)
-     * @param platformId           id of a platform corresponding to request
+     * @param sdevId           id of a platform corresponding to request
      * @param operationType        type of request - creation or modification
      * @param authorizationManager - authorization manager bean
      * @param policiesMap          - map with security policies
-     * @param requestBody          body from received request in form of a JSON String with a Map of a String and Resource
+     * @param requestResourcesMap          body from received request in form of a JSON String with a Map of a String and Resource
      */
 
     private void sendSspResourceOperationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
                                                                      String routingKey, RegistryOperationType operationType,
-                                                                     String message, String platformId, AuthorizationManager authorizationManager,
+                                                                     String message, String sdevId, AuthorizationManager authorizationManager,
                                                                      Map<String, IAccessPolicySpecifier> policiesMap,
-                                                                     String requestBody) {
-
-        //// TODO: 30.05.2018 todo!
-
+                                                                     Map<String, Resource> requestResourcesMap) {
         try {
             String replyQueueName = rpcChannel.queueDeclare().getQueue();
 
@@ -1135,10 +1130,10 @@ public class RabbitManager {
                     .replyTo(replyQueueName)
                     .build();
 
-            ResourceValidationResponseConsumer responseConsumer = new SspResourceTranslationResponseConsumer(
+            SspResourceTranslationResponseConsumer responseConsumer = new SspResourceTranslationResponseConsumer(
                     rpcConsumer, rpcProperties, rpcEnvelope,
-                    rpcChannel, repositoryManager, this, platformId, operationType,
-                    authorizationManager, policiesMap, requestBody
+                    rpcChannel, repositoryManager, this, sdevId, operationType,
+                    authorizationManager, policiesMap, requestResourcesMap
             );
 
             rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
@@ -1154,7 +1149,7 @@ public class RabbitManager {
                     "\nrpc envelope: " + rpcEnvelope +
                     "\nrouting key: " + routingKey +
                     "\nmessage: " + message +
-                    "\nplatform id: " + platformId +
+                    "\nsdev id: " + sdevId +
                     this.resourceExchangeName + "  -  " + routingKey +
                     "\nerror message: " + e.getMessage() +
                     "\nerror cause:" + e.getCause());

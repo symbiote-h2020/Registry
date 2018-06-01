@@ -13,10 +13,10 @@ import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.persistenceResults.ResourcePersistenceResult;
 import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
+import eu.h2020.symbiote.model.persistenceResults.ResourcePersistenceResult;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
@@ -37,6 +37,7 @@ import java.util.Map;
 public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
     private static Log log = LogFactory.getLog(ResourceValidationResponseConsumer.class);
+    Map<String, Resource> requestedResourcesMap;
     private CoreResourceRegistryResponse registryResponse;
     private DefaultConsumer rpcConsumer;
     private AMQP.BasicProperties rpcProperties;
@@ -52,7 +53,6 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     private AuthorizationManager authorizationManager;
     private Map<String, IAccessPolicySpecifier> policiesMap;
     private String requestBody;
-    Map<String, Resource> requestedResourcesMap;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -125,7 +125,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             }
 
             try {
-                requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {});
+                requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {
+                });
             } catch (Exception e) {
                 log.error("Unable to get resources from request body! ", e);
             }
@@ -170,14 +171,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     CoreResource coreResource = coreResources.get(key);
                     try {
                         coreResource.setPolicySpecifier(policiesMap.get(key));
-                        ResourcePersistenceResult resourceSavingResult =
-                                this.repositoryManager.saveResource(coreResource);
-                        persistenceOperationResultsMap.put(key, resourceSavingResult);
                     } catch (Exception e) {
                         log.error("Couldn't get Access Policies for Core Resource. " + e);
                         persistenceOperationResultsMap.put(key,
                                 new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
                     }
+                    ResourcePersistenceResult resourceSavingResult =
+                            this.repositoryManager.saveResource(coreResource);
+                    persistenceOperationResultsMap.put(key, resourceSavingResult);
                 }
                 break;
             case MODIFICATION:
@@ -185,14 +186,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     CoreResource coreResource = coreResources.get(key);
                     try {
                         coreResource.setPolicySpecifier(policiesMap.get(key));
-                        ResourcePersistenceResult resourceModificationResult =
-                                this.repositoryManager.modifyResource(coreResources.get(key));
-                        persistenceOperationResultsMap.put(key, resourceModificationResult);
                     } catch (Exception e) {
                         log.error("Couldn't get Access Policies for Core Resource. " + e);
                         persistenceOperationResultsMap.put(key,
                                 new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
                     }
+                    ResourcePersistenceResult resourceModificationResult =
+                            this.repositoryManager.modifyResource(coreResources.get(key));
+                    persistenceOperationResultsMap.put(key, resourceModificationResult);
                 }
                 break;
         }

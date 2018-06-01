@@ -7,8 +7,8 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.cci.RDFResourceRegistryRequest;
-import eu.h2020.symbiote.core.internal.*;
+import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryResponse;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
@@ -32,16 +32,25 @@ import java.util.stream.Collectors;
  */
 public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
+    //// TODO: 01.06.2018 change all heavy String concatenations to String.format !!
+
     private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     private Map<String, IAccessPolicySpecifier> policiesMap;
+    private CoreSspResourceRegistryResponse registryResponse;
+    private Envelope envelope;
+    private AMQP.BasicProperties properties;
+
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
      * Managers beans passed as parameters because of lack of possibility to inject it to consumer.
+     * <p>
+     * It should receive CoreSspResourceRegistryRequest which has Map<String, Resource> as body.
+     * It passes the body to Semantic Manager for translation to RDF.
      *
      * @param channel       the channel to which this consumer is attached
      * @param rabbitManager rabbit manager bean passed for access to messages manager
@@ -54,6 +63,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
         this.rabbitManager = rabbitManager;
         this.authorizationManager = authorizationManager;
         this.repositoryManager = repositoryManager;
+        this.registryResponse = new CoreSspResourceRegistryResponse();
         this.mapper = new ObjectMapper();
     }
 
@@ -71,9 +81,11 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        CoreSspResourceRegistryRequest request = null;
-        CoreSspResourceRegistryResponse registryResponse = new CoreSspResourceRegistryResponse();
+        CoreSspResourceRegistryRequest request;
         String message = new String(body, "UTF-8");
+        this.envelope = envelope;
+        this.properties = properties;
+
         log.info(" [x] Received Ssp resources to create (CoreSspResourceRegistryRequest): \n" + message);
 
         try {
@@ -82,96 +94,60 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 request = mapper.readValue(message, CoreSspResourceRegistryRequest.class);
             } catch (JsonSyntaxException | JsonMappingException e) {
                 log.error("Unable to get CoreSspResourceRegistryRequest from Message body!", e);
-                registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                registryResponse.setMessage("Content invalid. Could not deserialize. Resources not created!");
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(registryResponse));
+                sendReply(HttpStatus.SC_BAD_REQUEST, "Content invalid. Could not deserialize. Resources not created!");
+                return;
             }
 
-            if (request != null) {
-                //checking access by token verification
-                AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(request.getSecurityRequest(), request.getSdevId());
-                if (!tokenAuthorizationResult.isValidated()) {
-                    log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                    registryResponse.setStatus(400);
-                    registryResponse.setMessage("Error: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                    rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                            mapper.writeValueAsString(registryResponse));
-                    return;
-                }
+            //checking access by token verification
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(request.getSecurityRequest(), request.getSdevId()); //todo MOCKED
 
-                if (request.getBody() != null) {
+            if (!tokenAuthorizationResult.isValidated()) {
+                log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+                sendReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
+                return;
+            }
+
+            if (request.getBody() != null) {
+                //contact with Semantic Manager accordingly to Type of object Description received
+                if (checkIfResourcesHaveNullOrEmptyId(request)) {
+                    log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
+                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
 
                     this.policiesMap = request.getFilteringPolicies();
 
-                    //contact with Semantic Manager accordingly to Type of object Description received
-                    if (checkIfResourcesHaveNullOrEmptyId(request)) {
-                        log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
-                        //sending JSON content to Semantic Manager and passing responsibility to another consumer
-
-                        String requestBodyAsString = mapper.writeValueAsString(request.getBody());
-
-                        //// TODO: 30.05.2018 todo!
-                        rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
-                                message,
-                                request.getSdevId(),
-                                RegistryOperationType.CREATION,
-                                authorizationManager,
-                                this.policiesMap,
-                                requestBodyAsString
-                        );
-                    } else {
-                        log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
-                        registryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                        registryResponse.setMessage("One of the resources has ID or list with resources is invalid. Resources not created!");
-                        rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                                mapper.writeValueAsString(registryResponse));
-                    }
+                    rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
+                            message,
+                            request.getSdevId(),
+                            RegistryOperationType.CREATION,
+                            this.policiesMap,
+                            request.getBody()
+                    );
                 } else {
-                    log.error("Message body is null!");
-                    registryResponse.setStatus(400);
-                    registryResponse.setMessage("Message body is null!");
-                    rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                            mapper.writeValueAsString(registryResponse));
+                    log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
+                    sendReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not created!");
                 }
+            } else {
+                log.error("Message body is null!");
+                sendReply(400, "Message body is null!");
             }
+
         } catch (Exception e) {
             log.error(e);
-            registryResponse.setStatus(500);
-            registryResponse.setMessage("Consumer critical error!");
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                    mapper.writeValueAsString(registryResponse));
+            sendReply(500, "Consumer critical error");
         }
     }
 
-    private void createAndSendValidationRequest(Envelope envelope, AMQP.BasicProperties properties,
-                                                CoreResourceRegistryRequest request,
-                                                CoreResourceRegistryResponse registryResponse) throws IOException {
-        RDFResourceRegistryRequest rdfResourceRegistryRequest = mapper.readValue(request.getBody(), RDFResourceRegistryRequest.class);
-
-        String requestedInterworkingServiceUrl = rdfResourceRegistryRequest.getInterworkingServiceUrl();
-
-        String informationModelIdByInterworkingServiceUrl =
-                repositoryManager.getInformationModelIdByInterworkingServiceUrl(request.getPlatformId(), requestedInterworkingServiceUrl);
-
-        if (informationModelIdByInterworkingServiceUrl == null) {
-            log.error("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
-            registryResponse.setStatus(400);
-            registryResponse.setMessage("Requested Interworking Service Url does not exist for given platform! Resource not accepted.");
-            registryResponse.setServiceResponse(authorizationManager.generateServiceResponse());
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope,
-                    mapper.writeValueAsString(registryResponse));
-        } else {
-            ResourceInstanceValidationRequest resourceInstanceValidationRequest = new ResourceInstanceValidationRequest();
-            resourceInstanceValidationRequest.setRdf(rdfResourceRegistryRequest.getBody().getRdf());
-            resourceInstanceValidationRequest.setRdfFormat(rdfResourceRegistryRequest.getBody().getRdfFormat());
-            resourceInstanceValidationRequest.setInformationModelId(informationModelIdByInterworkingServiceUrl);
-            resourceInstanceValidationRequest.setInterworkingServiceURL(requestedInterworkingServiceUrl);
-
-            //sending RDF content to Semantic Manager and passing responsibility to another consumer
-            rabbitManager.sendResourceRdfValidationRpcMessage(this, properties, envelope,
-                    mapper.writeValueAsString(resourceInstanceValidationRequest),
-                    request.getPlatformId(), RegistryOperationType.CREATION, authorizationManager, this.policiesMap);
-        }
+    /**
+     * Sets status and massage in Registry Response for this Consumer and triggers sending this response in JSON format.
+     *
+     * @param status
+     * @param message
+     * @throws IOException
+     */
+    private void sendReply(int status, String message) throws IOException {
+        registryResponse.setStatus(status);
+        registryResponse.setMessage(message);
+        rabbitManager.sendRPCReplyMessage(this, this.properties, this.envelope, mapper.writeValueAsString(registryResponse));
     }
 
     /**

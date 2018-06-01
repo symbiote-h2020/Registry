@@ -1,19 +1,26 @@
 package eu.h2020.symbiote.model;
 
-import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.core.internal.CoreResource;
 
 /**
- * Smart Space Resource Object, contains of a Resource Object and its Sdev ID.
+ * Smart Space Resource Object, contains of an unique ID, a Resource Object and Sdev ID.
  */
 public class CoreSspResource {
 
+    private String id;
     private String SdevId;
-    private Resource resource;
+    private CoreResource resource;
 
     public CoreSspResource() {
     }
 
-    public CoreSspResource(String sdevId, Resource resource) {
+    public CoreSspResource(String sdevId, CoreResource resource) {
+        SdevId = sdevId;
+        this.resource = resource;
+    }
+
+    public CoreSspResource(String id, String sdevId, CoreResource resource) {
+        this.id = id;
         SdevId = sdevId;
         this.resource = resource;
     }
@@ -26,11 +33,19 @@ public class CoreSspResource {
         SdevId = sdevId;
     }
 
-    public Resource getResource() {
+    public CoreResource getResource() {
         return resource;
     }
 
-    public void setResource(Resource resource) {
+    public void setResource(CoreResource resource) {
         this.resource = resource;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

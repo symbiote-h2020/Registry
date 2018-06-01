@@ -15,9 +15,9 @@ import eu.h2020.symbiote.core.internal.ResourceInstanceValidationRequest;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.cim.*;
+import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -216,7 +216,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
                 } else if (resource instanceof Actuator) {
                     services = ((Actuator) resource).getServices();
                 }
-                if (services!=null&&!services.isEmpty()) {
+                if (services != null && !services.isEmpty()) {
                     for (Service service : services) {
                         if (!checkId(service)) return false;
                     }

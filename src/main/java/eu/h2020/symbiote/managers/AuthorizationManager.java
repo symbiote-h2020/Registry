@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.managers;
 
+import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;
@@ -194,5 +195,9 @@ public class AuthorizationManager {
 
         log.info("Interworking services check succeed!");
         return new AuthorizationResult("Interworking services check succeed!", true);
+    }
+
+    public AuthorizationResult checkIfCoreResourcesBelongToSdev(Map<String, CoreResource> coreResources, String sDevId) {
+        return new AuthorizationResult("MOCKED", true); //// TODO: 01.06.2018 MOCKED!!!
     }
 }
