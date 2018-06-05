@@ -34,7 +34,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
     //// TODO: 01.06.2018 change all heavy String concatenations to String.format !!
 
-    private static Log log = LogFactory.getLog(ResourceCreationRequestConsumer.class);
+    private static Log log = LogFactory.getLog(SspResourceCreationRequestConsumer.class);
     private ObjectMapper mapper;
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
@@ -106,6 +106,8 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 sendReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
                 return;
             }
+
+            //// TODO: 05.06.2018 check if the resource is bounded to existing SSP
 
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received
