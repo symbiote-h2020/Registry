@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceType;
+import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryRequest;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Utils for Registry project.
@@ -226,5 +228,138 @@ public class RegistryUtils {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
         });
+    }
+
+    /**
+     * Checks if given request consists of resources, which does not have any content in ID field.
+     *
+     * @param request
+     * @return true if given resources don't have an ID.
+     */
+    public static boolean checkIfResourcesDoesNotHaveIds(CoreResourceRegistryRequest request) {
+        Map<String, Resource> resourceMap = new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            resourceMap = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
+            });
+        } catch (IOException e) {
+            log.error("Could not deserialize content of request!" + e);
+        }
+        List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
+        return checkIfResourcesDoesNotHaveIds(resources);
+    }
+
+    /**
+     * Checks if given request consists of resources, which does not have any content in ID field.
+     *
+     * @param request
+     * @return true if given resources don't have an ID.
+     */
+    public static boolean checkIfResourcesDoesNotHaveIds(CoreSspResourceRegistryRequest request) {
+        Map<String, Resource> resourceMap = request.getBody();
+        ObjectMapper mapper = new ObjectMapper();
+        List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
+        return checkIfResourcesDoesNotHaveIds(resources);
+    }
+
+    private static boolean checkIfResourcesDoesNotHaveIds(List<Resource> resources) {
+
+        try {
+            for (Resource resource : resources) {
+                if (!checkIfResourceDoesNotHaveAnId(resource)) return false;
+                List<Service> services = new ArrayList<>();
+                if (resource instanceof Device) {
+                    services = ((Device) resource).getServices();
+                } else if (resource instanceof MobileSensor) {
+                    services = ((MobileSensor) resource).getServices();
+                } else if (resource instanceof Actuator) {
+                    services = ((Actuator) resource).getServices();
+                }
+                if (services != null && !services.isEmpty()) {
+                    for (Service service : services) {
+                        if (!checkIfResourceDoesNotHaveAnId(service)) return false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean checkIfResourceDoesNotHaveAnId(Resource resource) {
+        if (resource.getId() != null && !resource.getId().isEmpty()) {
+            log.error("One of the resources (or actuating services) has an ID!");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @param request with resources to check
+     * @return True if every of resources in list has an id. False if any of resources does not have an id.
+     */
+    public static boolean checkIfEveryResourceHasId(CoreResourceRegistryRequest request) {
+        List<Resource> resources = retrieveResourcesListFromRequest(request);
+        try {
+            for (Resource resource : resources) {
+
+                if (!checkIfResourceHasId(resource)) {                                                                  //if given resource does not have an id, false will be returned
+                    log.error("One of resources does not have an id!");
+                    return false;
+                }
+
+                if (resource instanceof Device) {
+                    List<Service> services = ((Device) resource).getServices();                                         //if given Resource is a subtype of Device, it can have services inside
+
+                    if (services != null && !services.isEmpty()) {
+                        for (Service service : services) {
+                            if (!checkIfResourceHasId(service)) {                                                       //if given service does not have an id, false will be returned
+                                log.error("One of services does not have an id!");
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            log.error(e);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Extracts Resource List from the request
+     *
+     * @param request
+     * @return list with Resource objects
+     */
+    private static List<Resource> retrieveResourcesListFromRequest(CoreResourceRegistryRequest request) {
+        Map<String, Resource> resourceMap = new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            resourceMap = mapper.readValue(request.getBody(), new TypeReference<Map<String, Resource>>() {
+            });
+        } catch (IOException e) {
+            log.error("Could not deserialize content of request!" + e);
+        }
+        return resourceMap.values().stream().collect(Collectors.toList());
+    }
+
+    /**
+     * @param resource
+     * @return True if resource has an ID. False if it has not an ID or ID is empty.
+     */
+    private static boolean checkIfResourceHasId(Resource resource) {
+        if (resource.getId() == null || resource.getId().isEmpty()) {
+            return false;
+        } else {
+            log.error("Resource (or actuating service) has an ID!");
+            return true;
+        }
     }
 }

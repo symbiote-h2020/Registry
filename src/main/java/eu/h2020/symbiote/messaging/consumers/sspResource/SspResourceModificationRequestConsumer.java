@@ -92,7 +92,7 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
                 request = mapper.readValue(message, CoreSspResourceRegistryRequest.class);
             } catch (JsonSyntaxException | JsonMappingException e) {
                 log.error("Unable to get CoreSspResourceRegistryRequest from Message body!", e);
-                sendReply(HttpStatus.SC_BAD_REQUEST, "Content invalid. Could not deserialize. Resources not modified!");
+                sendErrorReply(HttpStatus.SC_BAD_REQUEST, "Content invalid. Could not deserialize. Resources not modified!");
                 return;
             }
 
@@ -101,7 +101,7 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
 
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                sendReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
+                sendErrorReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
                 return;
             }
 
@@ -111,7 +111,7 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 if (checkIfResourcesHaveNullOrEmptyId(request)) {                                                       //resources should not have empty or null ids
                     log.error("One of the resources has ID or list with resources is invalid. Resources not modified!");
-                    sendReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not modified!");
+                    sendErrorReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not modified!");
                 } else {
                     log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
@@ -128,12 +128,12 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
                 }
             } else {
                 log.error("Message body is null!");
-                sendReply(400, "Message body is null!");
+                sendErrorReply(400, "Message body is null!");
             }
 
         } catch (Exception e) {
             log.error(e);
-            sendReply(500, "Consumer critical error");
+            sendErrorReply(500, "Consumer critical error");
         }
     }
 
@@ -144,7 +144,7 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
      * @param message
      * @throws IOException
      */
-    private void sendReply(int status, String message) throws IOException {
+    private void sendErrorReply(int status, String message) throws IOException {
         registryResponse.setStatus(status);
         registryResponse.setMessage(message);
         rabbitManager.sendRPCReplyMessage(this, this.properties, this.envelope, mapper.writeValueAsString(registryResponse));

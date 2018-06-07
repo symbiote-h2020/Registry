@@ -435,6 +435,8 @@ public class RabbitManager {
         startConsumerOfPlatformResourcesRequestsMessages(this.authorizationManager);
         startConsumerOfGetAllInformationModelsRequestsMessages();
         startConsumerOfPlatformDetailsConsumer();
+
+        //// TODO: 07.06.2018 Start new SSP consumers!
     }
 
     /**

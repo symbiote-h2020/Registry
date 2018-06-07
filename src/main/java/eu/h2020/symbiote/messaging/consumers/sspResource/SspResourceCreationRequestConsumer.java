@@ -12,20 +12,16 @@ import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryResponse;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.messaging.consumers.resource.ResourceCreationRequestConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
+import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created by mateuszl on 30.05.2018.
@@ -94,7 +90,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 request = mapper.readValue(message, CoreSspResourceRegistryRequest.class);
             } catch (JsonSyntaxException | JsonMappingException e) {
                 log.error("Unable to get CoreSspResourceRegistryRequest from Message body!", e);
-                sendReply(HttpStatus.SC_BAD_REQUEST, "Content invalid. Could not deserialize. Resources not created!");
+                sendErrorReply(HttpStatus.SC_BAD_REQUEST, "Content invalid. Could not deserialize. Resources not created!");
                 return;
             }
 
@@ -103,7 +99,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                sendReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
+                sendErrorReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
                 return;
             }
 
@@ -111,7 +107,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received
-                if (checkIfResourcesHaveNullOrEmptyId(request)) {
+                if (RegistryUtils.checkIfResourcesDoesNotHaveIds(request)) {
                     log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
 
@@ -126,16 +122,16 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                     );
                 } else {
                     log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
-                    sendReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not created!");
+                    sendErrorReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not created!");
                 }
             } else {
                 log.error("Message body is null!");
-                sendReply(400, "Message body is null!");
+                sendErrorReply(400, "Message body is null!");
             }
 
         } catch (Exception e) {
             log.error(e);
-            sendReply(500, "Consumer critical error");
+            sendErrorReply(500, "Consumer critical error");
         }
     }
 
@@ -146,58 +142,10 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
      * @param message
      * @throws IOException
      */
-    private void sendReply(int status, String message) throws IOException {
+    private void sendErrorReply(int status, String message) throws IOException {
         registryResponse.setStatus(status);
         registryResponse.setMessage(message);
         rabbitManager.sendRPCReplyMessage(this, this.properties, this.envelope, mapper.writeValueAsString(registryResponse));
-    }
-
-    /**
-     * Checks if given request consists of resources, which does not have any content in ID field.
-     *
-     * @param request
-     * @return true if given resources don't have an ID.
-     */
-    private boolean checkIfResourcesHaveNullOrEmptyId(CoreSspResourceRegistryRequest request) {
-        List<Resource> resources = request.getBody().values().stream().collect(Collectors.toList());
-        return checkIds(resources);
-    }
-
-    private boolean checkIds(List<Resource> resources) {
-
-        //// TODO: 30.05.2018 todo!
-
-        try {
-            for (Resource resource : resources) {
-                if (!checkId(resource)) return false;
-                List<Service> services = new ArrayList<>();
-                if (resource instanceof Device) {
-                    services = ((Device) resource).getServices();
-                } else if (resource instanceof MobileSensor) {
-                    services = ((MobileSensor) resource).getServices();
-                } else if (resource instanceof Actuator) {
-                    services = ((Actuator) resource).getServices();
-                }
-                if (services != null && !services.isEmpty()) {
-                    for (Service service : services) {
-                        if (!checkId(service)) return false;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error(e);
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean checkId(Resource resource) {
-        if (resource.getId() != null && !resource.getId().isEmpty()) {
-            log.error("One of the resources (or actuating services) has an ID!");
-            return false;
-        }
-        return true;
     }
 
 }
