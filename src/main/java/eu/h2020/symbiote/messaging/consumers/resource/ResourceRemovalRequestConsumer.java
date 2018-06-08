@@ -83,13 +83,13 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
             throws IOException {
         Map<String, ResourcePersistenceResult> resourceRemovalMap = new HashMap<>();
         List<Resource> resourcesRemoved = new ArrayList<>();
-        Map<String, Resource> resources = new HashMap<>();
+        Map<String, Resource> resources;
         this.envelope = envelope;
         this.properties = properties;
         this.response = new CoreResourceRegistryResponse();
 
-        CoreResourceRegistryRequest request = null;
-        ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
+        CoreResourceRegistryRequest request;
+        ResourcePersistenceResult resourceRemovalResult;
 
         String message = new String(body, "UTF-8");
         log.info(" [x] Received resource to remove");
@@ -168,11 +168,7 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 prepareAndSendErrorResponse(410, "Operation not performed");
             }
         } catch (Exception e) {
-            log.error(e);
-            response.setMessage("Consumer critical exception!");
-            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            response.setDescriptionType(DescriptionType.BASIC);
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+            prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Consumer critical exception!");
         }
     }
 
