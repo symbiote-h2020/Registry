@@ -308,8 +308,7 @@ public class RepositoryManager {
         } else {
             resourceRemovalResult.setResource(RegistryUtils.convertResourceToCoreResource(resource));
 
-            CoreResource foundResource = resourceRepository.findOne(resource.getId());
-            if (foundResource != null) {
+            if (resourceRepository.findOne(resource.getId()) != null) {
                 try {
                     resourceRepository.delete(resource.getId());
                     resourceRemovalResult.setStatus(HttpStatus.SC_OK);
@@ -767,7 +766,8 @@ public class RepositoryManager {
         return null;
     }
 
-    public void removeCoreSspResource(CoreSspResource resource) {
+    public CoreSspResourcePersistenceResult removeCoreSspResource(String coreSspResourceId) {
         // TODO: 01.06.2018
+        return null;
     }
 }

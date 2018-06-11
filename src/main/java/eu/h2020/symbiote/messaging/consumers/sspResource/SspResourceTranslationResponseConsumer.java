@@ -283,7 +283,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
     private void rollback(CoreSspResource resource) {
         switch (operationType) {
             case CREATION:
-                repositoryManager.removeCoreSspResource(resource);
+                repositoryManager.removeCoreSspResource(resource.getId());
                 break;
             case MODIFICATION:
                 log.error("ROLLBACK NOT IMPLEMENTED!");

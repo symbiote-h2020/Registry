@@ -13,16 +13,15 @@ import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryResponse;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.CoreSspResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
-import eu.h2020.symbiote.model.persistenceResults.ResourcePersistenceResult;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.model.persistenceResults.CoreSspResourcePersistenceResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +40,6 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
     private CoreSspResourceRegistryResponse response;
     private Envelope envelope;
     private AMQP.BasicProperties properties;
-
-    //todo SEND BACK LIST WITH ONLY IDs instead of full resources!
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -77,18 +74,17 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        Map<String, ResourcePersistenceResult> resourceRemovalMap = new HashMap<>();
-        List<Resource> resourcesRemoved = new ArrayList<>();
+        Map<String, CoreSspResourcePersistenceResult> resourcesRemovalResultMap = new HashMap<>();
         Map<String, Resource> resources;
         this.envelope = envelope;
         this.properties = properties;
         this.response = new CoreSspResourceRegistryResponse();
 
         CoreSspResourceRegistryRequest request;
-        ResourcePersistenceResult resourceRemovalResult;
+        CoreSspResourcePersistenceResult resourceRemovalResult;
 
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received resource to remove");
+        log.info(" [x] Received ssp resource to remove");
 
         try {
             try {
@@ -111,67 +107,74 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
             }
 
             resources = request.getBody();
-
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
-            //// TODO: 08.06.2018
-
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
-            /////////////////////////////////////
+            Map<String, CoreSspResource> sspResourcesMap = convertResourceToCoreSspResourceMap(resources, request.getSdevId());
 
             //// TODO: 05.06.2018 check if the resource is bounded to existing SSP - if not return and reply with 400
 
-            for (String key : resources.keySet()) {
-                if (resources.get(key) == null) {
-                    prepareAndSendErrorResponse(410, "Resources list contains a NULL resource!" + resources);
+            for (String key : sspResourcesMap.keySet()) {
+                if (sspResourcesMap.get(key) == null) {
+                    prepareAndSendErrorResponse(410, "Resources list contains a NULL ssp resource!" + sspResourcesMap);
                     return;
                 } else {
-                    if (resources.get(key).getId() != null || !resources.get(key).getId().isEmpty()) {
-                        resourceRemovalResult = this.repositoryManager.removeResource(resources.get(key));
+                    if (sspResourcesMap.get(key).getId() != null || !sspResourcesMap.get(key).getId().isEmpty()) {
+                        resourceRemovalResult = this.repositoryManager.removeCoreSspResource(sspResourcesMap.get(key).getId());
                     } else {
-                        prepareAndSendErrorResponse(400, "Given Resource has id null or empty");
+                        prepareAndSendErrorResponse(400, "Given Ssp Resource has id null or empty");
                         return;
                     }
-                    resourceRemovalMap.put(key, resourceRemovalResult);
+                    resourcesRemovalResultMap.put(key, resourceRemovalResult);
                 }
             }
 
-            if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resources)) {
+            if (checkIfRemovalWasSuccessful(resourcesRemovalResultMap, resources)) {
 
-                sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
+                sendFanoutMessage(resourcesRemovalResultMap);
 
                 response.setMessage("Success");
                 response.setStatus(200);
                 response.setServiceResponse(authorizationManager.generateServiceResponse());
 
-                Map<String, Resource> resourcesDeletedMap = new HashMap<>();
-                for (String key : resourceRemovalMap.keySet()) {
-                    resourcesDeletedMap.put(key, RegistryUtils.convertCoreResourceToResource(resourceRemovalMap.get(key).getResource()));
-                }
-
-                response.setBody(resourcesDeletedMap);
+                response.setBody(convertCoreSspResourceToResourceMap(resourcesRemovalResultMap));
 
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
             } else {
-                prepareAndSendErrorResponse(410, "Operation not performed");
+                prepareAndSendErrorResponse(410, "Operation od Ssp Resource Removal not performed!");
             }
         } catch (Exception e) {
             prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Consumer critical exception!");
         }
     }
 
-    private void sendFanoutMessage(List<ResourcePersistenceResult> resourceRemovalResultList) {
-        List<String> resourcesIds = resourceRemovalResultList.stream()
-                .map(ResourcePersistenceResult::getResource)
-                .map(CoreResource::getId)
+    private Map<String, Resource> convertCoreSspResourceToResourceMap(Map<String, CoreSspResourcePersistenceResult> resourcesRemovingResultMap) {
+        HashMap<String, Resource> resourcesMap = new HashMap<>();
+
+        resourcesRemovingResultMap.keySet().stream()
+                .forEach(key -> {
+                    CoreSspResource coreSspResource = resourcesRemovingResultMap.get(key).getCoreSspResource();
+                    Resource resource = coreSspResource.getResource();
+                    resourcesMap.put(key, resource);
+                });
+
+        return resourcesMap;
+    }
+
+    private Map<String, CoreSspResource> convertResourceToCoreSspResourceMap(Map<String, Resource> resources, String sDevId) {
+        HashMap<String, CoreSspResource> coreSspResourcesMap = new HashMap<>();
+
+        resources.keySet().stream().forEach(
+                key -> {
+                    Resource resource = resources.get(key);
+                    coreSspResourcesMap.put(key, new CoreSspResource(sDevId, (CoreResource) resource)); //todo czy to zadziała jak należy?
+                }
+        );
+
+        return coreSspResourcesMap;
+    }
+
+    private void sendFanoutMessage(Map<String, CoreSspResourcePersistenceResult> resourceRemovalResultsMap) {
+        List<String> resourcesIds = resourceRemovalResultsMap.keySet().stream()
+                .map(key -> resourceRemovalResultsMap.get(key).getCoreSspResource().getId())
                 .collect(Collectors.toList());
 
         log.info("Sending fanout message with content: " + resourcesIds);
@@ -179,15 +182,15 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendResourcesRemovalMessage(resourcesIds);
     }
 
-    private boolean checkIfRemovalWasSuccessful(List<ResourcePersistenceResult> resourceRemovalResultList,
-                                                List<Resource> resourcesRemoved, Map<String, Resource> resources) {
-        for (ResourcePersistenceResult result : resourceRemovalResultList) {
-            if (result.getStatus() == 200) {
-                resourcesRemoved.add(result.getResource());
-            }
-        }
-        if (resourcesRemoved.size() != resources.size()) {
-            rollback(resourcesRemoved);
+    private boolean checkIfRemovalWasSuccessful(Map<String, CoreSspResourcePersistenceResult> resourceRemovalResultsMap,
+                                                Map<String, Resource> resources) {
+        List<CoreSspResource> resourcesRemovedSuccessfully = resourceRemovalResultsMap.keySet().stream()
+                .filter(key -> resourceRemovalResultsMap.get(key).getStatus() == 200)
+                .map(key -> resourceRemovalResultsMap.get(key).getCoreSspResource())
+                .collect(Collectors.toList());
+
+        if (resourcesRemovedSuccessfully.size() != resources.size()) {
+            rollback(resourcesRemovedSuccessfully);
             return false;
         }
         return true;
@@ -202,9 +205,9 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
     }
 
-    private void rollback(List<Resource> resourcesRemoved) {
-        for (Resource resource : resourcesRemoved) {
-            this.repositoryManager.saveResource(RegistryUtils.convertResourceToCoreResource(resource));
+    private void rollback(List<CoreSspResource> resourcesRemoved) {
+        for (CoreSspResource resource : resourcesRemoved) {
+            this.repositoryManager.saveCoreSspResource(resource);
             log.info("Removed resources rollback performed.");
         }
     }
