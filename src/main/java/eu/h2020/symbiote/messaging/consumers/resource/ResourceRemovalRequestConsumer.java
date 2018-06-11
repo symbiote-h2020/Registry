@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * RabbitMQ Consumer implementation used for Resource Removal actions
+ * RabbitMQ Consumer implementation used for Resource Removal actions.
+ * Response contains List of removed IDs in JSON format as body
  * <p>
  * Created by mateuszl
  */
@@ -42,11 +43,9 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
-    private CoreResourceRegistryResponse response;
+    private CoreResourceRegistryResponse response; //containing List of removed IDs in JSON format
     private Envelope envelope;
     private AMQP.BasicProperties properties;
-
-    //todo SEND BACK LIST WITH ONLY IDs instead of full resources!
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -145,22 +144,22 @@ public class ResourceRemovalRequestConsumer extends DefaultConsumer {
                 }
             }
 
-            if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resources)) {
+            List<ResourcePersistenceResult> resourcePersistenceResultList = resourceRemovalMap.values().stream().collect(Collectors.toList());
+            if (checkIfRemovalWasSuccessful(resourcePersistenceResultList, resourcesRemoved, resources)) {
 
-                sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
+                sendFanoutMessage(resourcePersistenceResultList);
 
                 response.setMessage("Success");
                 response.setStatus(200);
                 response.setDescriptionType(DescriptionType.BASIC);
                 response.setServiceResponse(authorizationManager.generateServiceResponse());
 
-                Map<String, Resource> resourcesDeletedMap = new HashMap<>();
-                for (String key : resourceRemovalMap.keySet()) {
-                    resourcesDeletedMap.put(key, RegistryUtils.convertCoreResourceToResource(resourceRemovalMap.get(key).getResource()));
-                }
+                List<String> removedResourcesIdsList = resourcePersistenceResultList.stream()
+                        .map(p -> p.getResource().getId())
+                        .collect(Collectors.toList());
 
-                response.setBody(mapper.writerFor(new TypeReference<Map<String, Resource>>() {
-                }).writeValueAsString(resourcesDeletedMap));
+                response.setBody(mapper.writerFor(new TypeReference<List<String>>() {
+                }).writeValueAsString(removedResourcesIdsList));
 
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
