@@ -277,11 +277,19 @@ public class RabbitManager {
     @Value("${rabbit.routingKey.platform.model.validationRequested}")
     private String rdfInformationModelValidationRequestedRoutingKey;
     /* RDF translation/validation messages Params */
+    private Channel channel;
 
     @Autowired
     public RabbitManager(RepositoryManager repositoryManager, @Lazy AuthorizationManager authorizationManager) {
         this.repositoryManager = repositoryManager;
         this.authorizationManager = authorizationManager;
+    }
+
+    private Channel getChannel() throws IOException {
+        if (this.channel == null) {
+            channel = this.connection.createChannel();
+        }
+        return channel;
     }
 
     /**
@@ -439,22 +447,27 @@ public class RabbitManager {
         //// TODO: 07.06.2018 Start new SSP consumers!
     }
 
+    private void createQueueAndBeginConsuming(String queueName,
+                                              String exchangeName,
+                                              String routingKeyName,
+                                              Consumer consumer) throws IOException {
+        getChannel().queueDeclare(queueName, true, false, false, null);
+        getChannel().queueBind(queueName, exchangeName, routingKeyName);
+//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
+        getChannel().basicConsume(queueName, false, consumer);
+    }
+
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Resource creation requests.
      */
     public void startConsumerOfResourceCreationMessages(AuthorizationManager authorizationManager) {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(RESOURCE_CREATION_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.resourceCreationRequestedRoutingKey,
+                    new ResourceCreationRequestConsumer(channel, this, authorizationManager, repositoryManager));
             log.info("Receiver waiting for Resource Creation messages....");
-
-            Consumer consumer = new ResourceCreationRequestConsumer(channel, this, authorizationManager, repositoryManager);
-            channel.basicConsume(RESOURCE_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -465,18 +478,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Resource modification requests.
      */
     public void startConsumerOfResourceModificationMessages(AuthorizationManager authorizationManager) {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
-                    this.resourceModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(RESOURCE_MODIFICATION_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.resourceModificationRequestedRoutingKey,
+                    new ResourceModificationRequestConsumer(getChannel(), this, authorizationManager, repositoryManager));
             log.info("Receiver waiting for Resource Modification messages....");
-
-            Consumer consumer = new ResourceModificationRequestConsumer(channel, this, authorizationManager, repositoryManager);
-            channel.basicConsume(RESOURCE_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -487,17 +494,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
      */
     public void startConsumerOfResourceRemovalMessages(AuthorizationManager authorizationManager) {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(RESOURCE_REMOVAL_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.resourceRemovalRequestedRoutingKey,
+                    new ResourceRemovalRequestConsumer(getChannel(), repositoryManager, this, authorizationManager));
             log.info("Receiver waiting for Resource Removal messages....");
-
-            Consumer consumer = new ResourceRemovalRequestConsumer(channel, repositoryManager, this, authorizationManager);
-            channel.basicConsume(RESOURCE_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -508,17 +510,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Resource removal requests.
      */
     public void startConsumerOfClearDataMessages(AuthorizationManager authorizationManager) {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE, this.resourceExchangeName, this.resourceClearDataRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.resourceClearDataRequestedRoutingKey,
+                    new ResourceClearDataRequestConsumer(channel, repositoryManager, this, authorizationManager));
             log.info("Receiver waiting for Clear Data messages....");
-
-            Consumer consumer = new ResourceClearDataRequestConsumer(channel, repositoryManager, this, authorizationManager);
-            channel.basicConsume(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -529,17 +526,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Platforms Resources requests.
      */
     public void startConsumerOfPlatformResourcesRequestsMessages(AuthorizationManager authorizationManager) {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_RESOURCES_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName, this.platformResourcesRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(PLATFORM_RESOURCES_REQUESTED_QUEUE,
+                    this.platformExchangeName,
+                    this.platformResourcesRequestedRoutingKey,
+                    new PlatformResourcesRequestConsumer(channel, repositoryManager, this, authorizationManager));
             log.info("Receiver waiting for Platform Resources Requests messages....");
-
-            Consumer consumer = new PlatformResourcesRequestConsumer(channel, repositoryManager, this, authorizationManager);
-            channel.basicConsume(PLATFORM_RESOURCES_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -550,17 +542,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
      */
     public void startConsumerOfPlatformCreationMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(PLATFORM_CREATION_REQUESTED_QUEUE,
+                    this.platformExchangeName,
+                    this.platformCreationRequestedRoutingKey,
+                    new PlatformCreationRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Platform Creation messages....");
-
-            Consumer consumer = new PlatformCreationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -571,17 +558,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Platform modification requests.
      */
     public void startConsumerOfPlatformModificationMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName, this.platformModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(PLATFORM_MODIFICATION_REQUESTED_QUEUE,
+                    this.platformExchangeName,
+                    this.platformModificationRequestedRoutingKey,
+                    new PlatformModificationRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Platform Modification messages....");
-
-            Consumer consumer = new PlatformModificationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -592,17 +574,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Platform removal requests.
      */
     public void startConsumerOfPlatformRemovalMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName, this.platformRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(PLATFORM_REMOVAL_REQUESTED_QUEUE,
+                    this.platformExchangeName,
+                    this.platformRemovalRequestedRoutingKey,
+                    new PlatformRemovalRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Platform Removal messages....");
-
-            Consumer consumer = new PlatformRemovalRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -613,39 +590,28 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Platform Details requests.
      */
     public void startConsumerOfPlatformDetailsConsumer() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(PLATFORM_DETAILS_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(PLATFORM_DETAILS_REQUESTED_QUEUE, this.platformExchangeName, this.platformDetailsRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(PLATFORM_DETAILS_REQUESTED_QUEUE,
+                    this.platformExchangeName,
+                    this.platformDetailsRequestedRoutingKey,
+                    new PlatformDetailsRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Get Platform Details messages....");
-
-            Consumer consumer = new PlatformDetailsRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(PLATFORM_DETAILS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
-
 
     /**
      * Method creates queue and binds it globally available exchange and adequate Routing Key.
      * It also creates a consumer for messages incoming to this queue, regarding to Platform creation requests.
      */
     public void startConsumerOfInformationModelCreationMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE,
+                    this.informationModelExchangeName,
+                    this.informationModelCreationRequestedRoutingKey,
+                    new InformationModelCreationRequestConsumer(channel, this));
             log.info("Receiver waiting for Information Model Creation messages....");
-
-            Consumer consumer = new InformationModelCreationRequestConsumer(channel, this);
-            channel.basicConsume(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -656,17 +622,12 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Information Model modification requests.
      */
     public void startConsumerOfInformationModelModificationMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE,
+                    this.informationModelExchangeName,
+                    this.informationModelModificationRequestedRoutingKey,
+                    new InformationModelModificationRequestConsumer(channel, this));
             log.info("Receiver waiting for Information Model Modification messages....");
-
-            Consumer consumer = new InformationModelModificationRequestConsumer(channel, this);
-            channel.basicConsume(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -677,119 +638,85 @@ public class RabbitManager {
      * It also creates a consumer for messages incoming to this queue, regarding to Information Model removal requests.
      */
     public void startConsumerOfInformationModelRemovalMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE,
+                    this.informationModelExchangeName,
+                    this.informationModelRemovalRequestedRoutingKey,
+                    new InformationModelRemovalRequestConsumer(channel, this, repositoryManager));
             log.info("Receiver waiting for Information Model Removal messages....");
-
-            Consumer consumer = new InformationModelRemovalRequestConsumer(channel, this, repositoryManager);
-            channel.basicConsume(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
     public void startConsumerOfGetAllInformationModelsRequestsMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(INFORMATION_MODELS_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(INFORMATION_MODELS_REQUESTED_QUEUE, this.informationModelExchangeName, this.informationModelsRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(INFORMATION_MODELS_REQUESTED_QUEUE,
+                    this.informationModelExchangeName,
+                    this.informationModelsRequestedRoutingKey,
+                    new GetAllInformationModelsRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for List All Information Models Requests messages....");
-
-            Consumer consumer = new GetAllInformationModelsRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(INFORMATION_MODELS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
     private void startConsumerOfFederationCreationMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(FEDERATION_CREATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(FEDERATION_CREATION_REQUESTED_QUEUE, this.federationExchangeName, this.federationCreationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(FEDERATION_CREATION_REQUESTED_QUEUE,
+                    this.federationExchangeName,
+                    this.federationCreationRequestedRoutingKey,
+                    new FederationCreationRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Federation Creation messages....");
-
-            Consumer consumer = new FederationCreationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(FEDERATION_CREATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
     private void startConsumerOfFederationModificationMessages() {
-        Channel channel;
+        ;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(FEDERATION_MODIFICATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(FEDERATION_MODIFICATION_REQUESTED_QUEUE, this.federationExchangeName, this.federationModificationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(FEDERATION_MODIFICATION_REQUESTED_QUEUE,
+                    this.federationExchangeName,
+                    this.federationModificationRequestedRoutingKey,
+                    new FederationModificationRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Federation Modification messages....");
-
-            Consumer consumer = new FederationModificationRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(FEDERATION_MODIFICATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
     private void startConsumerOfFederationRemovalMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(FEDERATION_REMOVAL_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(FEDERATION_REMOVAL_REQUESTED_QUEUE, this.federationExchangeName, this.federationRemovalRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(FEDERATION_REMOVAL_REQUESTED_QUEUE,
+                    this.federationExchangeName,
+                    this.federationRemovalRequestedRoutingKey,
+                    new FederationRemovalRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Federation Removal messages....");
-
-            Consumer consumer = new FederationRemovalRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(FEDERATION_REMOVAL_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
     private void startConsumerOfGetAllFederationsMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(FEDERATIONS_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(FEDERATIONS_REQUESTED_QUEUE, this.federationExchangeName, this.federationsRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(FEDERATIONS_REQUESTED_QUEUE,
+                    this.federationExchangeName,
+                    this.federationsRequestedRoutingKey,
+                    new GetAllFederationsRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Get All Federations messages....");
-
-            Consumer consumer = new GetAllFederationsRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(FEDERATIONS_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
     private void startConsumerOfGetFederationForPlatformMessages() {
-        Channel channel;
         try {
-            channel = this.connection.createChannel();
-            channel.queueDeclare(FEDERATION_REQUESTED_QUEUE, true, false, false, null);
-            channel.queueBind(FEDERATION_REQUESTED_QUEUE, this.federationExchangeName, this.federationRequestedRoutingKey);
-//            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
-
+            createQueueAndBeginConsuming(FEDERATION_REQUESTED_QUEUE,
+                    this.federationExchangeName,
+                    this.federationRequestedRoutingKey,
+                    new GetFederationForPlatformRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Get Federation for Platform messages....");
-
-            Consumer consumer = new GetFederationForPlatformRequestConsumer(channel, repositoryManager, this);
-            channel.basicConsume(FEDERATION_REQUESTED_QUEUE, false, consumer);
         } catch (IOException e) {
             log.error(e);
         }
@@ -993,14 +920,14 @@ public class RabbitManager {
     /**
      * Triggers method for contact with Semantic Manager to translate JSON Resources (BASIC description type) to RDFs.
      *
-     * @param rpcConsumer          rabbit consumer that received the request
-     * @param rpcProperties        properties of request message received
-     * @param rpcEnvelope          envelope of request message received
-     * @param message              body of message in form of a JSON String with a CoreResourceRegistryRequest
-     * @param sDevId               id of a platform corresponding to request
-     * @param operationType        type of request - creation or modification
-     * @param policiesMap          - map with security policies
-     * @param requestResourcesMap    body from received request - Map of a String and Resource
+     * @param rpcConsumer         rabbit consumer that received the request
+     * @param rpcProperties       properties of request message received
+     * @param rpcEnvelope         envelope of request message received
+     * @param message             body of message in form of a JSON String with a CoreResourceRegistryRequest
+     * @param sDevId              id of a platform corresponding to request
+     * @param operationType       type of request - creation or modification
+     * @param policiesMap         - map with security policies
+     * @param requestResourcesMap body from received request - Map of a String and Resource
      */
     public void sendSspResourceJsonTranslationRpcMessage(DefaultConsumer rpcConsumer,
                                                          AMQP.BasicProperties rpcProperties,
@@ -1110,11 +1037,11 @@ public class RabbitManager {
      * @param rpcEnvelope          envelope of request message received
      * @param routingKey           routing key that is supposed to be used to publish the message on
      * @param message              request in form of a JSON String (a CoreResourceRegistryRequest)
-     * @param sdevId           id of a platform corresponding to request
+     * @param sdevId               id of a platform corresponding to request
      * @param operationType        type of request - creation or modification
      * @param authorizationManager - authorization manager bean
      * @param policiesMap          - map with security policies
-     * @param requestResourcesMap          body from received request in form of a JSON String with a Map of a String and Resource
+     * @param requestResourcesMap  body from received request in form of a JSON String with a Map of a String and Resource
      */
 
     private void sendSspResourceOperationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
@@ -1205,9 +1132,7 @@ public class RabbitManager {
      * @param classType  message content in JSON String format
      */
     private void sendMessage(String exchange, String routingKey, String message, String classType) {
-        Channel channel = null;
         try {
-            channel = this.connection.createChannel();
             Map<String, Object> headers = new HashMap<>();
             headers.put("__TypeId__", classType);
             headers.put("__ContentTypeId__", Object.class.getCanonicalName());
