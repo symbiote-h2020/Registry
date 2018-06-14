@@ -639,7 +639,7 @@ public class RepositoryManager {
         return sspRemovingResult;
     }
 
-    //// TODO: 25.07.2017 check method!
+    //// TODO: 25.07.2017 check and update method!
     private SmartSpace copyExistingSspData(SmartSpace requestedSmartSpace, SmartSpace foundSmartSpace) {
         if ((requestedSmartSpace.getDescription() == null || requestedSmartSpace.getDescription().isEmpty() ||
                 requestedSmartSpace.getDescription().get(0) == null) && foundSmartSpace.getDescription() != null)
@@ -711,7 +711,7 @@ public class RepositoryManager {
     }
 
     public List<Federation> getFederationsForPlatform(Platform platform) {
-        return federationRepository.findByMembersPlatformId(platform.getId()); //// TODO: 28.08.2017 check!
+        return federationRepository.findByMembersPlatformId(platform.getId());
     }
 
     public List<Federation> getAllFederations() {

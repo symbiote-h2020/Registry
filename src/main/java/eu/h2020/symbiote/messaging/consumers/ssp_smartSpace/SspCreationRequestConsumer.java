@@ -34,8 +34,8 @@ public class SspCreationRequestConsumer extends DefaultConsumer {
      * @param channel the channel to which this consumer is attached
      */
     public SspCreationRequestConsumer(Channel channel,
-                                      RepositoryManager repositoryManager,
-                                      RabbitManager rabbitManager) {
+                                      RabbitManager rabbitManager,
+                                      RepositoryManager repositoryManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;

@@ -10,7 +10,16 @@ import eu.h2020.symbiote.messaging.consumers.federation.*;
 import eu.h2020.symbiote.messaging.consumers.informationModel.*;
 import eu.h2020.symbiote.messaging.consumers.platform.*;
 import eu.h2020.symbiote.messaging.consumers.resource.*;
+import eu.h2020.symbiote.messaging.consumers.sspResource.SspResourceCreationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.sspResource.SspResourceModificationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.sspResource.SspResourceRemovalRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.sspResource.SspResourceTranslationResponseConsumer;
+import eu.h2020.symbiote.messaging.consumers.sspSdev.SspSdevCreationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.sspSdev.SspSdevModificationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.sspSdev.SspSdevRemovalRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspCreationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspModificationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspRemovalRequestConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.Federation;
@@ -71,9 +80,9 @@ public class RabbitManager {
     private static final String SSP_SDEV_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevCreationRequestedQueue";
     private static final String SSP_SDEV_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevModificationRequestedQueue";
     private static final String SSP_SDEV_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevRemovalRequestedQueue";
-    private static final String SSP_SDEV_RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceCreationRequestedQueue";
-    private static final String SSP_SDEV_RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceModificationRequestedQueue";
-    private static final String SSP_SDEV_RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceRemovalRequestedQueue";
+    private static final String SSP_RESOURCE_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceCreationRequestedQueue";
+    private static final String SSP_RESOURCE_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceModificationRequestedQueue";
+    private static final String SSP_RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceRemovalRequestedQueue";
     private static final String PLATFORM_DETAILS_REQUESTED_QUEUE = "symbIoTe-Registry-platformDetailsRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
     /* Queues names */
@@ -83,6 +92,7 @@ public class RabbitManager {
     private RepositoryManager repositoryManager;
     private Connection connection;
     private Channel rpcChannel;
+    private Channel channel;
 
     /* Connection Params */
     @Value("${rabbit.host}")
@@ -260,11 +270,11 @@ public class RabbitManager {
     @Value("${rabbit.routingKey.ssp.sdev.resource.created}")
     private String sspSdevResourceCreatedRoutingKey;
     @Value("${rabbit.routingKey.ssp.sdev.resource.modificationRequested}")
-    private String sspSdevResourceModificationRequestedRoutingKey;
+    private String sspResourceModificationRequestedRoutingKey;
     @Value("${rabbit.routingKey.ssp.sdev.resource.modified}")
     private String sspSdevResourceModifiedRoutingKey;
     @Value("${rabbit.routingKey.ssp.sdev.resource.removalRequested}")
-    private String sspSdevResourceRemovalRequestedRoutingKey;
+    private String sspResourceRemovalRequestedRoutingKey;
     @Value("${rabbit.routingKey.ssp.sdev.resource.removed}")
     private String sspSdevResourceRemovedRoutingKey;
     /* Smart Space Resource messages Params */
@@ -277,7 +287,6 @@ public class RabbitManager {
     @Value("${rabbit.routingKey.platform.model.validationRequested}")
     private String rdfInformationModelValidationRequestedRoutingKey;
     /* RDF translation/validation messages Params */
-    private Channel channel;
 
     @Autowired
     public RabbitManager(RepositoryManager repositoryManager, @Lazy AuthorizationManager authorizationManager) {
@@ -287,7 +296,7 @@ public class RabbitManager {
 
     private Channel getChannel() throws IOException {
         if (this.channel == null) {
-            channel = this.connection.createChannel();
+            this.channel = this.connection.createChannel();
         }
         return channel;
     }
@@ -318,35 +327,33 @@ public class RabbitManager {
      * It triggers start of all consumers used in Registry communication.
      */
     public void init() {
-        Channel channel = null;
-
         try {
             getConnection();
         } catch (TimeoutException e) {
             log.error(e);
         }
 
-        if (connection != null) {
+        if (this.connection != null) {
             try {
-                channel = this.connection.createChannel();
+                getChannel();
 
                 this.rpcChannel = connection.createChannel();
 
-                channel.exchangeDeclare(this.platformExchangeName,
+                this.channel.exchangeDeclare(this.platformExchangeName,
                         this.platformExchangeType,
                         this.plaftormExchangeDurable,
                         this.platformExchangeAutodelete,
                         this.platformExchangeInternal,
                         null);
 
-                channel.exchangeDeclare(this.resourceExchangeName,
+                this.channel.exchangeDeclare(this.resourceExchangeName,
                         this.resourceExchangeType,
                         this.resourceExchangeDurable,
                         this.resourceExchangeAutodelete,
                         this.resourceExchangeInternal,
                         null);
 
-                channel.exchangeDeclare(this.federationExchangeName,
+                this.channel.exchangeDeclare(this.federationExchangeName,
                         this.federationExchangeType,
                         this.federationExchangeDurable,
                         this.federationExchangeAutodelete,
@@ -355,7 +362,7 @@ public class RabbitManager {
             } catch (IOException e) {
                 log.error(e);
             } finally {
-                closeChannel(channel);
+                closeChannel(this.channel);
             }
         } else {
             log.error("Rabbit connection is null!");
@@ -444,7 +451,17 @@ public class RabbitManager {
         startConsumerOfGetAllInformationModelsRequestsMessages();
         startConsumerOfPlatformDetailsConsumer();
 
-        //// TODO: 07.06.2018 Start new SSP consumers!
+        startConsumerOfSspResourceCreationMessages(this.authorizationManager);
+        startConsumerOfSspResourceModificationMessages(this.authorizationManager);
+        startConsumerOfSspResourceRemovalMessages(this.authorizationManager);
+
+        startConsumerOfSspCreationMessages();
+        startConsumerOfSspModificationMessages();
+        startConsumerOfSspRemovalMessages();
+
+        startConsumerOfSspSdevCreationMessages();
+        startConsumerOfSspSdevModificationMessages();
+        startConsumerOfSspSdevRemovalMessages();
     }
 
     private void createQueueAndBeginConsuming(String queueName,
@@ -717,6 +734,150 @@ public class RabbitManager {
                     this.federationRequestedRoutingKey,
                     new GetFederationForPlatformRequestConsumer(channel, repositoryManager, this));
             log.info("Receiver waiting for Get Federation for Platform messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource creation requests.
+     */
+    public void startConsumerOfSspResourceCreationMessages(AuthorizationManager authorizationManager) {
+        try {
+            createQueueAndBeginConsuming(SSP_RESOURCE_CREATION_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.sspSdevResourceCreationRequestedRoutingKey,
+                    new SspResourceCreationRequestConsumer(channel, this, authorizationManager, repositoryManager));
+            log.info("Receiver waiting for SSP Resource Creation messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource modification requests.
+     */
+    public void startConsumerOfSspResourceModificationMessages(AuthorizationManager authorizationManager) {
+        try {
+            createQueueAndBeginConsuming(SSP_RESOURCE_MODIFICATION_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.sspResourceModificationRequestedRoutingKey,
+                    new SspResourceModificationRequestConsumer(getChannel(), this, authorizationManager, repositoryManager));
+            log.info("Receiver waiting for SSP Resource Modification messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource removal requests.
+     */
+    public void startConsumerOfSspResourceRemovalMessages(AuthorizationManager authorizationManager) {
+        try {
+            createQueueAndBeginConsuming(SSP_RESOURCE_REMOVAL_REQUESTED_QUEUE,
+                    this.resourceExchangeName,
+                    this.sspResourceRemovalRequestedRoutingKey,
+                    new SspResourceRemovalRequestConsumer(getChannel(), repositoryManager, this, authorizationManager));
+            log.info("Receiver waiting for SSP Resource Removal messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource creation requests.
+     */
+    public void startConsumerOfSspCreationMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_CREATION_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspCreationRequestedRoutingKey,
+                    new SspCreationRequestConsumer(channel, this, repositoryManager));
+            log.info("Receiver waiting for SSP Creation messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource modification requests.
+     */
+    public void startConsumerOfSspModificationMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_MODIFICATION_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspModificationRequestedRoutingKey,
+                    new SspModificationRequestConsumer(getChannel(), this, repositoryManager));
+            log.info("Receiver waiting for SSP Modification messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource removal requests.
+     */
+    public void startConsumerOfSspRemovalMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_REMOVAL_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspRemovalRequestedRoutingKey,
+                    new SspRemovalRequestConsumer(getChannel(), this, repositoryManager));
+            log.info("Receiver waiting for SSP Removal messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Sdev creation requests.
+     */
+    public void startConsumerOfSspSdevCreationMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_SDEV_CREATION_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspSdevCreationRequestedRoutingKey,
+                    new SspSdevCreationRequestConsumer(channel, this, repositoryManager));
+            log.info("Receiver waiting for SSP Sdev Creation messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Sdev modification requests.
+     */
+    public void startConsumerOfSspSdevModificationMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_SDEV_MODIFICATION_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspSdevModificationRequestedRoutingKey,
+                    new SspSdevModificationRequestConsumer(getChannel(), this, repositoryManager));
+            log.info("Receiver waiting for SSP Sdev Modification messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Sdev removal requests.
+     */
+    public void startConsumerOfSspSdevRemovalMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_SDEV_REMOVAL_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspSdevRemovalRequestedRoutingKey,
+                    new SspSdevRemovalRequestConsumer(getChannel(), this, repositoryManager));
+            log.info("Receiver waiting for SSP Sdev Removal messages....");
         } catch (IOException e) {
             log.error(e);
         }
