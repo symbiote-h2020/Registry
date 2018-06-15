@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.managers;
 
+import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
 import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.model.CoreSspResource;
 import eu.h2020.symbiote.model.cim.Resource;
@@ -7,9 +8,11 @@ import eu.h2020.symbiote.model.mim.*;
 import eu.h2020.symbiote.model.persistenceResults.*;
 import eu.h2020.symbiote.repository.*;
 import eu.h2020.symbiote.utils.RegistryUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,19 +39,26 @@ public class RepositoryManager {
     private FederationRepository federationRepository;
     private SspRepository sspRepository;
     private CoreSspResourceRepository coreSspResourceRepository;
+    private SdevRepository sdevRepository;
 
     @Autowired
     public RepositoryManager(PlatformRepository platformRepository,
                              ResourceRepository resourceRepository,
                              InformationModelRepository informationModelRepository,
                              FederationRepository federationRepository,
-                             SspRepository sspRepository) {
+                             SspRepository sspRepository,
+                             CoreSspResourceRepository coreSspResourceRepository,
+                             SdevRepository sdevRepository) {
         this.platformRepository = platformRepository;
         this.resourceRepository = resourceRepository;
         this.informationModelRepository = informationModelRepository;
         this.federationRepository = federationRepository;
         this.sspRepository = sspRepository;
+        this.coreSspResourceRepository = coreSspResourceRepository;
+        this.sdevRepository = sdevRepository;
     }
+
+    //// TODO: 15.06.2018 change all String null checks to StringUtils.isNotBlank(STR)
 
     /**
      * Saves given Platform in MongoDB. It triggers save action in Platform Repository and if it ends successfully
@@ -613,9 +623,9 @@ public class RepositoryManager {
         SspPersistenceResult sspRemovingResult = new SspPersistenceResult();
         sspRemovingResult.setSmartSpace(sspToRemove);
 
-        if (sspToRemove == null || sspToRemove.getId() == null || sspToRemove.getId().isEmpty()) {
+        if (sspToRemove == null || StringUtils.isBlank(sspToRemove.getId())) {
             log.error("Given Smart Space is null or has empty id!");
-            sspRemovingResult.setMessage("Given Smart Space is null or has empty PlatformId!");
+            sspRemovingResult.setMessage("Given Smart Space is null or has empty Id!");
             sspRemovingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
 //        } else if (resourceRepository.findByInterworkingServiceURL(sspToRemove.getId()) != null
 //                && !resourceRepository.findByInterworkingServiceURL(sspToRemove.getId()).isEmpty()) {
@@ -762,12 +772,107 @@ public class RepositoryManager {
     }
 
     public CoreSspResourcePersistenceResult modifyCoreSspResource(CoreSspResource coreSspResource) {
-        // TODO: 01.06.2018 todo 
+        // TODO: 01.06.2018 implement IMPORTANT
         return null;
     }
 
     public CoreSspResourcePersistenceResult removeCoreSspResource(String coreSspResourceId) {
-        // TODO: 01.06.2018
+        // TODO: 01.06.2018 implement IMPORTANT
         return null;
+    }
+
+    public SdevPersistenceResult saveSdev(SspRegInfo sDev) {
+        SdevPersistenceResult sdevPersistenceResult;
+
+        if (StringUtils.isBlank(sDev.getPluginId())) {
+            log.error("Sdev has a blank SSP ID (PluginId)!");
+            sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Sdev has a blank SSP ID (PluginId)!", sDev);
+        } else {
+            if (StringUtils.isNotBlank(sDev.getSymId())) {
+                log.error("Received Sdev has an ID! Sdev not created!");
+                sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Received Sdev has an ID! Sdev not created!", sDev);
+            } else {
+
+                createIdForSdev(sDev);
+
+                try {
+                    log.info("Saving Sdev: " + sDev.toString());
+                    SspRegInfo savedSdev = sdevRepository.save(sDev);
+                    log.info("sDev with id: " + savedSdev.getSymId() + " saved !");
+
+                    sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_OK, "OK", savedSdev);
+                } catch (Exception e) {
+                    log.error("Error occurred during Sdev (SspRegInfo) saving in db", e);
+                    sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Error occurred during Sdev (SspRegInfo) saving in db", sDev);
+                }
+            }
+        }
+        return sdevPersistenceResult;
+    }
+
+    /**
+     * Creates and sets unique ID for Sdev (SspRegInfo) object
+     *
+     * @param sspRegInfo
+     */
+    private void createIdForSdev(SspRegInfo sspRegInfo) {
+        sspRegInfo.setSymId(ObjectId.get().toString());
+    }
+
+    public SdevPersistenceResult modifySdev(SspRegInfo sDev) {
+        SdevPersistenceResult sdevPersistenceResult;
+
+        if (StringUtils.isBlank(sDev.getPluginId())) {
+            log.error("Sdev has a blank SSP ID (PluginId)!");
+            sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Sdev has a blank SSP ID (PluginId)!", sDev);
+        } else {
+            if (StringUtils.isBlank(sDev.getSymId())) {
+                log.error("Received Sdev has no ID! Sdev not modified!");
+                sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Received Sdev has no ID! Sdev not modified!", sDev);
+            } else {
+                if (sdevRepository.findOne(sDev.getSymId()) == null) {
+                    log.error("Received Sdev not exists in database! Sdev not modified!");
+                    sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Received Sdev not exists in database! Sdev not modified!", sDev);
+                } else {
+                    try {
+                        log.info("Modifying Sdev: " + sDev.toString());
+                        SspRegInfo savedSdev = sdevRepository.save(sDev);
+                        log.info("sDev with id: " + savedSdev.getSymId() + " modified !");
+
+                        sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_OK, "OK", savedSdev);
+                    } catch (Exception e) {
+                        log.error("Error occurred during Sdev (SspRegInfo) saving in db", e);
+                        sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Error occurred during Sdev (SspRegInfo) saving in db", sDev);
+                    }
+                }
+            }
+        }
+        return sdevPersistenceResult;
+    }
+
+    public SdevPersistenceResult removeSdev(SspRegInfo sDev) {
+        SdevPersistenceResult sdevPersistenceResult;
+
+        if (StringUtils.isBlank(sDev.getSymId())) {
+            log.error("Received Sdev has no ID! Sdev not removed!");
+            sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Received Sdev has no ID! Sdev not removed!", sDev);
+        } else {
+            if (sdevRepository.findOne(sDev.getSymId()) == null) {
+                log.error("Received Sdev not exists in database! Sdev not removed!");
+                sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_BAD_REQUEST, "Received Sdev not exists in database! Sdev not removed!", sDev);
+            } else {
+                try {
+                    log.info("Removing Sdev: " + sDev.toString());
+
+                    sdevRepository.delete(sDev.getSymId());
+
+                    sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_OK, "OK", sDev);
+                } catch (Exception e) {
+                    log.error("Error occurred during Sdev (SspRegInfo) removing from db", e);
+                    sdevPersistenceResult = new SdevPersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Error occurred during Sdev (SspRegInfo) removing from db", sDev);
+                }
+            }
+        }
+        return sdevPersistenceResult;
     }
 }

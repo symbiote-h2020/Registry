@@ -3,17 +3,15 @@ package eu.h2020.symbiote;
 import com.mongodb.MongoException;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.mim.Federation;
-import eu.h2020.symbiote.repository.FederationRepository;
-import eu.h2020.symbiote.repository.InformationModelRepository;
-import eu.h2020.symbiote.repository.PlatformRepository;
-import eu.h2020.symbiote.repository.ResourceRepository;
+import eu.h2020.symbiote.repository.*;
 import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static eu.h2020.symbiote.TestSetupConfig.generateFederationA;
@@ -26,19 +24,25 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class FederationRepositoryManagerTests {
 
-    RepositoryManager repositoryManager;
+    @Mock
     PlatformRepository platformRepository;
+    @Mock
     ResourceRepository resourceRepository;
+    @Mock
     InformationModelRepository informationModelRepository;
+    @Mock
     FederationRepository federationRepository;
+    @Mock
+    SspRepository sspRepository;
+    @Mock
+    CoreSspResourceRepository coreSspResourceRepository;
+    @Mock
+    SdevRepository sdevRepository;
+    @InjectMocks
+    RepositoryManager repositoryManager;
 
     @Before
     public void setup() {
-        platformRepository = Mockito.mock(PlatformRepository.class);
-        resourceRepository = Mockito.mock(ResourceRepository.class);
-        informationModelRepository = Mockito.mock(InformationModelRepository.class);
-        federationRepository = Mockito.mock(FederationRepository.class);
-        repositoryManager = new RepositoryManager(platformRepository, resourceRepository, informationModelRepository, federationRepository);
     }
 
     @After
@@ -92,28 +96,28 @@ public class FederationRepositoryManagerTests {
     public void testSaveFederationReturnsStatus200() throws Exception {
         Federation federation = generateFederationA();
         when(federationRepository.save(federation)).thenReturn(federation);
-        Assert.assertEquals(200,repositoryManager.saveFederation(federation).getStatus());
+        Assert.assertEquals(200, repositoryManager.saveFederation(federation).getStatus());
     }
 
     @Test
     public void testSaveFederationWithWrongId() throws Exception {
         Federation federation = generateFederationA();
         federation.setId(null);
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.saveFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.saveFederation(federation).getStatus());
     }
 
     @Test
-    public void testSaveFederationMongoError(){
+    public void testSaveFederationMongoError() {
         Federation federation = generateFederationA();
         when(federationRepository.save(federation)).thenThrow(new MongoException("FAKE MONGO ERROR"));
-        Assert.assertNotEquals(200,repositoryManager.saveFederation(federation).getStatus());
+        Assert.assertNotEquals(200, repositoryManager.saveFederation(federation).getStatus());
     }
 
     @Test
     public void testModifyFederationWithWrongId() throws Exception {
         Federation federation = generateFederationA();
         federation.setId(null);
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.modifyFederation(federation).getStatus());
     }
 
     @Test
@@ -121,7 +125,7 @@ public class FederationRepositoryManagerTests {
         Federation federation = generateFederationA();
         //FIXME set null for SLA in order to be able to build
         federation.setSlaConstraints(null);
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.modifyFederation(federation).getStatus());
     }
 
     @Test
@@ -129,14 +133,14 @@ public class FederationRepositoryManagerTests {
         Federation federation = generateFederationA();
         //FIXME set null for SLA in order to be able to build
         federation.setSlaConstraints(null);
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.modifyFederation(federation).getStatus());
     }
 
     @Test
     public void testModifyFederationThatDoesNotExistInDb() throws Exception {
         Federation federation = generateFederationA();
         when(federationRepository.findOne(federation.getId())).thenReturn(null);
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.modifyFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.modifyFederation(federation).getStatus());
     }
 
     @Test
@@ -144,26 +148,26 @@ public class FederationRepositoryManagerTests {
         Federation federation = generateFederationA();
         when(federationRepository.findOne(federation.getId())).thenReturn(federation);
         when(federationRepository.save(federation)).thenThrow(new MongoException("FAKE ERROR during saving"));
-        Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR,repositoryManager.modifyFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, repositoryManager.modifyFederation(federation).getStatus());
     }
 
     @Test
     public void testRemoveFederationWithoutId() throws Exception {
         Federation federation = generateFederationA();
         federation.setId(null);
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.removeFederation(federation).getStatus());
     }
 
     @Test
     public void testRemoveFederationWithWrongId() throws Exception {
         Federation federation = generateFederationA();
         federation.setId("");
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.removeFederation(federation).getStatus());
     }
 
     @Test
     public void testRemoveFederationThatDoesNotExist() throws Exception {
         Federation federation = generateFederationA();
-        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST,repositoryManager.removeFederation(federation).getStatus());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, repositoryManager.removeFederation(federation).getStatus());
     }
 }

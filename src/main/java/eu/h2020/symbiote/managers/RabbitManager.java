@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
 import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
 import eu.h2020.symbiote.core.internal.DescriptionType;
 import eu.h2020.symbiote.messaging.consumers.federation.*;
@@ -844,7 +845,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(SSP_SDEV_CREATION_REQUESTED_QUEUE,
                     this.sspExchangeName,
                     this.sspSdevCreationRequestedRoutingKey,
-                    new SspSdevCreationRequestConsumer(channel, this, repositoryManager));
+                    new SspSdevCreationRequestConsumer(getChannel(), this, repositoryManager));
             log.info("Receiver waiting for SSP Sdev Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -1365,7 +1366,7 @@ public class RabbitManager {
     }
 
     /**
-     * Triggers sending message containing Platform accordingly to Operation Type.
+     * Triggers sending message containing Federation accordingly to Operation Type.
      *
      * @param federation
      * @param operationType
@@ -1394,6 +1395,38 @@ public class RabbitManager {
             }
         } catch (JsonProcessingException e) {
             log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + federation, e);
+        }
+    }
+    /**
+     * Triggers sending message containing Sdev accordingly to Operation Type.
+     *
+     * @param sDev
+     * @param operationType
+     */
+    public void sendSdevOperationMessage(SspRegInfo sDev, RegistryOperationType operationType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(sDev);
+
+            switch (operationType) {
+                case CREATION:
+                    sendMessage(this.sspExchangeName, this.sspSdevCreatedRoutingKey, message,
+                            sDev.getClass().getCanonicalName());
+                    log.info("- sDev created message sent");
+                    break;
+                case MODIFICATION:
+                    sendMessage(this.sspExchangeName, this.sspSdevModifiedRoutingKey, message,
+                            sDev.getClass().getCanonicalName());
+                    log.info("- sDev modified message sent");
+                    break;
+                case REMOVAL:
+                    sendMessage(this.sspExchangeName, this.sspSdevRemovedRoutingKey, message,
+                            sDev.getClass().getCanonicalName());
+                    log.info("- sDev removed message sent");
+                    break;
+            }
+        } catch (JsonProcessingException e) {
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + sDev, e);
         }
     }
 

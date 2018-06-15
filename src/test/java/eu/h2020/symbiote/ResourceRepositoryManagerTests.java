@@ -4,10 +4,7 @@ import com.mongodb.MongoException;
 import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.repository.FederationRepository;
-import eu.h2020.symbiote.repository.InformationModelRepository;
-import eu.h2020.symbiote.repository.PlatformRepository;
-import eu.h2020.symbiote.repository.ResourceRepository;
+import eu.h2020.symbiote.repository.*;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import org.apache.http.HttpStatus;
 import org.junit.After;
@@ -15,7 +12,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static eu.h2020.symbiote.TestSetupConfig.*;
@@ -28,19 +26,25 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceRepositoryManagerTests {
 
-    RepositoryManager repositoryManager;
+    @Mock
     PlatformRepository platformRepository;
+    @Mock
     ResourceRepository resourceRepository;
+    @Mock
     InformationModelRepository informationModelRepository;
+    @Mock
     FederationRepository federationRepository;
+    @Mock
+    SspRepository sspRepository;
+    @Mock
+    CoreSspResourceRepository coreSspResourceRepository;
+    @Mock
+    SdevRepository sdevRepository;
+    @InjectMocks
+    RepositoryManager repositoryManager;
 
     @Before
     public void setup() {
-        platformRepository = Mockito.mock(PlatformRepository.class);
-        resourceRepository = Mockito.mock(ResourceRepository.class);
-        informationModelRepository = Mockito.mock(InformationModelRepository.class);
-        federationRepository = Mockito.mock(FederationRepository.class);
-        repositoryManager = new RepositoryManager(platformRepository, resourceRepository, informationModelRepository, federationRepository);
     }
 
     @After

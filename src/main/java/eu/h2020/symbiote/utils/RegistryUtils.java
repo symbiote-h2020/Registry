@@ -2,15 +2,18 @@ package eu.h2020.symbiote.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
 import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.core.internal.CoreResourceRegistryRequest;
 import eu.h2020.symbiote.core.internal.CoreResourceType;
 import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryRequest;
+import eu.h2020.symbiote.model.CoreSspResource;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.mim.Federation;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.model.mim.SmartSpace;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -219,8 +222,22 @@ public class RegistryUtils {
 
     public static boolean validateFields(SmartSpace smartSpace) {
         //// TODO: should i check some more information?
-        if (smartSpace.getId() == null || smartSpace.getId().isEmpty()) return false;
-        if (smartSpace.getName() == null || smartSpace.getName().isEmpty()) return false;
+        if (StringUtils.isBlank(smartSpace.getId())) return false;
+        if (StringUtils.isBlank(smartSpace.getName())) return false;
+        return true;
+    }
+
+    public static boolean validateFields(SspRegInfo sDev) {
+        //// TODO: should i check some more information?
+        if (StringUtils.isBlank(sDev.getPluginId())) return false;
+        if (StringUtils.isBlank(sDev.getPluginURL())) return false;
+        return true;
+    }
+
+    public static boolean validateFields(CoreSspResource coreSspResource) {
+        //// TODO: should i check some more information?
+        if (StringUtils.isBlank(coreSspResource.getId())) return false;
+        if (StringUtils.isBlank(coreSspResource.getSdevId())) return false;
         return true;
     }
 

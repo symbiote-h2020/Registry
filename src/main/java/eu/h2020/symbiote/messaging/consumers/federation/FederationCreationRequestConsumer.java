@@ -70,7 +70,7 @@ public class FederationCreationRequestConsumer extends DefaultConsumer {
             if (RegistryUtils.validateFields(requestFederation)) {
                 FederationPersistenceResult federationPersistenceResult = this.repositoryManager.saveFederation(requestFederation);
                 if (federationPersistenceResult.getStatus() == 200) {
-                    rabbitManager.sendFederationOperationMessage(federationResponse.getBody(),
+                    rabbitManager.sendFederationOperationMessage(federationPersistenceResult.getFederation(),
                             RegistryOperationType.CREATION);
                 } else {
                     log.error("Error occurred during Federation saving in db, due to: " +
