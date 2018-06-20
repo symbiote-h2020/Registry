@@ -363,7 +363,7 @@ public class RabbitManager {
             } catch (IOException e) {
                 log.error(e);
             } finally {
-                closeChannel(this.channel);
+//                closeChannel(this.channel);
             }
         } else {
             log.error("Rabbit connection is null!");
@@ -1309,7 +1309,7 @@ public class RabbitManager {
         } catch (IOException e) {
             log.error(e);
         } finally {
-            closeChannel(channel);
+//            closeChannel(channel);
         }
     }
 

@@ -84,6 +84,8 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
 
                 SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.saveSdev(sDev);
 
+                response.setStatus(sdevPersistenceResult.getStatus());
+                response.setMessage(sdevPersistenceResult.getMessage());
                 if (sdevPersistenceResult.getStatus() == 200) {
                     rabbitManager.sendSdevOperationMessage(sdevPersistenceResult.getSdev(),
                             RegistryOperationType.CREATION);
@@ -91,9 +93,14 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
                     prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) saving in db, due to: " +
                             sdevPersistenceResult.getMessage());
                 }
+
             } else {
                 prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Given Sdev (SspRegInfo) has some fields null or empty");
             }
+
+
+            //sdev class has newly created symId
+            response.setBody(sDev);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
         } catch (JsonSyntaxException | JsonMappingException e) {
