@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
 import eu.h2020.symbiote.core.cci.SdevRegistryRequest;
 import eu.h2020.symbiote.core.cci.SdevRegistryResponse;
+import eu.h2020.symbiote.core.internal.CoreSdevRegistryRequest;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
@@ -62,7 +63,7 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
     public void handleDelivery(String consumerTag, Envelope envelope,
                                AMQP.BasicProperties properties, byte[] body)
             throws IOException {
-        SdevRegistryRequest request;
+        CoreSdevRegistryRequest request;
         String message = new String(body, "UTF-8");
         response = new SdevRegistryResponse();
 
@@ -72,7 +73,10 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
         this.properties = properties;
 
         try {
-            request = mapper.readValue(message, SdevRegistryRequest.class);
+            request = mapper.readValue(message, CoreSdevRegistryRequest.class);
+
+            //// TODO: 20.06.2018 Check if given SspId exists
+            //// TODO: 20.06.2018 security check
 
             SspRegInfo sDev = request.getBody();
 
