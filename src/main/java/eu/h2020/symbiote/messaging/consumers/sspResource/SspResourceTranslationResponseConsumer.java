@@ -257,8 +257,8 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         }
 
         try {
-            rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
-            rabbitManager.closeConsumer(this, this.getChannel());
+            this.rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
+            this.rabbitManager.closeConsumer(this);
         } catch (IOException e) {
             log.error(e);
         }
@@ -271,7 +271,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreSspResourcesList);
         payload.setPlatformId(sDevId);
-        rabbitManager.sendResourceOperationMessage(payload, operationType);
+        this.rabbitManager.sendResourceOperationMessage(payload, operationType);
     }
 
     /**
