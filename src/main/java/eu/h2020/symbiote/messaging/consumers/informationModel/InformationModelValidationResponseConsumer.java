@@ -173,7 +173,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
 
-            rabbitManager.closeConsumer(this, this.getChannel());
+            rabbitManager.closeConsumer(this);
         } catch (IOException e) {
             log.error(e);
         }
