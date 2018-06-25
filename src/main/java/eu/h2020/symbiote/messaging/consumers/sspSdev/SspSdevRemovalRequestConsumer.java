@@ -86,6 +86,9 @@ public class SspSdevRemovalRequestConsumer extends DefaultConsumer {
 
                 SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.removeSdev(sDev);
 
+
+                response.setStatus(sdevPersistenceResult.getStatus());
+                response.setMessage(sdevPersistenceResult.getMessage());
                 if (sdevPersistenceResult.getStatus() == 200) {
                     rabbitManager.sendSdevOperationMessage(sdevPersistenceResult.getSdev(),
                             RegistryOperationType.REMOVAL);
