@@ -285,6 +285,10 @@ public class RabbitManager {
     private String jsonResourceTranslationRequestedRoutingKey; //dla JSONów
     @Value("${rabbit.routingKey.resource.instance.validationRequested}")
     private String rdfResourceValidationRequestedRoutingKey; //dla RDFów
+
+    @Value("${rabbit.routingKey.ssp.sdev.resource.instance.translationRequested}")
+    private String sspResourceInstanceTranslationRequestedRoutingKey; //dla SSP resources
+
     @Value("${rabbit.routingKey.platform.model.validationRequested}")
     private String rdfInformationModelValidationRequestedRoutingKey;
     /* RDF translation/validation messages Params */
@@ -1101,7 +1105,8 @@ public class RabbitManager {
                                                          Map<String, Resource> requestResourcesMap) {
 
         sendSspResourceOperationRpcMessageToSemanticManager(rpcConsumer, rpcProperties, rpcEnvelope,
-                this.jsonResourceTranslationRequestedRoutingKey,
+//                this.jsonResourceTranslationRequestedRoutingKey,
+                this.sspResourceInstanceTranslationRequestedRoutingKey,
                 operationType,
                 message,
                 sDevId,
