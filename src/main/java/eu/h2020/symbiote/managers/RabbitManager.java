@@ -19,6 +19,7 @@ import eu.h2020.symbiote.messaging.consumers.sspSdev.SspSdevCreationRequestConsu
 import eu.h2020.symbiote.messaging.consumers.sspSdev.SspSdevModificationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.sspSdev.SspSdevRemovalRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspCreationRequestConsumer;
+import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspDetailsRequestedConsumer;
 import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspModificationRequestConsumer;
 import eu.h2020.symbiote.messaging.consumers.ssp_smartSpace.SspRemovalRequestConsumer;
 import eu.h2020.symbiote.model.RegistryOperationType;
@@ -78,6 +79,7 @@ public class RabbitManager {
     private static final String SSP_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspCreationRequestedQueue";
     private static final String SSP_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspModificationRequestedQueue";
     private static final String SSP_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspRemovalRequestedQueue";
+    private static final String SSP_DETAILS_REQUESTED_QUEUE = "symbIoTe-Registry-sspDetailsRequestedQueue";
     private static final String SSP_SDEV_CREATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevCreationRequestedQueue";
     private static final String SSP_SDEV_MODIFICATION_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevModificationRequestedQueue";
     private static final String SSP_SDEV_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevRemovalRequestedQueue";
@@ -248,6 +250,8 @@ public class RabbitManager {
     private String sspRemovalRequestedRoutingKey;
     @Value("${rabbit.routingKey.ssp.removed}")
     private String sspRemovedRoutingKey;
+    @Value("${rabbit.routingKey.ssp.sspDetailsRequested}")
+    private String sspDetailsRequestedRoutingKey;
     /* Smart Space messages Params */
 
     /* Smart Device messages Params */
@@ -425,6 +429,16 @@ public class RabbitManager {
                 this.channel.queueDelete(FEDERATION_CREATION_REQUESTED_QUEUE);
                 this.channel.queueDelete(FEDERATION_MODIFICATION_REQUESTED_QUEUE);
                 this.channel.queueDelete(FEDERATION_REMOVAL_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_CREATION_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_MODIFICATION_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_REMOVAL_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_RESOURCE_CREATION_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_RESOURCE_MODIFICATION_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_RESOURCE_REMOVAL_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_SDEV_CREATION_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_SDEV_MODIFICATION_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_SDEV_REMOVAL_REQUESTED_QUEUE);
+                this.channel.queueDelete(SSP_DETAILS_REQUESTED_QUEUE);
                 closeChannel();
                 this.connection.close();
             }
@@ -467,10 +481,12 @@ public class RabbitManager {
         startConsumerOfSspCreationMessages();
         startConsumerOfSspModificationMessages();
         startConsumerOfSspRemovalMessages();
+        startConsumerOfSspDetailsMessages();
 
         startConsumerOfSspSdevCreationMessages();
         startConsumerOfSspSdevModificationMessages();
         startConsumerOfSspSdevRemovalMessages();
+
     }
 
     private void createQueueAndBeginConsuming(String queueName,
@@ -838,6 +854,22 @@ public class RabbitManager {
                     this.sspExchangeName,
                     this.sspRemovalRequestedRoutingKey,
                     new SspRemovalRequestConsumer(getChannel(), this, repositoryManager));
+            log.info("Receiver waiting for SSP Removal messages....");
+        } catch (IOException e) {
+            log.error(e);
+        }
+    }
+
+    /**
+     * Method creates queue and binds it globally available exchange and adequate Routing Key.
+     * It also creates a consumer for messages incoming to this queue, regarding to SSP Resource removal requests.
+     */
+    public void startConsumerOfSspDetailsMessages() {
+        try {
+            createQueueAndBeginConsuming(SSP_DETAILS_REQUESTED_QUEUE,
+                    this.sspExchangeName,
+                    this.sspDetailsRequestedRoutingKey,
+                    new SspDetailsRequestedConsumer(getChannel(), this, repositoryManager));
             log.info("Receiver waiting for SSP Removal messages....");
         } catch (IOException e) {
             log.error(e);

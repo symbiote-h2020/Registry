@@ -875,4 +875,8 @@ public class RepositoryManager {
         }
         return sdevPersistenceResult;
     }
+
+    public SmartSpace getSspById(String requestedSspId) {
+        return sspRepository.findOne(requestedSspId);
+    }
 }
