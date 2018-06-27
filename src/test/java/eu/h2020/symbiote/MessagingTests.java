@@ -68,11 +68,12 @@ public class MessagingTests {
         initializeRabbitManager(rabbitManager);
         mapper = new ObjectMapper();
         connection = rabbitManager.getConnection();
-        channel = connection.createChannel();
+        channel = rabbitManager.getChannel();
     }
 
     @After
-    public void teardown() {
+    public void teardown() throws IOException, TimeoutException {
+        channel.close();
         deleteRabbitQueues(rabbitManager);
         log.info("Rabbit cleaned!");
     }
@@ -80,7 +81,6 @@ public class MessagingTests {
     @Test
     public void resourceCreationRequestConsumerHappyPathTest() throws InterruptedException, IOException, TimeoutException, InvalidArgumentsException {
         rabbitManager.startConsumerOfResourceCreationMessages(mockedAuthorizationManager);
-
         Resource resource1 = generateCoreResourceSensorWithoutId();
         Resource resource2 = generateCoreResourceSensorWithoutId();
         CoreResourceRegistryRequest coreResourceRegistryRequest = generateCoreResourceRegistryRequestBasicType(resource1, resource2);

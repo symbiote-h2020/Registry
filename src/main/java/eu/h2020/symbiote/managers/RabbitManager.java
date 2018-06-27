@@ -303,9 +303,16 @@ public class RabbitManager {
         this.authorizationManager = authorizationManager;
     }
 
-    private Channel getChannel() throws IOException {
-        if (this.channel == null) {
-            this.channel = this.connection.createChannel();
+    public Channel getChannel() {
+        try {
+            if (this.channel == null) {
+                this.channel = getConnection().createChannel();
+                log.info("Rabbit channel created! " + channel.getChannelNumber() + " conn: " + channel.getConnection().getAddress());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
         }
         return channel;
     }
@@ -324,6 +331,7 @@ public class RabbitManager {
             factory.setPassword(this.rabbitPassword);
             try {
                 this.connection = factory.newConnection();
+                log.info("Rabbit connection created! " + connection.getAddress());
             } catch (IOException e) {
                 log.error(e);
             }
@@ -378,6 +386,7 @@ public class RabbitManager {
             } catch (IOException e) {
                 log.error(e);
             }
+            log.info("Exchanges created!");
         } else {
             log.error("Rabbit connection is null!");
         }
@@ -392,53 +401,53 @@ public class RabbitManager {
         try {
             if (this.connection != null && this.connection.isOpen()) {
                 getChannel();
-                this.channel.queueUnbind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName,
+                getChannel().queueUnbind(PLATFORM_CREATION_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                this.channel.queueUnbind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName,
+                getChannel().queueUnbind(PLATFORM_MODIFICATION_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                this.channel.queueUnbind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName,
+                getChannel().queueUnbind(PLATFORM_REMOVAL_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformCreationRequestedRoutingKey);
-                this.channel.queueUnbind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName,
+                getChannel().queueUnbind(RESOURCE_CREATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
-                this.channel.queueUnbind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
+                getChannel().queueUnbind(RESOURCE_MODIFICATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
-                this.channel.queueUnbind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName,
+                getChannel().queueUnbind(RESOURCE_REMOVAL_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.resourceCreationRequestedRoutingKey);
-                this.channel.queueUnbind(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE, this.resourceExchangeName,
+                getChannel().queueUnbind(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.rdfResourceValidationRequestedRoutingKey);
-                this.channel.queueUnbind(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE, this.resourceExchangeName,
+                getChannel().queueUnbind(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE, this.resourceExchangeName,
                         this.jsonResourceTranslationRequestedRoutingKey);
-                this.channel.queueUnbind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName,
+                getChannel().queueUnbind(PLATFORM_RESOURCES_REQUESTED_QUEUE, this.platformExchangeName,
                         this.platformResourcesRequestedRoutingKey);
-                this.channel.queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(INFORMATION_MODELS_REQUESTED_QUEUE);
-                this.channel.queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
-                this.channel.queueDelete(PLATFORM_DETAILS_REQUESTED_QUEUE);
-                this.channel.queueDelete(FEDERATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(FEDERATIONS_REQUESTED_QUEUE);
-                this.channel.queueDelete(FEDERATION_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(FEDERATION_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(FEDERATION_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_RESOURCE_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_RESOURCE_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_RESOURCE_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_SDEV_CREATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_SDEV_MODIFICATION_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_SDEV_REMOVAL_REQUESTED_QUEUE);
-                this.channel.queueDelete(SSP_DETAILS_REQUESTED_QUEUE);
+                getChannel().queueDelete(PLATFORM_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(PLATFORM_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(PLATFORM_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(RESOURCE_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(RESOURCE_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(RESOURCE_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(INFORMATION_MODELS_REQUESTED_QUEUE);
+                getChannel().queueDelete(RDF_RESOURCE_VALIDATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(JSON_RESOURCE_TRANSLATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(PLATFORM_RESOURCES_REQUESTED_QUEUE);
+                getChannel().queueDelete(PLATFORM_DETAILS_REQUESTED_QUEUE);
+                getChannel().queueDelete(FEDERATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(FEDERATIONS_REQUESTED_QUEUE);
+                getChannel().queueDelete(FEDERATION_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(FEDERATION_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(FEDERATION_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_RESOURCE_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_RESOURCE_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_RESOURCE_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_SDEV_CREATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_SDEV_MODIFICATION_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_SDEV_REMOVAL_REQUESTED_QUEUE);
+                getChannel().queueDelete(SSP_DETAILS_REQUESTED_QUEUE);
                 closeChannel();
                 this.connection.close();
             }
@@ -508,9 +517,11 @@ public class RabbitManager {
             createQueueAndBeginConsuming(RESOURCE_CREATION_REQUESTED_QUEUE,
                     this.resourceExchangeName,
                     this.resourceCreationRequestedRoutingKey,
-                    new ResourceCreationRequestConsumer(this.channel, this, authorizationManager, repositoryManager));
+                    new ResourceCreationRequestConsumer(getChannel(), this, authorizationManager, repositoryManager));
             log.info("Receiver waiting for Resource Creation messages....");
         } catch (IOException e) {
+            log.error(e);
+        } catch (Exception e) {
             log.error(e);
         }
     }
@@ -556,7 +567,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(RESOURCE_CLEAR_DATA_REQUESTED_QUEUE,
                     this.resourceExchangeName,
                     this.resourceClearDataRequestedRoutingKey,
-                    new ResourceClearDataRequestConsumer(this.channel, repositoryManager, this, authorizationManager));
+                    new ResourceClearDataRequestConsumer(getChannel(), repositoryManager, this, authorizationManager));
             log.info("Receiver waiting for Clear Data messages....");
         } catch (IOException e) {
             log.error(e);
@@ -572,7 +583,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(PLATFORM_RESOURCES_REQUESTED_QUEUE,
                     this.platformExchangeName,
                     this.platformResourcesRequestedRoutingKey,
-                    new PlatformResourcesRequestConsumer(this.channel, repositoryManager, this, authorizationManager));
+                    new PlatformResourcesRequestConsumer(getChannel(), repositoryManager, this, authorizationManager));
             log.info("Receiver waiting for Platform Resources Requests messages....");
         } catch (IOException e) {
             log.error(e);
@@ -588,7 +599,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(PLATFORM_CREATION_REQUESTED_QUEUE,
                     this.platformExchangeName,
                     this.platformCreationRequestedRoutingKey,
-                    new PlatformCreationRequestConsumer(this.channel, repositoryManager, this));
+                    new PlatformCreationRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Platform Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -604,7 +615,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(PLATFORM_MODIFICATION_REQUESTED_QUEUE,
                     this.platformExchangeName,
                     this.platformModificationRequestedRoutingKey,
-                    new PlatformModificationRequestConsumer(this.channel, repositoryManager, this));
+                    new PlatformModificationRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Platform Modification messages....");
         } catch (IOException e) {
             log.error(e);
@@ -620,7 +631,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(PLATFORM_REMOVAL_REQUESTED_QUEUE,
                     this.platformExchangeName,
                     this.platformRemovalRequestedRoutingKey,
-                    new PlatformRemovalRequestConsumer(this.channel, repositoryManager, this));
+                    new PlatformRemovalRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Platform Removal messages....");
         } catch (IOException e) {
             log.error(e);
@@ -636,7 +647,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(PLATFORM_DETAILS_REQUESTED_QUEUE,
                     this.platformExchangeName,
                     this.platformDetailsRequestedRoutingKey,
-                    new PlatformDetailsRequestConsumer(this.channel, repositoryManager, this));
+                    new PlatformDetailsRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Get Platform Details messages....");
         } catch (IOException e) {
             log.error(e);
@@ -652,7 +663,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(INFORMATION_MODEL_CREATION_REQUESTED_QUEUE,
                     this.informationModelExchangeName,
                     this.informationModelCreationRequestedRoutingKey,
-                    new InformationModelCreationRequestConsumer(this.channel, this));
+                    new InformationModelCreationRequestConsumer(getChannel(), this));
             log.info("Receiver waiting for Information Model Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -668,7 +679,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(INFORMATION_MODEL_MODIFICATION_REQUESTED_QUEUE,
                     this.informationModelExchangeName,
                     this.informationModelModificationRequestedRoutingKey,
-                    new InformationModelModificationRequestConsumer(this.channel, this));
+                    new InformationModelModificationRequestConsumer(getChannel(), this));
             log.info("Receiver waiting for Information Model Modification messages....");
         } catch (IOException e) {
             log.error(e);
@@ -684,7 +695,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(INFORMATION_MODEL_REMOVAL_REQUESTED_QUEUE,
                     this.informationModelExchangeName,
                     this.informationModelRemovalRequestedRoutingKey,
-                    new InformationModelRemovalRequestConsumer(this.channel, this, repositoryManager));
+                    new InformationModelRemovalRequestConsumer(getChannel(), this, repositoryManager));
             log.info("Receiver waiting for Information Model Removal messages....");
         } catch (IOException e) {
             log.error(e);
@@ -696,7 +707,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(INFORMATION_MODELS_REQUESTED_QUEUE,
                     this.informationModelExchangeName,
                     this.informationModelsRequestedRoutingKey,
-                    new GetAllInformationModelsRequestConsumer(this.channel, repositoryManager, this));
+                    new GetAllInformationModelsRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for List All Information Models Requests messages....");
         } catch (IOException e) {
             log.error(e);
@@ -708,7 +719,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(FEDERATION_CREATION_REQUESTED_QUEUE,
                     this.federationExchangeName,
                     this.federationCreationRequestedRoutingKey,
-                    new FederationCreationRequestConsumer(this.channel, repositoryManager, this));
+                    new FederationCreationRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Federation Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -721,7 +732,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(FEDERATION_MODIFICATION_REQUESTED_QUEUE,
                     this.federationExchangeName,
                     this.federationModificationRequestedRoutingKey,
-                    new FederationModificationRequestConsumer(this.channel, repositoryManager, this));
+                    new FederationModificationRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Federation Modification messages....");
         } catch (IOException e) {
             log.error(e);
@@ -733,7 +744,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(FEDERATION_REMOVAL_REQUESTED_QUEUE,
                     this.federationExchangeName,
                     this.federationRemovalRequestedRoutingKey,
-                    new FederationRemovalRequestConsumer(this.channel, repositoryManager, this));
+                    new FederationRemovalRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Federation Removal messages....");
         } catch (IOException e) {
             log.error(e);
@@ -745,7 +756,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(FEDERATIONS_REQUESTED_QUEUE,
                     this.federationExchangeName,
                     this.federationsRequestedRoutingKey,
-                    new GetAllFederationsRequestConsumer(this.channel, repositoryManager, this));
+                    new GetAllFederationsRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Get All Federations messages....");
         } catch (IOException e) {
             log.error(e);
@@ -757,7 +768,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(FEDERATION_REQUESTED_QUEUE,
                     this.federationExchangeName,
                     this.federationRequestedRoutingKey,
-                    new GetFederationForPlatformRequestConsumer(this.channel, repositoryManager, this));
+                    new GetFederationForPlatformRequestConsumer(getChannel(), repositoryManager, this));
             log.info("Receiver waiting for Get Federation for Platform messages....");
         } catch (IOException e) {
             log.error(e);
@@ -773,7 +784,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(SSP_RESOURCE_CREATION_REQUESTED_QUEUE,
                     this.resourceExchangeName,
                     this.sspSdevResourceCreationRequestedRoutingKey,
-                    new SspResourceCreationRequestConsumer(this.channel, this, authorizationManager, repositoryManager));
+                    new SspResourceCreationRequestConsumer(getChannel(), this, authorizationManager, repositoryManager));
             log.info("Receiver waiting for SSP Resource Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -821,7 +832,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(SSP_CREATION_REQUESTED_QUEUE,
                     this.sspExchangeName,
                     this.sspCreationRequestedRoutingKey,
-                    new SspCreationRequestConsumer(this.channel, this, repositoryManager));
+                    new SspCreationRequestConsumer(getChannel(), this, repositoryManager));
             log.info("Receiver waiting for SSP Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -1322,7 +1333,7 @@ public class RabbitManager {
     }
 
     public void closeConsumer(DefaultConsumer consumerToClose) throws IOException {
-        this.channel.basicCancel(consumerToClose.getConsumerTag());
+        getChannel().basicCancel(consumerToClose.getConsumerTag());
     }
 
     /**
@@ -1346,7 +1357,7 @@ public class RabbitManager {
                     .build();
 
             log.info("Sending message...");
-            this.channel.basicPublish(exchange, routingKey, props, message.getBytes());
+            getChannel().basicPublish(exchange, routingKey, props, message.getBytes());
         } catch (IOException e) {
             log.error(e);
         }
@@ -1361,8 +1372,9 @@ public class RabbitManager {
      */
     private void closeChannel() {
         try {
-            if (this.channel != null && this.channel.isOpen())
-                this.channel.close();
+            if (getChannel() != null && getChannel().isOpen())
+                getChannel().close();
+            log.info("Channel closed! " + getChannel().getChannelNumber());
         } catch (IOException | TimeoutException e) {
             log.error(e);
         }
@@ -1481,12 +1493,12 @@ public class RabbitManager {
      */
     public String sendRpcMessageAndConsumeResponse(String exchangeName, String routingKey, String message) {
 
-        QueueingConsumer consumer = new QueueingConsumer(this.channel);
+        QueueingConsumer consumer = new QueueingConsumer(getChannel());
 
         try {
             log.debug("Sending RPC message...");
 
-            String replyQueueName = this.channel.queueDeclare().getQueue();
+            String replyQueueName = getChannel().queueDeclare().getQueue();
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -1496,11 +1508,11 @@ public class RabbitManager {
                     .contentType("application/json")
                     .build();
 
-            this.channel.basicConsume(replyQueueName, true, consumer);
+            getChannel().basicConsume(replyQueueName, true, consumer);
 
             String responseMsg = null;
 
-            this.channel.basicPublish(exchangeName, routingKey, props, message.getBytes());
+            getChannel().basicPublish(exchangeName, routingKey, props, message.getBytes());
             while (true) {
                 QueueingConsumer.Delivery delivery = consumer.nextDelivery(20000);
                 if (delivery == null) {
@@ -1524,7 +1536,7 @@ public class RabbitManager {
             log.error("Error while sending RPC Message via RabbitMQ", e);
         } finally {
             try {
-                this.channel.basicCancel(consumer.getConsumerTag());
+                getChannel().basicCancel(consumer.getConsumerTag());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

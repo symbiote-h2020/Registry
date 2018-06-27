@@ -7,6 +7,8 @@ import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,6 +28,8 @@ import static org.mockito.Mockito.when;
  * Created by mateuszl
  */
 public class AuthorizationManagerTests {
+
+    private static Log log = LogFactory.getLog(AuthorizationManagerTests.class);
 
     AuthorizationManager authorizationManager;
     PlatformRepository mockedPlatformRepository;
@@ -50,7 +54,7 @@ public class AuthorizationManagerTests {
     }
 
     @Test
-    public void operationAccessWithSecurityDisabledTest(){
+    public void operationAccessWithSecurityDisabledTest() {
         Assert.assertTrue(authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "").isValidated());
         //method should return true because of security is disabled
     }
@@ -63,8 +67,8 @@ public class AuthorizationManagerTests {
         try {
             authorizationManager1 = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, true);
             //security enabled = true stands for ENABLING security
-        } catch (Exception e){
-            System.out.println(e);
+        } catch (Exception e) {
+            log.error(e);
         }
         authorizationManager1.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "id");
         //method should return throw a null pointer because of enabled security

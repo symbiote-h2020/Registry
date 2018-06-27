@@ -79,6 +79,33 @@ public class TestSetupConfig {
     public static final String RESOURCE_VALIDATION_REQUESTED_RK = "symbIoTe.resource.instance.validationRequested";
     public static final String GET_FEDERATION_FOR_PLATFORM_RK = "symbIoTe.federation.getForPlatform";
     public static final String GET_ALL_FEDERATIONS_RK = "symbIoTe.federation.getAll";
+
+    public static final String SSP_EXCHANGE_NAME = "symbIoTe.ssp";
+    public static final String SSP_CREATION_REQUESTED_RK = "symbIoTe.ssp.creationRequested";
+    public static final String SSP_CREATED_RK = "symbIoTe.ssp.created";
+    public static final String SSP_MODIFICATION_REQUESTED_RK = "symbIoTe.ssp.modificationRequested";
+    public static final String SSP_MODIFIED_RK = "symbIoTe.ssp.updated";
+    public static final String SSP_REMOVAL_REQUESTED_RK = "symbIoTe.ssp.removalRequested";
+    public static final String SSP_REMOVED_RK = "symbIoTe.ssp.removed";
+    public static final String SSP_DETAILS_REQUESTED_RK = "symbIoTe.ssp.sspDetailsRequested";
+
+    public static final String SSP_SDEV_CREATION_REQUESTED_RK = "symbIoTe.ssp.sdev.creationRequested";
+    public static final String SSP_SDEV_CREATED_RK = "symbIoTe.ssp.sdev.created";
+    public static final String SSP_SDEV_MODIFICATION_REQUESTED_RK = "symbIoTe.ssp.sdev.modificationRequested";
+    public static final String SSP_SDEV_MODIFIED_RK = "symbIoTe.ssp.sdev.updated";
+    public static final String SSP_SDEV_REMOVAL_REQUESTED_RK = "symbIoTe.ssp.sdev.removalRequested";
+    public static final String SSP_SDEV_REMOVED_RK = "symbIoTe.ssp.sdev.removed";
+
+    public static final String SSP_SDEV_RESOURCE_CREATION_REQUESTED_RK = "symbIoTe.ssp.sdev.resource.creationRequested";
+    public static final String SSP_SDEV_RESOURCE_CREATED_RK = "symbIoTe.ssp.sdev.resource.created";
+    public static final String SSP_SDEV_RESOURCE_MODIFICATION_REQUESTED_RK = "symbIoTe.ssp.sdev.resource.modificationRequested";
+    public static final String SSP_SDEV_RESOURCE_MODIFIED_RK = "symbIoTe.ssp.sdev.resource.updated";
+    public static final String SSP_SDEV_RESOURCE_REMOVAL_REQUESTED_RK = "symbIoTe.ssp.sdev.resource.removalRequested";
+    public static final String SSP_SDEV_RESOURCE_REMOVED_RK = "symbIoTe.ssp.sdev.resource.removed";
+
+    public static final String SSP_SDEV_RESOURCE_INSTANCE_TRANSLATION_REQUESTED_RK = "symbIoTe.ssp.instance.translationRequested";
+
+
     public static final String AAM_EXCHANGE_NAME = "symbIoTe.AuthenticationAuthorizationManager";
     public static final String AAM_GET_PLATFORM_OWNERS_RK = "symbIoTe-AuthenticationAuthorizationManager.get_platform_owners_names";
     public static final String PLATFORM_A_ID = "1";
@@ -147,6 +174,12 @@ public class TestSetupConfig {
         ReflectionTestUtils.setField(rm, "informationModelExchangeAutodelete", false);
         ReflectionTestUtils.setField(rm, "informationModelExchangeInternal", false);
 
+        ReflectionTestUtils.setField(rm, "sspExchangeName", SSP_EXCHANGE_NAME);
+        ReflectionTestUtils.setField(rm, "sspExchangeType", "topic");
+        ReflectionTestUtils.setField(rm, "sspExchangeDurable", true);
+        ReflectionTestUtils.setField(rm, "sspExchangeAutodelete", false);
+        ReflectionTestUtils.setField(rm, "sspExchangeInternal", false);
+
         ReflectionTestUtils.setField(rm, "platformCreationRequestedRoutingKey", PLATFORM_CREATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rm, "platformModificationRequestedRoutingKey", PLATFORM_MODIFICATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rm, "platformRemovalRequestedRoutingKey", PLATFORM_REMOVAL_REQUESTED_RK);
@@ -182,6 +215,30 @@ public class TestSetupConfig {
 
         ReflectionTestUtils.setField(rm, "jsonResourceTranslationRequestedRoutingKey", RESOURCE_TRANSLATION_REQUESTED_RK);
         ReflectionTestUtils.setField(rm, "rdfResourceValidationRequestedRoutingKey", RESOURCE_VALIDATION_REQUESTED_RK);
+
+        ReflectionTestUtils.setField(rm, "sspCreationRequestedRoutingKey", SSP_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspCreatedRoutingKey", SSP_CREATED_RK);
+        ReflectionTestUtils.setField(rm, "sspModificationRequestedRoutingKey", SSP_MODIFICATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspModifiedRoutingKey", SSP_MODIFIED_RK);
+        ReflectionTestUtils.setField(rm, "sspRemovalRequestedRoutingKey", SSP_REMOVAL_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspRemovedRoutingKey", SSP_REMOVED_RK);
+        ReflectionTestUtils.setField(rm, "sspDetailsRequestedRoutingKey", SSP_DETAILS_REQUESTED_RK);
+
+        ReflectionTestUtils.setField(rm, "sspSdevCreationRequestedRoutingKey", SSP_SDEV_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevCreatedRoutingKey", SSP_SDEV_CREATED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevModificationRequestedRoutingKey", SSP_SDEV_MODIFICATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevModifiedRoutingKey", SSP_SDEV_MODIFIED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevRemovalRequestedRoutingKey", SSP_SDEV_REMOVAL_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevRemovedRoutingKey", SSP_SDEV_REMOVED_RK);
+
+        ReflectionTestUtils.setField(rm, "sspSdevResourceCreationRequestedRoutingKey", SSP_SDEV_RESOURCE_CREATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevResourceCreatedRoutingKey", SSP_SDEV_RESOURCE_CREATED_RK);
+        ReflectionTestUtils.setField(rm, "sspResourceModificationRequestedRoutingKey", SSP_SDEV_RESOURCE_MODIFICATION_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevResourceModifiedRoutingKey", SSP_SDEV_RESOURCE_MODIFIED_RK);
+        ReflectionTestUtils.setField(rm, "sspResourceRemovalRequestedRoutingKey", SSP_SDEV_RESOURCE_REMOVAL_REQUESTED_RK);
+        ReflectionTestUtils.setField(rm, "sspSdevResourceRemovedRoutingKey", SSP_SDEV_RESOURCE_REMOVED_RK);
+
+        ReflectionTestUtils.setField(rm, "sspResourceInstanceTranslationRequestedRoutingKey", SSP_SDEV_RESOURCE_INSTANCE_TRANSLATION_REQUESTED_RK);
         ReflectionTestUtils.invokeMethod(rm, "init");
     }
 

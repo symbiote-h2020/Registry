@@ -70,8 +70,6 @@ public class MongoRepositoryTests {
     }
 
     public void addResourceAndPlatformToDb() throws InvalidArgumentsException {
-        System.out.println("test1");
-
         CoreResource coreResource = TestSetupConfig.generateCoreResourceWithoutId();
         coreResource.setId("someId2");
 
