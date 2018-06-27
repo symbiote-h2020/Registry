@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.messaging.consumers.sspResource;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -104,22 +105,15 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
             throws IOException {
 
         String message = new String(body, "UTF-8");
-        ResourceInstanceValidationResult resourceInstanceValidationResult = new ResourceInstanceValidationResult();
+        ResourceInstanceValidationResult resourceInstanceValidationResult;
         Map<String, CoreResource> coreResourcesFromSM;
 
         log.info("[x] Received SspResource translation result: '" + message + "'");
 
         try {
-            try {
-                //receive and read message from Semantic Manager
-                resourceInstanceValidationResult = mapper.readValue(message, ResourceInstanceValidationResult.class);
-            } catch (JsonSyntaxException | JsonMappingException e) {
-                log.error("Unable to get resource validation result from Message body!", e);
-                registryResponse.setStatus(500);
-                registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
-            }
+            resourceInstanceValidationResult = readMessageFromSemanticManager(message);
 
-            if (resourceInstanceValidationResult.isSuccess()) {
+            if (resourceInstanceValidationResult != null && resourceInstanceValidationResult.isSuccess()) {
                 coreResourcesFromSM = resourceInstanceValidationResult.getObjectDescription();
                 log.info("CoreSspResources received from SM! Content: " + coreResourcesFromSM);
 
@@ -143,6 +137,18 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
             registryResponse.setMessage(e.toString());
         }
         sendRpcResponse();
+    }
+
+    private ResourceInstanceValidationResult readMessageFromSemanticManager(String message) throws IOException {
+        try {
+            //receive and read message from Semantic Manager
+            return mapper.readValue(message, ResourceInstanceValidationResult.class);
+        } catch (JsonSyntaxException | JsonMappingException | JsonParseException e) {
+            log.error("Unable to get resource validation result from Message body!", e);
+            registryResponse.setStatus(500);
+            registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + message);
+            return null;
+        }
     }
 
     /**

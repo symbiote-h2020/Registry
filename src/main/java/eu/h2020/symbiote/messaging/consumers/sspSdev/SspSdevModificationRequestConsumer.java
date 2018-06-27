@@ -86,9 +86,9 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
 
                 SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.modifySdev(sDev);
 
-
                 response.setStatus(sdevPersistenceResult.getStatus());
                 response.setMessage(sdevPersistenceResult.getMessage());
+                response.setBody(sdevPersistenceResult.getSdev());
 
                 if (sdevPersistenceResult.getStatus() == 200) {
                     rabbitManager.sendSdevOperationMessage(sdevPersistenceResult.getSdev(),

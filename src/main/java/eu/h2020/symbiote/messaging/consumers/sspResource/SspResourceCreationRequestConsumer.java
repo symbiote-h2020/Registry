@@ -103,8 +103,6 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 return;
             }
 
-            //// TODO: 05.06.2018 check if the resource is bounded to existing SSP
-
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 if (RegistryUtils.checkIfResourcesDoesNotHaveIds(request)) {
