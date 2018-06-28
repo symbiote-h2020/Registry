@@ -1093,7 +1093,7 @@ public class RabbitManager {
                 platformId,
                 authorizationManager,
                 policiesMap,
-                null); //// TODO: 15.01.2018
+                null); //// TODO: 15.01.2018 CHECK!!
         log.info("- rdf resource to validation message sent");
     }
 

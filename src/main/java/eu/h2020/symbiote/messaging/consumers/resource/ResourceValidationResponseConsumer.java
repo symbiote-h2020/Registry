@@ -129,6 +129,8 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                 });
             } catch (Exception e) {
                 log.error("Unable to get resources from request body! ", e);
+                registryResponse.setStatus(500);
+                registryResponse.setMessage("VALIDATION CONTENT INVALID:\n" + e);
             }
 
             if (resourceInstanceValidationResult.isSuccess()) {
@@ -240,15 +242,18 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             }
 
         } else {
-            for (String key : persistenceOperationResultsMap.keySet()) {
-                if (persistenceOperationResultsMap.get(key).getStatus() == 200) {
-                    rollback(persistenceOperationResultsMap.get(key).getResource());
-                }
-            }
+            rollback(persistenceOperationResultsMap);
             log.error("Bulk request ERROR");
             registryResponse.setStatus(500);
             registryResponse.setMessage("Bulk request ERROR");
         }
+    }
+
+    private void rollback(Map<String, ResourcePersistenceResult> persistenceOperationResultsMap) {
+        persistenceOperationResultsMap.keySet().stream()
+                .filter(k -> persistenceOperationResultsMap.get(k).getStatus() == 200)
+                .map(k -> persistenceOperationResultsMap.get(k).getResource())
+                .forEach(this::rollbackResourceOperation);
     }
 
     /**
@@ -282,12 +287,12 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
     }
 
     /**
-     * Type of transaction rollback used for bulk registration, triggered for all successfully saved objects when
+     * Type of transaction rollbackResourceOperation used for bulk registration, triggered for all successfully saved objects when
      * any of given objects in list did not save successfully in database.
      *
      * @param resource
      */
-    private void rollback(CoreResource resource) {
+    private void rollbackResourceOperation(CoreResource resource) {
         switch (operationType) {
             case CREATION:
                 repositoryManager.removeResource(resource);

@@ -78,7 +78,7 @@ public class RepositoryManager {
 
         log.info("Received platform to save: " + platformToSave);
 
-        if (platformToSave.getId() == null || platformToSave.getId().isEmpty()) {
+        if (StringUtils.isBlank(platformToSave.getId())) {
             log.error("Given platform has null or empty id!");
             platformSavingResult.setMessage("Given platform has null or empty id!");
             platformSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -122,7 +122,7 @@ public class RepositoryManager {
         normalizePlatformsInterworkingServicesUrls(platformToModify);
 
         Platform foundPlatform = null;
-        if (platformToModify.getId() == null || platformToModify.getId().isEmpty()) {
+        if (StringUtils.isBlank(platformToModify.getId())) {
             log.error("Given platform has empty PlatformId!");
             platformModifyingResult.setMessage("Given platform has empty PlatformId!");
             platformModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -167,7 +167,7 @@ public class RepositoryManager {
         PlatformPersistenceResult platformRemovingResult = new PlatformPersistenceResult();
         platformRemovingResult.setPlatform(platformToRemove);
 
-        if (platformToRemove == null || platformToRemove.getId() == null || platformToRemove.getId().isEmpty()) {
+        if (platformToRemove == null || StringUtils.isBlank(platformToRemove.getId())) {
             log.error("Given platform is null or has empty PlatformId!");
             platformRemovingResult.setMessage("Given platform is null or has empty PlatformId!");
             platformRemovingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -198,7 +198,7 @@ public class RepositoryManager {
             requestedPlatform.setDescription(foundPlatform.getDescription());
         if (requestedPlatform.getRdfFormat() == null && foundPlatform.getRdfFormat() != null)
             requestedPlatform.setRdfFormat(foundPlatform.getRdfFormat());
-        if ((requestedPlatform.getName() == null || requestedPlatform.getName().isEmpty()) && foundPlatform.getName() != null)
+        if ((StringUtils.isBlank(requestedPlatform.getName())) && foundPlatform.getName() != null)
             requestedPlatform.setName(foundPlatform.getName());
         if (requestedPlatform.getRdf() == null && foundPlatform.getRdf() != null)
             requestedPlatform.setRdf(foundPlatform.getRdf());
@@ -222,11 +222,11 @@ public class RepositoryManager {
         ResourcePersistenceResult resourceSavingResult = new ResourcePersistenceResult();
         resourceSavingResult.setResource(resource);
 
-        if (resource.getId() == null || resource.getId().isEmpty()) {
+        if (StringUtils.isBlank(resource.getId())) {
             log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resource.getInterworkingServiceURL() == null || resource.getInterworkingServiceURL().isEmpty()) {
+        } else if (StringUtils.isBlank(resource.getInterworkingServiceURL())) {
             log.error("Given resource has null or empty Interworking service URL!");
             resourceSavingResult.setMessage("Given resource has null or empty Interworking service URL!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -262,14 +262,14 @@ public class RepositoryManager {
         CoreResource foundResource;
         resourceSavingResult.setResource(resource);
 
-        if (resource.getId() == null || resource.getId().isEmpty()) {
+        if (StringUtils.isBlank(resource.getId())) {
             log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
             return resourceSavingResult;
         }
 
-        if (resource.getInterworkingServiceURL() == null || resource.getInterworkingServiceURL().isEmpty()) {
+        if (StringUtils.isBlank(resource.getInterworkingServiceURL())) {
             log.error("Given resource has null or empty Interworking service URL!");
             resourceSavingResult.setMessage("Given resource has null or empty Interworking service URL!");
             resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -311,7 +311,7 @@ public class RepositoryManager {
     public ResourcePersistenceResult removeResource(Resource resource) {
         ResourcePersistenceResult resourceRemovalResult = new ResourcePersistenceResult();
 
-        if (resource == null || resource.getId() == null || resource.getId().isEmpty()) {
+        if (resource == null || StringUtils.isBlank(resource.getId())) {
             log.error("Given resource is null or it has null or empty ID!");
             resourceRemovalResult.setMessage("Given resource is null or it has null or empty ID!");
             resourceRemovalResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -343,7 +343,7 @@ public class RepositoryManager {
         InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
         informationModelPersistenceResult.setInformationModel(informationModel);
 
-        if (informationModel.getId() == null || informationModel.getId().isEmpty()) {
+        if (StringUtils.isBlank(informationModel.getId())) {
             log.error(IM_HAS_NULL_OR_EMPTY_ID);
             informationModelPersistenceResult.setMessage(IM_HAS_NULL_OR_EMPTY_ID);
             informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -370,7 +370,7 @@ public class RepositoryManager {
         InformationModelPersistenceResult informationModelPersistenceResult = new InformationModelPersistenceResult();
         informationModelPersistenceResult.setInformationModel(informationModel);
 
-        if (informationModel.getId() == null || informationModel.getId().isEmpty()) {
+        if (StringUtils.isBlank(informationModel.getId())) {
             log.error(IM_HAS_NULL_OR_EMPTY_ID);
             informationModelPersistenceResult.setMessage(IM_HAS_NULL_OR_EMPTY_ID);
             informationModelPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -432,7 +432,7 @@ public class RepositoryManager {
         FederationPersistenceResult federationPersistenceResult = new FederationPersistenceResult();
         federationPersistenceResult.setFederation(federation);
 
-        if (federation.getId() == null || federation.getId().isEmpty()) {
+        if (StringUtils.isBlank(federation.getId())) {
             log.error(FEDERATION_HAS_NULL_OR_EMPTY_ID);
             federationPersistenceResult.setMessage(FEDERATION_HAS_NULL_OR_EMPTY_ID);
             federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -460,7 +460,7 @@ public class RepositoryManager {
         Federation federationFound;
         federationPersistenceResult.setFederation(federation);
 
-        if (federation.getId() == null || federation.getId().isEmpty()) {
+        if (StringUtils.isBlank(federation.getId())) {
             log.error(FEDERATION_HAS_NULL_OR_EMPTY_ID);
             federationPersistenceResult.setMessage(FEDERATION_HAS_NULL_OR_EMPTY_ID);
             federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -494,7 +494,7 @@ public class RepositoryManager {
     public FederationPersistenceResult removeFederation(Federation federation) {
         FederationPersistenceResult federationPersistenceResult = new FederationPersistenceResult();
         federationPersistenceResult.setFederation(federation);
-        if (federation == null || federation.getId() == null || federation.getId().isEmpty()) {
+        if (federation == null || StringUtils.isBlank(federation.getId())) {
             log.error("Given resource is null or it has null or empty ID!");
             federationPersistenceResult.setMessage("Given resource is null or it has null or empty ID!");
             federationPersistenceResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -536,7 +536,7 @@ public class RepositoryManager {
 
         log.info("Received Smart Space to save: " + smartSpaceReceived);
 
-        if (smartSpaceReceived.getId() == null || smartSpaceReceived.getId().isEmpty()) {
+        if (StringUtils.isBlank(smartSpaceReceived.getId())) {
             log.error("Given smartSpace has null or empty id!");
             sspSavingResult.setMessage("Given smartSpace has null or empty id!");
             sspSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
@@ -578,7 +578,7 @@ public class RepositoryManager {
         sspModifyingResult.setSmartSpace(sspToModify);
 
         SmartSpace foundSsp = null;
-        if (sspToModify.getId() == null || sspToModify.getId().isEmpty()) {
+        if (StringUtils.isBlank(sspToModify.getId())) {
             log.error("Given Smart Space has empty ID!");
             sspModifyingResult.setMessage("Given Smart Space has empty Id!");
             sspModifyingResult.setStatus(HttpStatus.SC_BAD_REQUEST);

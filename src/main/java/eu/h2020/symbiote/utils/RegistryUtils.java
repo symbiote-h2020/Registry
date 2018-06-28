@@ -222,6 +222,7 @@ public class RegistryUtils {
 
     public static boolean validateFields(SmartSpace smartSpace) {
         //// TODO: should i check some more information?
+        if (smartSpace == null) return false;
         if (StringUtils.isBlank(smartSpace.getId())) return false;
         if (StringUtils.isBlank(smartSpace.getName())) return false;
         return true;

@@ -61,36 +61,39 @@ public class SspRemovalRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received SSP to remove: '" + message + "'");
 
-        SmartSpace requestSsp;
+        SmartSpace requestSsp = null;
 
         SspRegistryResponse sspResponse = new SspRegistryResponse();
 
         try {
             requestSsp = mapper.readValue(message, SmartSpace.class);
             sspResponse.setBody(requestSsp);
-
-            if (RegistryUtils.validateFields(requestSsp)) {
-                SspPersistenceResult sspPersistenceResult = this.repositoryManager.removeSsp(requestSsp);
-                if (sspPersistenceResult.getStatus() == 200) {
-                    sspResponse.setMessage(sspPersistenceResult.getMessage());
-                    sspResponse.setStatus(200);
-                    rabbitManager.sendSspOperationMessage(sspPersistenceResult.getSmartSpace(),
-                            RegistryOperationType.REMOVAL);
-                } else {
-                    log.error("Error occurred during Smart Space removing from db, due to: " +
-                            sspPersistenceResult.getMessage());
-                    sspResponse.setMessage("Error occurred during Smart Space removing from in db, due to: " +
-                            sspPersistenceResult.getMessage());
-                    sspResponse.setStatus(500);
-                }
-            } else {
-                log.error("Given Smart Space has some fields null or empty");
-                sspResponse.setMessage("Given Smart Space has some fields null or empty");
-                sspResponse.setStatus(400);
-            }
         } catch (JsonSyntaxException | JsonMappingException e) {
             log.error("Error occurred during Smart Space retrieving from json", e);
             sspResponse.setMessage("Error occurred during Smart Space retrieving from json");
+            sspResponse.setStatus(400);
+        }
+
+        if (RegistryUtils.validateFields(requestSsp)) {
+
+            SspPersistenceResult sspPersistenceResult = this.repositoryManager.removeSsp(requestSsp);
+
+            if (sspPersistenceResult.getStatus() == 200) {
+                sspResponse.setMessage(sspPersistenceResult.getMessage());
+                sspResponse.setStatus(200);
+                rabbitManager.sendSspOperationMessage(sspPersistenceResult.getSmartSpace(),
+                        RegistryOperationType.REMOVAL);
+            } else {
+                log.error("Error occurred during Smart Space removing from db, due to: " +
+                        sspPersistenceResult.getMessage());
+                sspResponse.setMessage("Error occurred during Smart Space removing from in db, due to: " +
+                        sspPersistenceResult.getMessage());
+                sspResponse.setStatus(500);
+            }
+
+        } else {
+            log.error("Given Smart Space has some fields null or empty");
+            sspResponse.setMessage("Given Smart Space has some fields null or empty");
             sspResponse.setStatus(400);
         }
 

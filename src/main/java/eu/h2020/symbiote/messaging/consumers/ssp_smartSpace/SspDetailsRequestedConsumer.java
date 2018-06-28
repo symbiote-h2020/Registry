@@ -75,11 +75,13 @@ public class SspDetailsRequestedConsumer extends DefaultConsumer {
             }
 
             sspRegistryResponse.setBody(foundSsp);
+
         } catch (Exception e) {
             log.error(e);
             sspRegistryResponse.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-            sspRegistryResponse.setMessage("Consumer critical error!");
+            sspRegistryResponse.setMessage("Consumer error!");
         }
+
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(sspRegistryResponse));
     }
 }
