@@ -13,12 +13,13 @@ import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
+import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.persistenceResults.ResourcePersistenceResult;
-import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class ResourceClearDataRequestConsumer extends DefaultConsumer {
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
+    private ClearDataResponse response;
 
     /**
      * Constructs a new instance and records its association to the passed-in channel.
@@ -77,8 +79,7 @@ public class ResourceClearDataRequestConsumer extends DefaultConsumer {
         List<Resource> resourcesRemoved = new ArrayList<>();
         List<CoreResource> resourceList;
 
-        ClearDataRequest request = null;
-        ClearDataResponse response;
+        ClearDataRequest request;
         ResourcePersistenceResult resourceRemovalResult;
 
         String message = new String(body, "UTF-8");
@@ -89,24 +90,26 @@ public class ResourceClearDataRequestConsumer extends DefaultConsumer {
                 request = mapper.readValue(message, ClearDataRequest.class);
             } catch (JsonSyntaxException | JsonMappingException e) {
                 log.error("Error occurred during getting Operation Request from Json", e);
-                response = new ClearDataResponse(400, "Error occurred during getting Operation Request from Json", getServiceResponse());
+                generateResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during getting Operation Request from Json");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
                 return;
             }
 
             if (request == null) {
                 log.error("Request for clear data is null");
-                response = new ClearDataResponse(400, "Request for clear data is null", getServiceResponse());
+                generateResponse(HttpStatus.SC_BAD_REQUEST, "Request for clear data is null");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
                 return;
             }
 
             if (request.getSecurityRequest() != null) {
                 //This happens if request came from external server, this check is skipped for internal communication from Admin
-                AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getBody());
+                AuthorizationResult tokenAuthorizationResult =
+                        authorizationManager.checkSinglePlatformOperationAccess(request.getSecurityRequest(), request.getBody());
                 if (!tokenAuthorizationResult.isValidated()) {
                     log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                    response = new ClearDataResponse(400, "Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\" could not clear data for a platform", getServiceResponse());
+                    generateResponse(HttpStatus.SC_BAD_REQUEST, "Token invalid: \"" + tokenAuthorizationResult.getMessage()
+                            + "\" could not clear data for a platform");
                     rabbitManager.sendRPCReplyMessage(this, properties, envelope,
                             mapper.writeValueAsString(response));
                     return;
@@ -119,7 +122,7 @@ public class ResourceClearDataRequestConsumer extends DefaultConsumer {
 
             if (resourceList.isEmpty()) {
                 log.error("Request to clear the data - there are no resources to remove.");
-                response = new ClearDataResponse(400, "Request to clear the data - there are no resources to remove.", getServiceResponse());
+                generateResponse(HttpStatus.SC_OK, "Request to clear the data - there are no resources to remove.");
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
                 return;
             }
@@ -135,21 +138,23 @@ public class ResourceClearDataRequestConsumer extends DefaultConsumer {
 
             if (checkIfRemovalWasSuccessful(resourceRemovalMap.values().stream().collect(Collectors.toList()), resourcesRemoved, resourceList)) {
                 sendFanoutMessage(resourceRemovalMap.values().stream().collect(Collectors.toList()));
-                response = new ClearDataResponse(200, "Success", getServiceResponse());
+                generateResponse(HttpStatus.SC_OK, "Success");
             } else {
-                response = new ClearDataResponse(410, "Operation not performed", getServiceResponse());
+                generateResponse(410, "Operation not performed");
             }
 
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         } catch (Exception e) {
             log.error(e);
-            response = new ClearDataResponse(500, "Consumer critical exception!", getServiceResponse());
+            generateResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Consumer critical exception!");
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }
     }
 
-    private String getServiceResponse() {
-        return authorizationManager.generateServiceResponse();
+    private ClearDataResponse generateResponse(int status, String msg) {
+        this.response = new ClearDataResponse(status, msg, null);
+        this.response.setServiceResponse(authorizationManager.generateServiceResponse());
+        return response;
     }
 
     private void sendFanoutMessage(List<ResourcePersistenceResult> resourceRemovalResultList) {
