@@ -13,7 +13,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.SmartSpace;
 import eu.h2020.symbiote.model.persistenceResults.SspPersistenceResult;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -74,7 +74,7 @@ public class SspRemovalRequestConsumer extends DefaultConsumer {
             sspResponse.setStatus(400);
         }
 
-        if (RegistryUtils.validateFields(requestSsp)) {
+        if (StringUtils.isNotBlank(requestSsp.getId())) {
 
             SspPersistenceResult sspPersistenceResult = this.repositoryManager.removeSsp(requestSsp);
 
