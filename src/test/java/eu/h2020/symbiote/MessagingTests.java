@@ -1109,28 +1109,6 @@ public class MessagingTests {
     }
 
     @Test
-    public void informationModelModificationRequestConsumerNullFieldsRPCTest() throws Exception {
-        rabbitManager.startConsumerOfInformationModelModificationMessages();
-
-        InformationModelRequest informationModelRequest = new InformationModelRequest();
-        InformationModel informationModel = new InformationModel();
-        informationModelRequest.setBody(informationModel);
-
-        String message = mapper.writeValueAsString(informationModelRequest);
-
-        String response = rabbitManager.sendRpcMessageAndConsumeResponse(PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_MODIFICATION_REQUESTED_RK, message);
-
-        InformationModelResponse informationModelResponse = mapper.readValue(response, InformationModelResponse.class);
-
-        InformationModel informationModelResponseBody = informationModelResponse.getBody();
-        Assert.assertNotNull(informationModelResponseBody);
-        Assert.assertNotNull(informationModelResponse.getMessage());
-        Assert.assertEquals(informationModelResponse.getStatus(), 400);
-
-        verifyZeroInteractions(mockedRepository);
-    }
-
-    @Test
     public void informationModelRemovalRequestConsumerNullFieldsRPCTest() throws Exception {
         rabbitManager.startConsumerOfInformationModelRemovalMessages();
 

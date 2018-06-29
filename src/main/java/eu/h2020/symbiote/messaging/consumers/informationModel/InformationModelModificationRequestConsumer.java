@@ -2,7 +2,6 @@ package eu.h2020.symbiote.messaging.consumers.informationModel;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -12,9 +11,10 @@ import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.InformationModel;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 
@@ -49,41 +49,34 @@ public class InformationModelModificationRequestConsumer extends DefaultConsumer
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received Information Model to modify");
-
-        InformationModelRequest informationModelRequest;
-        InformationModel informationModelReceived;
         InformationModelResponse response = new InformationModelResponse();
 
+        log.info(" [x] Received Information Model to modify");
+
         try {
-            informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
-            informationModelReceived = informationModelRequest.getBody();
+            InformationModelRequest informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
+            InformationModel informationModelReceived = informationModelRequest.getBody();
             response.setBody(informationModelReceived);
 
-            if (RegistryUtils.validateFields(informationModelReceived)) {
-                if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
-                    log.error("Given Information Model has not ID! It should have an ID!");
-                    response.setMessage("Given Information Model has no ID! It should  have an ID!");
-                    response.setStatus(400);
-                    rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-                } else {
-                    log.info("Message to Semantic Manager Sent. Information model id: "
-                            + informationModelRequest.getBody().getId());
-                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
-                    rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
-                            mapper.writeValueAsString(informationModelReceived),
-                            RegistryOperationType.MODIFICATION);
-                }
-            } else {
-                log.error("Given IM has some fields null or empty");
-                response.setMessage("Given IM has some fields null or empty");
-                response.setStatus(400);
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-            }
-        } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occurred during IM modification in db", e);
-            response.setMessage("Error occurred during IM modification in db");
-            response.setStatus(400);
+            ValidationUtils.validateInformationModelForModification(informationModelReceived);
+
+            log.info("Message to Semantic Manager Sent. IM id: " + informationModelRequest.getBody().getId());
+            //sending JSON content to Semantic Manager and passing responsibility to another consumer
+
+            rabbitManager.sendInformationModelValidationRpcMessage(this, properties, envelope,
+                    mapper.writeValueAsString(informationModelReceived),
+                    RegistryOperationType.MODIFICATION);
+
+        } catch (IllegalArgumentException | JsonMappingException | NullPointerException e) {
+            log.error(e.getMessage());
+            response.setMessage(e.getMessage());
+            response.setStatus(HttpStatus.SC_BAD_REQUEST);
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            response.setMessage(e.getMessage());
+            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }
     }

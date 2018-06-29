@@ -462,6 +462,8 @@ public class TestSetupConfig {
         informationModel.setName("IM mocked name");
         informationModel.setOwner("Some mocked owner");
         informationModel.setUri("Some Uri/");
+        informationModel.setRdfFormat(RDFFormat.JSONLD);
+        informationModel.setRdf("mock");
         return informationModel;
     }
 

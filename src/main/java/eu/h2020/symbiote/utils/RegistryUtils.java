@@ -10,7 +10,6 @@ import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryRequest;
 import eu.h2020.symbiote.model.CoreSspResource;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.mim.Federation;
-import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.model.mim.SmartSpace;
 import org.apache.commons.lang.StringUtils;
@@ -93,42 +92,6 @@ public class RegistryUtils {
             }
         }
         return b;
-    }
-
-    /**
-     * Checks if given informationModel has all of the needed fields (besides the id field) and that neither is empty.
-     *
-     * @param informationModel informationModel to check
-     * @return true if it has all the fields and neither is empty.
-     */
-    public static boolean validateFields(InformationModel informationModel) {
-        //todo extend validation to all fields?
-        boolean b;
-        if (informationModel == null) {
-            log.info("Given informationModel is null");
-            b = false;
-
-        } else {
-            if (informationModel.getName() == null
-                    || informationModel.getOwner() == null
-                    || informationModel.getUri() == null) {
-                log.info("Given informationModel has some null fields");
-                b = false;
-            } else if (informationModel.getName().isEmpty()
-                    || informationModel.getOwner().isEmpty()
-                    || informationModel.getUri().isEmpty()) {
-                log.info("Given informationModel has some empty fields");
-                b = false;
-            } else {
-                b = true;
-            }
-        }
-        return b;
-    }
-
-    public static boolean validateNullOrEmptyId(InformationModel informationModel) {
-        if (informationModel.getId() == null || informationModel.getId().isEmpty()) return true;
-        return false;
     }
 
     /**
@@ -308,7 +271,7 @@ public class RegistryUtils {
     }
 
     private static boolean checkIfResourceDoesNotHaveAnId(Resource resource) {
-        if (resource.getId() != null && !resource.getId().isEmpty()) {
+        if (StringUtils.isNotBlank(resource.getId())) {
             log.error("One of the resources (or actuating services) has an ID!");
             return false;
         }
@@ -380,4 +343,6 @@ public class RegistryUtils {
             return true;
         }
     }
+
+
 }

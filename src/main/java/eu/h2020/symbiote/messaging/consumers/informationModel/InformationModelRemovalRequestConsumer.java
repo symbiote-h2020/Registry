@@ -2,7 +2,6 @@ package eu.h2020.symbiote.messaging.consumers.informationModel;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
@@ -11,12 +10,13 @@ import eu.h2020.symbiote.core.cci.InformationModelRequest;
 import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.persistenceResults.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.InformationModel;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.model.persistenceResults.InformationModelPersistenceResult;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 
@@ -43,43 +43,37 @@ public class InformationModelRemovalRequestConsumer extends DefaultConsumer {
 
         ObjectMapper mapper = new ObjectMapper();
         String message = new String(body, "UTF-8");
-        log.info(" [x] Received Information Model to remove");
-
-        InformationModelRequest informationModelRequest;
-        InformationModel informationModelReceived;
         InformationModelResponse response = new InformationModelResponse();
 
+        log.info(" [x] Received Information Model to create");
+
         try {
-            informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
-            informationModelReceived = informationModelRequest.getBody();
+            InformationModelRequest informationModelRequest = mapper.readValue(message, InformationModelRequest.class);
+            InformationModel informationModelReceived = informationModelRequest.getBody();
             response.setBody(informationModelReceived);
 
-            if (RegistryUtils.validateNullOrEmptyId(informationModelReceived)) {
-                log.error("Given Information Model has ID null or empty");
-                response.setMessage("Given Information Model has ID null or empty");
-                response.setStatus(400);
+            ValidationUtils.validateInformationModelForRemoval(informationModelReceived);
+
+            InformationModelPersistenceResult informationModelPersistenceResult = repositoryManager.removeInformationModel(informationModelReceived);
+
+            if (informationModelPersistenceResult.getStatus() == 200) {
+                rabbitManager.sendInformationModelOperationMessage(informationModelReceived, RegistryOperationType.REMOVAL);
+                log.info("Information Model removed successfully!");
+                response.setMessage("Information Model removed successfully!");
+                response.setStatus(200);
                 rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-            } else {
+            } else throw new InterruptedException(informationModelPersistenceResult.getMessage());
 
-                InformationModelPersistenceResult informationModelPersistenceResult = repositoryManager.removeInformationModel(informationModelReceived);
+        } catch (IllegalArgumentException | JsonMappingException | NullPointerException | InterruptedException e) {
+            log.error(e.getMessage());
+            response.setMessage(e.getMessage());
+            response.setStatus(HttpStatus.SC_BAD_REQUEST);
+            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
-                if (informationModelPersistenceResult.getStatus() == 200) {
-                    rabbitManager.sendInformationModelOperationMessage(informationModelReceived, RegistryOperationType.REMOVAL);
-                    log.info("Information Model removed successfully!");
-                    response.setMessage("Information Model removed successfully!");
-                    response.setStatus(200);
-                    rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-                } else {
-                    log.error("Operation unsuccessful due to: " + informationModelPersistenceResult.getMessage());
-                    response.setMessage("Operation unsuccessful due to: " + informationModelPersistenceResult.getMessage());
-                    response.setStatus(informationModelPersistenceResult.getStatus());
-                    rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-                }
-            }
-        } catch (JsonSyntaxException | JsonMappingException e) {
-            log.error("Error occurred during Information Model saving to db", e);
-            response.setMessage("Error occurred during Information Model saving to db");
-            response.setStatus(400);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            response.setMessage(e.getMessage());
+            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
         }
     }
