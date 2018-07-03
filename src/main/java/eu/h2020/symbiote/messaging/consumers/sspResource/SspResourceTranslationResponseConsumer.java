@@ -46,6 +46,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
     private String sDevId;
+    private String sspId;
     private RegistryOperationType operationType;
     private boolean bulkRequestSuccess = true;
     private ObjectMapper mapper;
@@ -68,6 +69,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
                                                   RepositoryManager repositoryManager,
                                                   RabbitManager rabbitManager,
                                                   String sDevId,
+                                                  String sspId,
                                                   RegistryOperationType operationType,
                                                   AuthorizationManager authorizationManager,
                                                   Map<String, IAccessPolicySpecifier> policiesMap,
@@ -80,6 +82,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         this.rpcEnvelope = rpcEnvelope;
         this.rpcProperties = rpcProperties;
         this.sDevId = sDevId;
+        this.sspId = sspId;
         this.operationType = operationType;
         this.policiesMap = policiesMap;
         this.receivedResourcesMap = receivedResourcesMap;
@@ -271,12 +274,12 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
     }
 
     /**
-     * Sends a Fanout message with payload constisting of modified resources list and its Platform Id.
+     * Sends a Fanout message with payload constisting of modified resources list.
      */
     private void sendFanoutMessage(List<CoreResource> savedCoreSspResourcesList) {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreSspResourcesList);
-        payload.setPlatformId(sDevId);
+        payload.setPlatformId(sspId);
         this.rabbitManager.sendResourceOperationMessage(payload, operationType);
     }
 

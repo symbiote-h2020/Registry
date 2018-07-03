@@ -114,6 +114,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                     rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
                             message,
                             request.getSdevId(),
+                            request.getSspId(),
                             RegistryOperationType.CREATION,
                             this.policiesMap,
                             request.getBody()

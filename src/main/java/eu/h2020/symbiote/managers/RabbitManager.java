@@ -1147,6 +1147,7 @@ public class RabbitManager {
                                                          Envelope rpcEnvelope,
                                                          String message,
                                                          String sDevId,
+                                                         String sspId,
                                                          RegistryOperationType operationType,
                                                          Map<String, IAccessPolicySpecifier> policiesMap,
                                                          Map<String, Resource> requestResourcesMap) {
@@ -1157,6 +1158,7 @@ public class RabbitManager {
                 operationType,
                 message,
                 sDevId,
+                sspId,
                 authorizationManager,
                 policiesMap,
                 requestResourcesMap);
@@ -1260,7 +1262,8 @@ public class RabbitManager {
 
     private void sendSspResourceOperationRpcMessageToSemanticManager(DefaultConsumer rpcConsumer, AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
                                                                      String routingKey, RegistryOperationType operationType,
-                                                                     String message, String sdevId, AuthorizationManager authorizationManager,
+                                                                     String message, String sdevId, String sspId,
+                                                                     AuthorizationManager authorizationManager,
                                                                      Map<String, IAccessPolicySpecifier> policiesMap,
                                                                      Map<String, Resource> requestResourcesMap) {
         try {
@@ -1275,7 +1278,7 @@ public class RabbitManager {
 
             SspResourceTranslationResponseConsumer responseConsumer = new SspResourceTranslationResponseConsumer(
                     rpcConsumer, rpcProperties, rpcEnvelope,
-                    rpcChannel, repositoryManager, this, sdevId, operationType,
+                    rpcChannel, repositoryManager, this, sdevId, sspId, operationType,
                     authorizationManager, policiesMap, requestResourcesMap
             );
 
