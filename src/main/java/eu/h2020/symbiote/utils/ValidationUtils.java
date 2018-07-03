@@ -1,6 +1,10 @@
 package eu.h2020.symbiote.utils;
 
+import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
+import eu.h2020.symbiote.core.internal.CoreSdevRegistryRequest;
+import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.mim.InformationModel;
+import eu.h2020.symbiote.model.mim.InterworkingService;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -55,6 +59,29 @@ public class ValidationUtils {
 
         } else if (StringUtils.isBlank(informationModelReceived.getUri())) {
             throw new IllegalArgumentException("URI is blank! Request denied!");
+        }
+    }
+
+    public static void validateSdev(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
+            throws IllegalAccessException {
+
+        SspRegInfo sDev = request.getBody();
+
+        //check if given sspId exists in DB
+        if (!repositoryManager.checkIfSspExists(request.getSspId())) {
+            throw new IllegalAccessException("Given Ssp does not exist in database!");
+        }
+
+        //check if given sdev has a match PluginId with given SspId
+        else if (!request.getSspId().equals(sDev.getPluginId())) {
+            throw new IllegalAccessException("Given Ssp ID does not match with sDev's Plugin ID!");
+        }
+
+        //check if given sdevs pluginURL match to any of Ssps InterworkingInterfaceURL
+        else if (!repositoryManager.getSspById(request.getSspId()).getInterworkingServices().stream()
+                .map(InterworkingService::getUrl)
+                .anyMatch(url -> url.equals(sDev.getPluginURL()))) {
+            throw new IllegalAccessException("Given sdevs pluginURL does not match to any of Ssps InterworkingInterfaceURL!");
         }
     }
 }

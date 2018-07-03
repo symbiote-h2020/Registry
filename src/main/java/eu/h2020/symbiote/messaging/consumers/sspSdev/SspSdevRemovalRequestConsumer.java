@@ -15,6 +15,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -76,11 +77,13 @@ public class SspSdevRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             request = mapper.readValue(message, CoreSdevRegistryRequest.class);
-
-            //// TODO: 20.06.2018 Check if given SspId exists
-            //// TODO: 20.06.2018 security check
-
             SspRegInfo sDev = request.getBody();
+            response.setBody(sDev);
+
+            //check if given ids have a match needed
+            validateAccess(request);
+
+            //// TODO: 20.06.2018 security check
 
             if (RegistryUtils.validateFields(sDev)) {
 
@@ -103,6 +106,14 @@ public class SspSdevRemovalRequestConsumer extends DefaultConsumer {
 
         } catch (JsonSyntaxException | JsonMappingException e) {
             prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) retrieving from message" + e);
+        }
+    }
+
+    private void validateAccess(CoreSdevRegistryRequest request) throws IOException {
+        try {
+            ValidationUtils.validateSdev(repositoryManager, request);
+        } catch (IllegalAccessException e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
         }
     }
 

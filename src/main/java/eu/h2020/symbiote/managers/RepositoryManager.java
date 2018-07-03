@@ -876,7 +876,19 @@ public class RepositoryManager {
         return sdevPersistenceResult;
     }
 
+    /**
+     * @param requestedSspId
+     * @return null if Ssp does not exists
+     */
     public SmartSpace getSspById(String requestedSspId) {
         return sspRepository.findOne(requestedSspId);
+    }
+
+    /**
+     * @param sspId
+     * @return null if Ssp does not exists
+     */
+    public boolean checkIfSspExists(String sspId){
+        return getSspById(sspId)!=null;
     }
 }

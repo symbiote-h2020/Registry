@@ -8,7 +8,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
-import eu.h2020.symbiote.core.cci.SdevRegistryRequest;
 import eu.h2020.symbiote.core.cci.SdevRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreSdevRegistryRequest;
 import eu.h2020.symbiote.managers.RabbitManager;
@@ -16,6 +15,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
 import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -74,11 +74,13 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
 
         try {
             request = mapper.readValue(message, CoreSdevRegistryRequest.class);
-
-            //// TODO: 20.06.2018 Check if given SspId exists
-            //// TODO: 20.06.2018 security check
-
             SspRegInfo sDev = request.getBody();
+            response.setBody(sDev);
+
+            //check if given ids have a match needed
+            validateAccess(request);
+
+            //// TODO: 20.06.2018 security check
 
             if (RegistryUtils.validateFields(sDev)) {
 
@@ -98,13 +100,20 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
                 prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Given Sdev (SspRegInfo) has some fields null or empty");
             }
 
-
             //sdev class has newly created symId
             response.setBody(sDev);
             rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
         } catch (JsonSyntaxException | JsonMappingException e) {
             prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) retrieving from message" + e);
+        }
+    }
+
+    private void validateAccess(CoreSdevRegistryRequest request) throws IOException {
+        try {
+            ValidationUtils.validateSdev(repositoryManager, request);
+        } catch (IllegalAccessException e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
         }
     }
 
