@@ -77,7 +77,7 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
             SspRegInfo sDev = request.getBody();
             response.setBody(sDev);
 
-            //check if given ids have a match needed
+            //checking access by verification of fields needed for that operation
             validateAccess(request);
 
             //// TODO: 20.06.2018 security check

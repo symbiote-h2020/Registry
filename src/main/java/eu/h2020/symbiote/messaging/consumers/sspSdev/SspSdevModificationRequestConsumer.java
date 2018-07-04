@@ -83,7 +83,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
             //check if given ids have a match needed
             validateAccess(request);
 
-            //// TODO: 20.06.2018 security check
+            //// TODO: 20.06.2018 security check HASH codes for ROAMING
 
             if (RegistryUtils.validateFields(sDev)) {
 

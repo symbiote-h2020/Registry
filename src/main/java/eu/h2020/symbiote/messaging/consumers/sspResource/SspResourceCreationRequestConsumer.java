@@ -14,14 +14,13 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
-import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Created by mateuszl on 30.05.2018.
@@ -35,7 +34,6 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
     private RabbitManager rabbitManager;
     private AuthorizationManager authorizationManager;
     private RepositoryManager repositoryManager;
-    private Map<String, IAccessPolicySpecifier> policiesMap;
     private CoreSspResourceRegistryResponse registryResponse;
     private Envelope envelope;
     private AMQP.BasicProperties properties;
@@ -94,8 +92,13 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 return;
             }
 
+            //checking access by verification of fields needed for that operation
+            validateAccess(request);
+
             //checking access by token verification
-            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(request.getSecurityRequest(), request.getSdevId()); //todo MOCKED
+            AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
+                    request.getSecurityRequest(),
+                    request.getSdevId()); //todo MOCKED
 
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -106,17 +109,16 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received
                 if (RegistryUtils.checkIfResourcesDoesNotHaveIds(request)) {
+                    //// TODO: 04.07.2018 MOVE to ValidationUtils and refactor
                     log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
-
-                    this.policiesMap = request.getFilteringPolicies();
 
                     rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
                             message,
                             request.getSdevId(),
                             request.getSspId(),
                             RegistryOperationType.CREATION,
-                            this.policiesMap,
+                            request.getFilteringPolicies(),
                             request.getBody()
                     );
                 } else {
@@ -133,6 +135,17 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             sendErrorReply(500, "Consumer critical error");
         }
     }
+
+    private void validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
+        try {
+            ValidationUtils.validateSspResource(request, repositoryManager);
+        } catch (IllegalArgumentException e) {
+            sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            sendErrorReply(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
 
     /**
      * Sets status and massage in Registry Response for this Consumer and triggers sending this response in JSON format.

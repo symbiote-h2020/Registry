@@ -86,6 +86,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         this.operationType = operationType;
         this.policiesMap = policiesMap;
         this.receivedResourcesMap = receivedResourcesMap;
+
         this.mapper = new ObjectMapper();
         this.registryResponse = new CoreSspResourceRegistryResponse();
         response = "";
@@ -118,12 +119,14 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
 
             if (resourceInstanceValidationResult != null && resourceInstanceValidationResult.isSuccess()) {
                 coreResourcesFromSM = resourceInstanceValidationResult.getObjectDescription();
-                log.info("CoreSspResources received from SM! Content: " + coreResourcesFromSM);
+                log.info("CoreResources received from SM! Content: " + coreResourcesFromSM);
 
-                AuthorizationResult authorizationResult = authorizationManager.checkIfCoreResourcesBelongToSdev(coreResourcesFromSM, sDevId); //// TODO: 01.06.2018 MOCKED!!
+                AuthorizationResult authorizationResult =
+                        authorizationManager.checkIfCoreResourcesBelongToSdev(coreResourcesFromSM, sDevId); //// TODO: 01.06.2018 MOCKED!!
 
                 if (authorizationResult.isValidated()) {
-                    Map<String, CoreSspResourcePersistenceResult> persistenceResultMap = makePersistenceOperations(coreResourcesFromSM, sDevId);
+                    Map<String, CoreSspResourcePersistenceResult> persistenceResultMap =
+                            makePersistenceOperations(coreResourcesFromSM, sDevId);
                     prepareContentOfMessage(persistenceResultMap);
                 } else {
                     registryResponse.setStatus(400);
@@ -159,17 +162,15 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
      *
      * @param coreResourcesFromSM
      */
-    private Map<String, CoreSspResourcePersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResourcesFromSM, String sDevId) {
+    private Map<String, CoreSspResourcePersistenceResult> makePersistenceOperations(Map<String, CoreResource> coreResourcesFromSM,
+                                                                                    String sDevId) {
 
-        HashMap<String, CoreSspResource> coreSspResources = new HashMap<>();
-
-        for (String s : coreResourcesFromSM.keySet()) {
-            CoreResource coreResource = coreResourcesFromSM.get(s);
-            coreSspResources.put(s, convertCoreResourceToCoreSspResource(coreResource, sDevId));
-        }
+        HashMap<String, CoreSspResource> coreSspResources = convertCoreResourcesToCoreSspResources(coreResourcesFromSM, sDevId);
 
         Map<String, CoreSspResourcePersistenceResult> persistenceOperationResultsMap = new HashMap<>();
+
         switch (operationType) {
+
             case CREATION:
                 for (String key : coreSspResources.keySet()) {
                     CoreSspResource sspResource = coreSspResources.get(key);
@@ -178,13 +179,16 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
                     } catch (Exception e) {
                         log.error("Couldn't get Access Policies for Core Ssp Resource. " + e);
                         persistenceOperationResultsMap.put(key,
-                                new CoreSspResourcePersistenceResult(500, "Couldn't get Access Policies for Core Ssp Resource. " + e, sspResource));
+                                new CoreSspResourcePersistenceResult(500,
+                                        "Couldn't get Access Policies for Core Ssp Resource. " + e,
+                                        sspResource));
                     }
                     CoreSspResourcePersistenceResult resourceSavingResult =
                             this.repositoryManager.saveCoreSspResource(sspResource);
                     persistenceOperationResultsMap.put(key, resourceSavingResult);
                 }
                 break;
+
             case MODIFICATION:
                 for (String key : coreSspResources.keySet()) {
                     CoreSspResource coreResource = coreSspResources.get(key);
@@ -193,10 +197,12 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
                     } catch (Exception e) {
                         log.error("Couldn't get Access Policies for Core Resource. " + e);
                         persistenceOperationResultsMap.put(key,
-                                new CoreSspResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                                new CoreSspResourcePersistenceResult(500,
+                                        "Couldn't get Access Policies for Core Resource. " + e,
+                                        coreResource));
                     }
                     CoreSspResourcePersistenceResult resourceModificationResult =
-                            this.repositoryManager.modifyCoreSspResource(coreSspResources.get(key));
+                            this.repositoryManager.modifyCoreSspResource(coreResource);
                     persistenceOperationResultsMap.put(key, resourceModificationResult);
                 }
                 break;
@@ -204,12 +210,21 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         return persistenceOperationResultsMap;
     }
 
+    private HashMap<String, CoreSspResource> convertCoreResourcesToCoreSspResources(Map<String, CoreResource> coreResourcesFromSM, String sDevId) {
+        HashMap<String, CoreSspResource> coreSspResources = new HashMap<>();
+
+        for (String s : coreResourcesFromSM.keySet()) {
+            CoreResource coreResource = coreResourcesFromSM.get(s);
+            coreSspResources.put(s, convertCoreResourceToCoreSspResource(coreResource, sDevId));
+        }
+        return coreSspResources;
+    }
+
     private void checkIfBulkOperationSucceded(Map<String, CoreSspResourcePersistenceResult> persistenceOperationResultsMap) {
-        persistenceOperationResultsMap.keySet().stream()
-                .filter(key -> persistenceOperationResultsMap.get(key).getStatus() != 200)
-                .forEach(key -> {
-                    this.bulkRequestSuccess = false;
-                });
+        if (persistenceOperationResultsMap.keySet().stream()
+                .anyMatch(key -> persistenceOperationResultsMap.get(key).getStatus() != 200)) {
+            this.bulkRequestSuccess = false;
+        }
     }
 
     private CoreSspResource convertCoreResourceToCoreSspResource(CoreResource coreResource, String sDevId) {

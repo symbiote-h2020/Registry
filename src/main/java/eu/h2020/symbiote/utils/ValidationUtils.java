@@ -2,9 +2,11 @@ package eu.h2020.symbiote.utils;
 
 import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
 import eu.h2020.symbiote.core.internal.CoreSdevRegistryRequest;
+import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryRequest;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.mim.InformationModel;
 import eu.h2020.symbiote.model.mim.InterworkingService;
+import eu.h2020.symbiote.model.mim.SmartSpace;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -82,6 +84,39 @@ public class ValidationUtils {
                 .map(InterworkingService::getUrl)
                 .anyMatch(url -> url.equals(sDev.getPluginURL()))) {
             throw new IllegalAccessException("Given sdevs pluginURL does not match to any of Ssps InterworkingInterfaceURL!");
+        }
+    }
+
+
+    public static void validateSspResource(CoreSspResourceRegistryRequest request, RepositoryManager repositoryManager) {
+
+        SmartSpace sspById = repositoryManager.getSspById(request.getSspId());
+
+        if (sspById == null) {
+            throw new IllegalArgumentException("There is no such ssp in db!");
+        }
+
+        SspRegInfo sdevById = repositoryManager.getSdevById(request.getSdevId());
+
+        if (sdevById == null) {
+            throw new IllegalArgumentException("There is no such sdev in DB!");
+        }
+
+        //checks if there exists a matching IS URL in SSP to one given in Resource
+        for (String k : request.getBody().keySet()) {
+            String interworkingServiceURL = request.getBody().get(k).getInterworkingServiceURL();
+            if (
+                    sspById.getInterworkingServices().stream()
+                            .map(InterworkingService::getUrl)
+                            .noneMatch(url -> url.equalsIgnoreCase(interworkingServiceURL))) {
+
+                throw new IllegalArgumentException("there does not exist a matching InterworkingService URL in SSP to one given in Resource!");
+            }
+        }
+
+        //checks if SSP ID in request matches with SSP ID in given SDEV
+        if (!sdevById.getSspId().equals(request.getSspId())) {
+            throw new IllegalArgumentException("SSP ID in request does not match with SSP ID in given SDEV");
         }
     }
 }

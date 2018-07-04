@@ -733,52 +733,123 @@ public class RepositoryManager {
     }
 
     public CoreSspResourcePersistenceResult saveCoreSspResource(CoreSspResource sspResource) {
-        CoreSspResourcePersistenceResult resourceSavingResult = new CoreSspResourcePersistenceResult();
-        resourceSavingResult.setCoreSspResource(sspResource);
+        CoreSspResourcePersistenceResult resourceSavingResult;
+
         CoreResource resource = sspResource.getResource();
 
-        if (sspResource.getSdevId() == null || sspResource.getSdevId().isEmpty()) {
-            log.error("CoreSspResource has empty or null sDevId!");
-            resourceSavingResult.setMessage("CoreSspResource has empty or null sDevId!");
-            resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
+        if (StringUtils.isBlank(sspResource.getSdevId())) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "CoreSspResource has empty or null sDevId!",
+                    sspResource);
+
+        } else if (StringUtils.isBlank(resource.getId())) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    RESOURCE_HAS_NULL_OR_EMPTY_ID,
+                    sspResource);
+
+        } else if (StringUtils.isBlank(resource.getInterworkingServiceURL())) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "Given resource has null or empty Interworking service URL!",
+                    sspResource);
+
         } else {
-            if (resource.getId() == null || resource.getId().isEmpty()) {
-                log.error(RESOURCE_HAS_NULL_OR_EMPTY_ID);
-                resourceSavingResult.setMessage(RESOURCE_HAS_NULL_OR_EMPTY_ID);
-                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            } else if (resource.getInterworkingServiceURL() == null || resource.getInterworkingServiceURL().isEmpty()) {
-                log.error("Given resource has null or empty Interworking service URL!");
-                resourceSavingResult.setMessage("Given resource has null or empty Interworking service URL!");
-                resourceSavingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-            } else {
-                try {
-                    normalizeResourceInterworkingServiceUrl(resource);
-                    log.info("Saving CoreSsp Resource: " + resource.toString());
+            try {
+                normalizeResourceInterworkingServiceUrl(resource);
+                log.info("Saving CoreSsp Resource: " + resource.toString());
 
-                    CoreSspResource savedResource = coreSspResourceRepository.save(sspResource);
-                    log.info("CoreSsp Resource with id: " + savedResource.getId() + " saved !");
+                CoreSspResource savedResource = coreSspResourceRepository.save(sspResource);
+                log.info("CoreSsp Resource with id: " + savedResource.getId() + " saved !");
 
-                    resourceSavingResult.setStatus(HttpStatus.SC_OK);
-                    resourceSavingResult.setMessage("OK");
-                    resourceSavingResult.setCoreSspResource(savedResource);
-                } catch (Exception e) {
-                    log.error("Error occurred during CoreSsp Resource saving in db", e);
-                    resourceSavingResult.setMessage("Error occurred during CoreSsp Resource saving in db");
-                    resourceSavingResult.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-                }
+                resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_OK,
+                        "ok",
+                        savedResource);
+            } catch (Exception e) {
+
+                resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                        "Error occurred during CoreSsp Resource saving in db",
+                        sspResource);
             }
+
         }
         return resourceSavingResult;
     }
 
     public CoreSspResourcePersistenceResult modifyCoreSspResource(CoreSspResource coreSspResource) {
-        // TODO: 01.06.2018 implement IMPORTANT
-        return null;
+        CoreSspResourcePersistenceResult resourceSavingResult;
+        CoreResource resource = coreSspResource.getResource();
+
+        if (StringUtils.isBlank(coreSspResource.getSdevId())) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "CoreSspResource has empty or null sDevId!",
+                    coreSspResource);
+
+        } else if (StringUtils.isNotBlank(resource.getId())) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "Resource has an ID!",
+                    coreSspResource);
+
+        } else if (StringUtils.isBlank(resource.getInterworkingServiceURL())) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "Given resource has null or empty Interworking service URL!",
+                    coreSspResource);
+
+        } else {
+            try {
+                normalizeResourceInterworkingServiceUrl(resource);
+                log.info("Modifying CoreSsp Resource: " + resource.toString());
+
+                CoreSspResource savedResource = coreSspResourceRepository.save(coreSspResource);
+                log.info("CoreSsp Resource with id: " + savedResource.getId() + " modified !");
+
+                resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_OK,
+                        "OK",
+                        savedResource);
+
+            } catch (Exception e) {
+                resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                        "Error occurred during CoreSsp Resource modifying in db",
+                        coreSspResource);
+            }
+
+        }
+        return resourceSavingResult;
     }
 
+
     public CoreSspResourcePersistenceResult removeCoreSspResource(String coreSspResourceId) {
-        // TODO: 01.06.2018 implement IMPORTANT
-        return null;
+        CoreSspResourcePersistenceResult resourceSavingResult;
+        CoreSspResource resourceToRemove = coreSspResourceRepository.findOne(coreSspResourceId);
+
+        if (StringUtils.isBlank(coreSspResourceId)) {
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "Resource ID is empty!",
+                    resourceToRemove);
+
+        } else if (resourceToRemove == null) {
+
+            resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
+                    "There is no such resource in DB!",
+                    resourceToRemove);
+
+        } else {
+            try {
+                coreSspResourceRepository.delete(coreSspResourceId);
+                log.info("CoreSsp Resource with id: " + coreSspResourceId + " removed !");
+
+
+                resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_OK,
+                        "ok",
+                        resourceToRemove);
+
+            } catch (Exception e) {
+
+                resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                        "Error occurred during CoreSsp Resource modifying in db",
+                        resourceToRemove);
+
+            }
+        }
+        return resourceSavingResult;
     }
 
     public SdevPersistenceResult saveSdev(SspRegInfo sDev) {
@@ -888,7 +959,11 @@ public class RepositoryManager {
      * @param sspId
      * @return null if Ssp does not exists
      */
-    public boolean checkIfSspExists(String sspId){
-        return getSspById(sspId)!=null;
+    public boolean checkIfSspExists(String sspId) {
+        return getSspById(sspId) != null;
+    }
+
+    public SspRegInfo getSdevById(String sdevId) {
+        return sdevRepository.findOne(sdevId);
     }
 }
