@@ -69,14 +69,13 @@ public class ValidationUtils {
 
         SspRegInfo sDev = request.getBody();
 
+        if (repositoryManager.getSdevById(sDev.getSymId()) == null)
+            throw new IllegalAccessException("Wrong Sdev Id!");
+
+
         //check if given sspId exists in DB
         if (!repositoryManager.checkIfSspExists(request.getSspId())) {
             throw new IllegalAccessException("Given Ssp does not exist in database!");
-        }
-
-        //check if given sdev has a match PluginId with given SspId
-        else if (!request.getSspId().equals(sDev.getPluginId())) {
-            throw new IllegalAccessException("Given Ssp ID does not match with sDev's Plugin ID!");
         }
 
         //check if given sdevs pluginURL match to any of Ssps InterworkingInterfaceURL

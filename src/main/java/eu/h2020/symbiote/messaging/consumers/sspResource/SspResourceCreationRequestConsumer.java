@@ -92,9 +92,6 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 return;
             }
 
-            //checking access by verification of fields needed for that operation
-            validateAccess(request);
-
             //checking access by token verification
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                     request.getSecurityRequest(),
@@ -105,6 +102,10 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
                 sendErrorReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
                 return;
             }
+
+            //checking access by verification of fields needed for that operation
+            validateAccess(request);
+
 
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received

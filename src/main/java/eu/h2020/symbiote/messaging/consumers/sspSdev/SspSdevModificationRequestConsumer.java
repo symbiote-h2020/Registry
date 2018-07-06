@@ -14,6 +14,7 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
+import eu.h2020.symbiote.security.helpers.SDevHelper;
 import eu.h2020.symbiote.utils.RegistryUtils;
 import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
@@ -21,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Created by mateuszl on 11.06.2018.
@@ -80,10 +82,20 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
             SspRegInfo sDev = request.getBody();
             response.setBody(sDev);
 
-            //check if given ids have a match needed
-            validateAccess(request);
+            try {
+                //check if given ids have a match needed
+                validateAccess(request);
 
-            //// TODO: 20.06.2018 security check HASH codes for ROAMING
+                //check if there is a migration going on
+                handleMigrationIfOccurs(request);
+
+            } catch (NoSuchAlgorithmException | IllegalAccessException e) {
+                prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+                return;
+            } catch (Exception e) {
+                prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+                return;
+            }
 
             if (RegistryUtils.validateFields(sDev)) {
 
@@ -110,12 +122,50 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
         }
     }
 
-    private void validateAccess(CoreSdevRegistryRequest request) throws IOException {
-        try {
-            ValidationUtils.validateSdev(repositoryManager, request);
-        } catch (IllegalAccessException e) {
-            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+
+    private void handleMigrationIfOccurs(CoreSdevRegistryRequest request) throws NoSuchAlgorithmException, IllegalAccessException {
+
+        SspRegInfo sDevFromRequest = request.getBody();
+
+        String receivedSdevId = sDevFromRequest.getSymId();
+
+        String sDevFromRequestHashField = sDevFromRequest.getHashField();
+
+
+        SspRegInfo sDevFromDbById = repositoryManager.getSdevById(receivedSdevId);
+
+        String previousDK1 = sDevFromDbById.getDerivedKey1();
+
+        String newHash = calculateHash(receivedSdevId, previousDK1);
+
+        //check if given sdev has a match PluginId with given SspId
+
+        if (!newHash.equals(sDevFromRequestHashField)) {
+            log.error("Sdev Hash comparing failed! Received Sdev Hash: " + sDevFromRequestHashField + " Calculated hash: " + newHash);
+            //źle throw exception i nic nie robimy
+            throw new IllegalAccessException("Sdev Hash comparing failed! Received Sdev Hash: " + sDevFromRequestHashField + " Calculated hash: " + newHash);
         }
+        //// TODO: 06.07.2018 check if something else more should be done
+    }
+
+
+    private String calculateHash(String symId, String previousDK1) throws NoSuchAlgorithmException {
+        String hash;
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(symId);
+        builder.append(previousDK1);
+        String s = builder.toString();
+
+        hash = SDevHelper.hashSHA1(s);
+
+        log.info(hash);
+        return hash;
+    }
+
+
+    private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
+        ValidationUtils.validateSdev(repositoryManager, request);
     }
 
     private void prepareAndSendErrorResponse(int status, String message) throws IOException {
