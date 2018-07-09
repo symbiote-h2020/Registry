@@ -13,7 +13,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.SmartSpace;
 import eu.h2020.symbiote.model.persistenceResults.SspPersistenceResult;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -75,7 +75,7 @@ public class SspModificationRequestConsumer extends DefaultConsumer {
             sspResponse.setStatus(400);
         }
 
-        if (RegistryUtils.validateFields(requestSsp)) {
+        if (ValidationUtils.validateFields(requestSsp)) {
 
             SspPersistenceResult sspPersistenceResult = this.repositoryManager.modifySsp(requestSsp);
 

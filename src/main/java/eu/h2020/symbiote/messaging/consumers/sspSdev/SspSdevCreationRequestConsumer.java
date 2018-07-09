@@ -14,7 +14,6 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -82,7 +81,7 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
 
             //// TODO: 20.06.2018 security check
 
-            if (RegistryUtils.validateFields(sDev)) {
+            if (ValidationUtils.validateFields(sDev)) {
 
                 SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.saveSdev(sDev);
 

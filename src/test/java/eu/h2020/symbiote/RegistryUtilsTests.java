@@ -6,6 +6,7 @@ import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.model.mim.Platform;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -85,49 +86,49 @@ public class RegistryUtilsTests {
     @Test
     public void testPlatformFieldsValidation() {
         Platform platform = generatePlatformB();
-        Assert.assertTrue(RegistryUtils.validateFields(platform));
+        Assert.assertTrue(ValidationUtils.validateFields(platform));
     }
 
     @Test
     public void testPlatformFieldsValidationFail() {
         Platform platform = null;
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
         platform = new Platform();
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
 
         platform.setDescription(new ArrayList<>());
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
         platform.setName("");
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
         platform.setInterworkingServices(new ArrayList<>());
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
 
         platform.getDescription().add(null);
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
         platform.getInterworkingServices().add(null);
-        Assert.assertFalse(RegistryUtils.validateFields(platform));
+        Assert.assertFalse(ValidationUtils.validateFields(platform));
     }
 
     @Test
     public void testResourceFieldsValidation() {
         Resource resource = generateCoreResourceSensorWithoutId();
-        Assert.assertTrue(RegistryUtils.validateFields(resource));
+        Assert.assertTrue(ValidationUtils.validateFields(resource));
     }
 
     @Test
     public void testResourceFieldsValidationFail() {
         Resource resource = null;
-        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        Assert.assertFalse(ValidationUtils.validateFields(resource));
         resource = new Resource();
-        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        Assert.assertFalse(ValidationUtils.validateFields(resource));
         resource.setInterworkingServiceURL("");
-        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        Assert.assertFalse(ValidationUtils.validateFields(resource));
         resource.setId("");
-        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        Assert.assertFalse(ValidationUtils.validateFields(resource));
         resource.setName("");
-        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        Assert.assertFalse(ValidationUtils.validateFields(resource));
         resource.setDescription(new ArrayList<>());
-        Assert.assertFalse(RegistryUtils.validateFields(resource));
+        Assert.assertFalse(ValidationUtils.validateFields(resource));
     }
 
     @Test

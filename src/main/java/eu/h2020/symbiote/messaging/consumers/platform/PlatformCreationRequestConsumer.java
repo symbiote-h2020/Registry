@@ -10,10 +10,10 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.cci.PlatformRegistryResponse;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.persistenceResults.PlatformPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.Platform;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.model.persistenceResults.PlatformPersistenceResult;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -73,7 +73,7 @@ public class PlatformCreationRequestConsumer extends DefaultConsumer {
 
             //// TODO: 11.08.2017 should i check some information given in platform?
 
-            if (RegistryUtils.validateFields(requestPlatform)) {
+            if (ValidationUtils.validateFields(requestPlatform)) {
                 PlatformPersistenceResult platformPersistenceResult = this.repositoryManager.savePlatform(requestPlatform);
                 if (platformPersistenceResult.getStatus() == 200) {
                     platformResponse.setMessage(

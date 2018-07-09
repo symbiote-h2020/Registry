@@ -18,7 +18,7 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -112,7 +112,7 @@ public class ResourceCreationRequestConsumer extends DefaultConsumer {
 
                             break;
                         case BASIC:
-                            if (RegistryUtils.checkIfResourcesDoesNotHaveIds(request)) {
+                            if (ValidationUtils.checkIfResourcesDoesNotHaveIds(request)) {
                                 log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                                 //sending JSON content to Semantic Manager and passing responsibility to another consumer
                                 rabbitManager.sendResourceJsonTranslationRpcMessage(this, properties, envelope,

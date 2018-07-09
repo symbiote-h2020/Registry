@@ -15,7 +15,6 @@ import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
 import eu.h2020.symbiote.security.helpers.SDevHelper;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -97,7 +96,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
                 return;
             }
 
-            if (RegistryUtils.validateFields(sDev)) {
+            if (ValidationUtils.validateFields(sDev)) {
 
                 SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.modifySdev(sDev);
 

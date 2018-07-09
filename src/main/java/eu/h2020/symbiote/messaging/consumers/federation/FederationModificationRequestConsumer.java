@@ -10,10 +10,10 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.core.internal.FederationRegistryResponse;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.persistenceResults.FederationPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.Federation;
-import eu.h2020.symbiote.utils.RegistryUtils;
+import eu.h2020.symbiote.model.persistenceResults.FederationPersistenceResult;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -68,7 +68,7 @@ public class FederationModificationRequestConsumer extends DefaultConsumer {
             Federation federation = mapper.readValue(message, Federation.class);
             federationResponse.setBody(federation);
 
-            if (RegistryUtils.validateFields(federation)) {
+            if (ValidationUtils.validateFields(federation)) {
                 FederationPersistenceResult federationPersistenceResult = this.repositoryManager.modifyFederation(federation);
                 if (federationPersistenceResult.getStatus() == 200) {
                     rabbitManager.sendFederationOperationMessage(federationPersistenceResult.getFederation(),

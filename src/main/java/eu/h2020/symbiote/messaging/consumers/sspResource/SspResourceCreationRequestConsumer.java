@@ -14,7 +14,6 @@ import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
-import eu.h2020.symbiote.utils.RegistryUtils;
 import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -109,7 +108,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received
-                if (RegistryUtils.checkIfResourcesDoesNotHaveIds(request)) {
+                if (ValidationUtils.checkIfResourcesDoesNotHaveIds(request)) {
                     //// TODO: 04.07.2018 MOVE to ValidationUtils and refactor
                     log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                     //sending JSON content to Semantic Manager and passing responsibility to another consumer
