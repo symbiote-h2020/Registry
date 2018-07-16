@@ -110,7 +110,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
             validateAccess(request);
 
             //check if there is a migration going on
-            handleMigrationIfOccurs(request);
+            checkIfHashfieldsAreRight(request);
 
         } catch (NoSuchAlgorithmException | IllegalAccessException e) {
             prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
@@ -119,6 +119,8 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
             prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             return;
         }
+
+        //todo if we want to check if there is a migration, we have to compare SSP ID from request and Sdev PluginId
 
         SspRegInfo sDev = request.getBody();
         response.setBody(sDev);
@@ -146,13 +148,13 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
     }
 
 
-    private void handleMigrationIfOccurs(CoreSdevRegistryRequest request) throws NoSuchAlgorithmException, IllegalAccessException {
+    private void checkIfHashfieldsAreRight(CoreSdevRegistryRequest request) throws NoSuchAlgorithmException, IllegalAccessException {
 
-        SspRegInfo sDevFromRequest = request.getBody();
+        SspRegInfo receivedSdev = request.getBody();
 
-        String receivedSdevId = sDevFromRequest.getSymId();
+        String receivedSdevId = receivedSdev.getSymId();
 
-        String sDevFromRequestHashField = sDevFromRequest.getHashField();
+        String receivedSdevHashField = receivedSdev.getHashField();
 
 
         SspRegInfo sDevFromDbById = repositoryManager.getSdevById(receivedSdevId);
@@ -161,14 +163,21 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
 
         String newHash = calculateHash(receivedSdevId, previousDK1);
 
-        //check if given sdev has a match PluginId with given SspId
 
-        if (!newHash.equals(sDevFromRequestHashField)) {
-            log.error("Sdev Hash comparing failed! Received Sdev Hash: " + sDevFromRequestHashField + " Calculated hash: " + newHash);
-            //źle throw exception i nic nie robimy
-            throw new IllegalAccessException("Sdev Hash comparing failed! Received Sdev Hash: " + sDevFromRequestHashField + " Calculated hash: " + newHash);
+        if (!newHash.equals(receivedSdevHashField)) {
+
+            // if new hash field is different than old hashfield -> throw illegal access exception
+
+            StringBuilder s = new StringBuilder();
+            s.append("Sdev Hash comparing failed! Received Sdev Hash: ");
+            s.append(receivedSdevHashField);
+            s.append(" Calculated hash: ");
+            s.append(newHash);
+            String msg = s.toString();
+            log.error(msg);
+            throw new IllegalAccessException(msg);
         }
-        //// TODO: 06.07.2018 check if something else more should be done
+        //if new hash field is the same as old one -> just update fields in sdev
     }
 
 
@@ -187,7 +196,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
     }
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
-        ValidationUtils.validateSdev(repositoryManager, request);
+        ValidationUtils.validateSdevsMatchWithSsp(repositoryManager, request);
     }
 
     private void prepareAndSendErrorResponse(int status, String message) throws IOException {

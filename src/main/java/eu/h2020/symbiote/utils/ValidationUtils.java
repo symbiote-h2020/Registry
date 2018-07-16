@@ -141,25 +141,25 @@ public class ValidationUtils {
         }
     }
 
-    public static void validateSdev(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
+    public static void validateSdevsMatchWithSsp(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
             throws IllegalAccessException {
 
         SspRegInfo sDev = request.getBody();
 
         if (repositoryManager.getSdevById(sDev.getSymId()) == null)
-            throw new IllegalAccessException("Wrong Sdev Id!");
+            throw new IllegalAccessException("There is no sDev in database with given SymId !");
 
 
         //check if given sspId exists in DB
         if (!repositoryManager.checkIfSspExists(request.getSspId())) {
-            throw new IllegalAccessException("Given Ssp does not exist in database!");
+            throw new IllegalAccessException("Ssp with given SspId does not exist in database!");
         }
 
-        //check if given sdevs pluginURL match to any of Ssps InterworkingInterfaceURL
+        //check if given Sdevs pluginURL match to any of Ssps InterworkingInterfaceURL
         else if (!repositoryManager.getSspById(request.getSspId()).getInterworkingServices().stream()
                 .map(InterworkingService::getUrl)
                 .anyMatch(url -> url.equals(sDev.getPluginURL()))) {
-            throw new IllegalAccessException("Given sdevs pluginURL does not match to any of Ssps InterworkingInterfaceURL!");
+            throw new IllegalAccessException("Given Sdevs pluginURL does not match to any of Ssps InterworkingServiceURL!");
         }
     }
 

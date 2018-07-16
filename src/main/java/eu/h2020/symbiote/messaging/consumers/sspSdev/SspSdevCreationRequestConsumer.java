@@ -140,7 +140,7 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
     }
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
-        ValidationUtils.validateSdev(repositoryManager, request);
+        ValidationUtils.validateSdevsMatchWithSsp(repositoryManager, request);
     }
 
     private void prepareAndSendErrorResponse(int status, String message) throws IOException {
