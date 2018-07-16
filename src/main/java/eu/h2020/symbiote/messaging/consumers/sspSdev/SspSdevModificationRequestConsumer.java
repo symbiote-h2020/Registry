@@ -10,9 +10,11 @@ import com.rabbitmq.client.Envelope;
 import eu.h2020.symbiote.cloud.model.ssp.SspRegInfo;
 import eu.h2020.symbiote.core.cci.SdevRegistryResponse;
 import eu.h2020.symbiote.core.internal.CoreSdevRegistryRequest;
+import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
+import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
 import eu.h2020.symbiote.security.helpers.SDevHelper;
 import eu.h2020.symbiote.utils.ValidationUtils;
@@ -31,6 +33,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
     private static Log log = LogFactory.getLog(SspSdevModificationRequestConsumer.class);
     private RepositoryManager repositoryManager;
     private RabbitManager rabbitManager;
+    private AuthorizationManager authorizationManager;
     private SdevRegistryResponse response;
     private Envelope envelope;
     private AMQP.BasicProperties properties;
@@ -46,10 +49,12 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
      */
     public SspSdevModificationRequestConsumer(Channel channel,
                                               RabbitManager rabbitManager,
-                                              RepositoryManager repositoryManager) {
+                                              RepositoryManager repositoryManager,
+                                              AuthorizationManager authorizationManager) {
         super(channel);
         this.repositoryManager = repositoryManager;
         this.rabbitManager = rabbitManager;
+        this.authorizationManager = authorizationManager;
         mapper = new ObjectMapper();
     }
 
@@ -76,49 +81,68 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
         this.envelope = envelope;
         this.properties = properties;
 
+        /////////////////// Request retrieval from message
+
         try {
             request = mapper.readValue(message, CoreSdevRegistryRequest.class);
-            SspRegInfo sDev = request.getBody();
-            response.setBody(sDev);
-
-            try {
-                //check if given ids have a match needed
-                validateAccess(request);
-
-                //check if there is a migration going on
-                handleMigrationIfOccurs(request);
-
-            } catch (NoSuchAlgorithmException | IllegalAccessException e) {
-                prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
-                return;
-            } catch (Exception e) {
-                prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-                return;
-            }
-
-            if (ValidationUtils.validateFields(sDev)) {
-
-                SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.modifySdev(sDev);
-
-                response.setStatus(sdevPersistenceResult.getStatus());
-                response.setMessage(sdevPersistenceResult.getMessage());
-                response.setBody(sdevPersistenceResult.getSdev());
-
-                if (sdevPersistenceResult.getStatus() == 200) {
-                    rabbitManager.sendSdevOperationMessage(sdevPersistenceResult.getSdev(),
-                            RegistryOperationType.MODIFICATION);
-                } else {
-                    prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) saving in db, due to: " +
-                            sdevPersistenceResult.getMessage());
-                }
-            } else {
-                prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Given Sdev (SspRegInfo) has some fields null or empty");
-            }
-            rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
         } catch (JsonSyntaxException | JsonMappingException e) {
-            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) retrieving from message" + e);
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) retrieving from message. " + e);
+            return;
         }
+
+        /////////////////// checking access by token verification
+
+        AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
+                request.getSecurityRequest(),
+                request.getBody().getSymId()); //todo partially MOCKED
+
+        if (!tokenAuthorizationResult.isValidated()) {
+            log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+            prepareAndSendErrorResponse(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
+            return;
+        }
+
+        /////////////////// access and migration verification
+
+        try {
+            //check if given ids have a match needed
+            validateAccess(request);
+
+            //check if there is a migration going on
+            handleMigrationIfOccurs(request);
+
+        } catch (NoSuchAlgorithmException | IllegalAccessException e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return;
+        } catch (Exception e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            return;
+        }
+
+        SspRegInfo sDev = request.getBody();
+        response.setBody(sDev);
+
+        if (ValidationUtils.validateFields(sDev)) {
+
+            SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.modifySdev(sDev);
+
+            response.setStatus(sdevPersistenceResult.getStatus());
+            response.setMessage(sdevPersistenceResult.getMessage());
+            response.setBody(sdevPersistenceResult.getSdev());
+
+            if (sdevPersistenceResult.getStatus() == 200) {
+                rabbitManager.sendSdevOperationMessage(sdevPersistenceResult.getSdev(),
+                        RegistryOperationType.MODIFICATION);
+            } else {
+                prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Error occurred during Sdev (SspRegInfo) saving in db, due to: " +
+                        sdevPersistenceResult.getMessage());
+            }
+        } else {
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, "Given Sdev (SspRegInfo) has some fields null or empty");
+        }
+        rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+
     }
 
 
@@ -161,7 +185,6 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
         log.info(hash);
         return hash;
     }
-
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
         ValidationUtils.validateSdev(repositoryManager, request);

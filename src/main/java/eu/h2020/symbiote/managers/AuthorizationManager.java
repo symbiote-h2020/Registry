@@ -79,68 +79,75 @@ public class AuthorizationManager {
 
     public AuthorizationResult checkSinglePlatformOperationAccess(SecurityRequest securityRequest, String platformId) {
         Set<String> ids = new HashSet<>();
+
+        final String rhComponentId = "reghandler";
+
         if (platformId == null) {
             return new AuthorizationResult("Platform Id is null!", false);
         } else {
             ids.add(platformId);
-            return checkOperationAccess(securityRequest, ids);
+            return checkOperationAccess(securityRequest, ids, rhComponentId);
         }
     }
 
     public AuthorizationResult checkSdevOperationAccess(SecurityRequest securityRequest, String sDevId) {
-        return new AuthorizationResult("MOCKED!", true); //// TODO: 30.05.2018 MOCKED!!! FIX!!
+        Set<String> ids = new HashSet<>();
+
+        final String componentId = "reghandler"; //// TODO: 10.07.2018 CHANGE!! after decision from team
+
+        if (sDevId == null) {
+            return new AuthorizationResult("Sdev Id is null!", false);
+        } else {
+            ids.add(sDevId);
+            return checkOperationAccess(securityRequest, ids, componentId);
+        }
+
     }
 
-    private AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds) {
+    private AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds, String componentId) {
         if (securityEnabled) {
+
             log.info("Received SecurityRequest to verification: (" + securityRequest + ")");
 
             if (securityRequest == null) {
                 return new AuthorizationResult("SecurityRequest is null", false);
             }
             if (platformIds == null || platformIds.isEmpty()) {
-                return new AuthorizationResult("Platform Ids is null", false);
+                return new AuthorizationResult("Platform Ids set is null or empty", false);
             }
-            Set<String> checkedPolicies;
-            try {
-                checkedPolicies = checkPolicies(securityRequest, platformIds);
-            } catch (Exception e) {
-                log.error("Component Security Handler Exception " + e);
-                return new AuthorizationResult("Component Security Handler Exception " + e, false);
-            }
+
+            Set<String> checkedPolicies = checkPolicies(securityRequest, platformIds, componentId);
+
             if (!checkedPolicies.isEmpty()) {
                 return new AuthorizationResult("ok", true);
             } else {
                 return new AuthorizationResult("Provided Policies does not match with needed to perform operation.", false);
             }
+
         } else {
             //if security is disabled in properties
             return new AuthorizationResult("security disabled", true);
         }
     }
 
-    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds) throws Exception {
+    private Set<String> checkPolicies(SecurityRequest securityRequest, Set<String> platformIds, String componentId) {
 
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
         Set<String> satisfiedPoliciesIdentifiers;
 
-        final String rhComponentId = "reghandler";
 
         for (String platformId : platformIds) {
 
             try {
-                ComponentHomeTokenAccessPolicy componentHomeTokenAccessPolicy = new ComponentHomeTokenAccessPolicy(platformId, rhComponentId, null);
+                ComponentHomeTokenAccessPolicy componentHomeTokenAccessPolicy = new ComponentHomeTokenAccessPolicy(platformId, componentId, null);
                 accessPoliciesMap.put(platformId, componentHomeTokenAccessPolicy);
             } catch (InvalidArgumentsException e) {
-                log.error("Single Token Access Policy Specifier error: " + e);
+                log.error("Component Home Token Access Policy error: " + e);
             }
         }
-        try {
-            satisfiedPoliciesIdentifiers = componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
-        } catch (Exception e) {
-            log.error("Component Security Handler Exception " + e);
-            throw e;
-        }
+
+        satisfiedPoliciesIdentifiers = componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+
 
         return satisfiedPoliciesIdentifiers;
     }

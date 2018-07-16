@@ -94,7 +94,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             //checking access by token verification
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                     request.getSecurityRequest(),
-                    request.getSdevId()); //todo MOCKED
+                    request.getSdevId()); //todo partially MOCKED
 
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -103,47 +103,54 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             }
 
             //checking access by verification of fields needed for that operation
-            validateAccess(request);
+            if (!validateAccess(request)) return;
 
 
             if (request.getBody() != null) {
-                //contact with Semantic Manager accordingly to Type of object Description received
-                if (ValidationUtils.checkIfResourcesDoesNotHaveIds(request)) {
-                    //// TODO: 04.07.2018 MOVE to ValidationUtils and refactor
-                    log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
-                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
 
-                    rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
-                            message,
-                            request.getSdevId(),
-                            request.getSspId(),
-                            RegistryOperationType.CREATION,
-                            request.getFilteringPolicies(),
-                            request.getBody()
-                    );
-                } else {
-                    log.error("One of the resources has ID or list with resources is invalid. Resources not created!");
-                    sendErrorReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not created!");
-                }
+                log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
+                //contact with Semantic Manager accordingly to Type of object Description received
+                //sending JSON content to Semantic Manager and passing responsibility to another consumer
+
+                rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
+                        message,
+                        request.getSdevId(),
+                        request.getSspId(),
+                        RegistryOperationType.CREATION,
+                        request.getFilteringPolicies(),
+                        request.getBody()
+                );
+
             } else {
-                log.error("Message body is null!");
                 sendErrorReply(400, "Message body is null!");
             }
 
         } catch (Exception e) {
-            log.error(e);
-            sendErrorReply(500, "Consumer critical error");
+            sendErrorReply(500, "Consumer critical error: " + e);
         }
     }
 
-    private void validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
+    private boolean validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
         try {
             ValidationUtils.validateSspResource(request, repositoryManager);
         } catch (IllegalArgumentException e) {
             sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return false;
         } catch (Exception e) {
             sendErrorReply(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            return false;
         }
+
+        try {
+            ValidationUtils.checkIfResourcesDoesNotHaveIds(request);
+            //// TODO: 09.07.2018 check!!
+
+        } catch (IllegalArgumentException e) {
+            sendErrorReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not created!");
+            return false;
+        }
+
+        return true;
     }
 
 
@@ -155,6 +162,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
      * @throws IOException
      */
     private void sendErrorReply(int status, String message) throws IOException {
+        log.error(message);
         registryResponse.setStatus(status);
         registryResponse.setMessage(message);
         rabbitManager.sendRPCReplyMessage(this, this.properties, this.envelope, mapper.writeValueAsString(registryResponse));

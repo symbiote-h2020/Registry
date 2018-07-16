@@ -13,22 +13,15 @@ import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
 import eu.h2020.symbiote.model.RegistryOperationType;
-import eu.h2020.symbiote.model.cim.Device;
-import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.security.accesspolicies.common.IAccessPolicySpecifier;
 import eu.h2020.symbiote.utils.ValidationUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created by mateuszl on 30.05.2018.
@@ -103,7 +96,7 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
             //checking access by token verification
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                     request.getSecurityRequest(),
-                    request.getSdevId()); //todo MOCKED
+                    request.getSdevId()); //todo partially MOCKED
 
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -112,32 +105,27 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
             }
 
             //checking access by verification of fields needed for that operation
-            validateAccess(request);
+            if (!validateAccess(request)) return;
 
             //// TODO: 05.06.2018 check if the resource is bounded to existing SSP
 
             if (request.getBody() != null) {
                 //contact with Semantic Manager accordingly to Type of object Description received
-                if (checkIfResourcesHaveNullOrEmptyId(request)) {
-                    //// TODO: 04.07.2018 MOVE to ValidationUtils and refactor
-                    //resources should not have empty or null ids
-                    log.error("One of the resources has ID or list with resources is invalid. Resources not modified!");
-                    sendErrorReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not modified!");
-                } else {
-                    log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
-                    //sending JSON content to Semantic Manager and passing responsibility to another consumer
 
-                    this.policiesMap = request.getFilteringPolicies();
+                log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
+                //sending JSON content to Semantic Manager and passing responsibility to another consumer
 
-                    rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
-                            message,
-                            request.getSdevId(),
-                            request.getSspId(),
-                            RegistryOperationType.MODIFICATION,
-                            this.policiesMap,
-                            request.getBody()
-                    );
-                }
+                this.policiesMap = request.getFilteringPolicies();
+
+                rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
+                        message,
+                        request.getSdevId(),
+                        request.getSspId(),
+                        RegistryOperationType.MODIFICATION,
+                        this.policiesMap,
+                        request.getBody()
+                );
+
             } else {
                 log.error("Message body is null!");
                 sendErrorReply(400, "Message body is null!");
@@ -149,14 +137,25 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
         }
     }
 
-    private void validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
+    private boolean validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
         try {
             ValidationUtils.validateSspResource(request, repositoryManager);
         } catch (IllegalArgumentException e) {
             sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return false;
         } catch (Exception e) {
             sendErrorReply(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            return false;
         }
+
+        try {
+            ValidationUtils.checkIfResourcesHaveNullOrEmptyId(request);
+        } catch (IllegalArgumentException e) {
+            sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -172,42 +171,5 @@ public class SspResourceModificationRequestConsumer extends DefaultConsumer {
         rabbitManager.sendRPCReplyMessage(this, this.properties, this.envelope, mapper.writeValueAsString(registryResponse));
     }
 
-    /**
-     * Checks if given request consists of resources, which does not have any content in ID field.
-     *
-     * @param request
-     * @return true if given resources don't have an ID.
-     */
-    private boolean checkIfResourcesHaveNullOrEmptyId(CoreSspResourceRegistryRequest request) {
-        List<Resource> resources = request.getBody().values().stream().collect(Collectors.toList());
-
-        for (Resource resource : resources) {
-            if (!resourceHasId(resource)) return false;
-
-            List<Service> services = new ArrayList<>();
-            try {
-                if (resource instanceof Device) services = ((Device) resource).getServices();
-            } catch (Exception e) {
-                log.error(e);
-                return false;
-            }
-
-            if (services != null && !services.isEmpty()) {
-                for (Service service : services) {
-                    if (!resourceHasId(service)) return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private boolean resourceHasId(Resource resource) {
-        if (StringUtils.isBlank(resource.getId())) {
-            log.error("One of the resources (or actuating services) does not have an ID!");
-            return false;
-        }
-        return true;
-    }
 
 }

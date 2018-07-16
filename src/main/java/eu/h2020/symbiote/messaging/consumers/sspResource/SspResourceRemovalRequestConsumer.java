@@ -17,6 +17,7 @@ import eu.h2020.symbiote.model.CoreSspResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.persistenceResults.CoreSspResourcePersistenceResult;
+import eu.h2020.symbiote.utils.ValidationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -86,26 +87,32 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         log.info(" [x] Received ssp resource to remove");
 
+
         try {
-            try {
-                request = mapper.readValue(message, CoreSspResourceRegistryRequest.class);
-            } catch (JsonSyntaxException | JsonMappingException e) {
-                log.error("Error occurred during getting Operation Request from Json", e);
-                prepareAndSendErrorResponse(400, "Error occurred during getting Operation Request from Json");
-                return;
-            }
+            request = mapper.readValue(message, CoreSspResourceRegistryRequest.class);
+        } catch (JsonSyntaxException | JsonMappingException e) {
+            log.error("Error occurred during getting Operation Request from Json", e);
+            prepareAndSendErrorResponse(400, "Error occurred during getting Operation Request from Json");
+            return;
+        }
 
-            if (request != null) {
-                AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(request.getSecurityRequest(), request.getSdevId());
-                if (!tokenAuthorizationResult.isValidated()) {
-                    prepareAndSendErrorResponse(400, "Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
-                    return;
-                }
-            } else {
-                prepareAndSendErrorResponse(400, "Request is null");
-                return;
-            }
 
+        //checking access by token verification
+        AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
+                request.getSecurityRequest(),
+                request.getSdevId()); //todo partially MOCKED
+
+        if (!tokenAuthorizationResult.isValidated()) {
+            log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
+            prepareAndSendErrorResponse(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
+            return;
+        }
+
+        //checking access by verification of fields needed for that operation
+        if (!validateAccess(request)) return;
+
+
+        try {
             resources = request.getBody();
             Map<String, CoreSspResource> sspResourcesMap = convertResourceToCoreSspResourceMap(resources, request.getSdevId());
 
@@ -145,6 +152,29 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
             prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Consumer critical exception!");
         }
     }
+
+
+    private boolean validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
+        try {
+            ValidationUtils.validateSspResource(request, repositoryManager);
+        } catch (IllegalArgumentException e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return false;
+        } catch (Exception e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            return false;
+        }
+
+        try {
+            ValidationUtils.checkIfResourcesHaveNullOrEmptyId(request);
+        } catch (IllegalArgumentException e) {
+            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
 
     private Map<String, Resource> convertCoreSspResourceToResourceMap(Map<String, CoreSspResourcePersistenceResult> resourcesRemovingResultMap) {
         HashMap<String, Resource> resourcesMap = new HashMap<>();

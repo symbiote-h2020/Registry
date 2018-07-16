@@ -238,7 +238,7 @@ public class ValidationUtils {
      * @param request
      * @return true if given resources don't have an ID.
      */
-    public static boolean checkIfResourcesDoesNotHaveIds(CoreResourceRegistryRequest request) {
+    public static void checkIfResourcesDoesNotHaveIds(CoreResourceRegistryRequest request) throws IllegalArgumentException {
         Map<String, Resource> resourceMap = new HashMap<>();
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -248,7 +248,7 @@ public class ValidationUtils {
             log.error("Could not deserialize content of request!" + e);
         }
         List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
-        return checkIfResourcesDoesNotHaveIds(resources);
+        checkIfResourcesDoesNotHaveIds(resources);
     }
 
     /**
@@ -257,39 +257,72 @@ public class ValidationUtils {
      * @param request
      * @return true if given resources don't have an ID.
      */
-    public static boolean checkIfResourcesDoesNotHaveIds(CoreSspResourceRegistryRequest request) {
+    public static void checkIfResourcesDoesNotHaveIds(CoreSspResourceRegistryRequest request) throws IllegalArgumentException {
         Map<String, Resource> resourceMap = request.getBody();
-        ObjectMapper mapper = new ObjectMapper();
         List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
-        return checkIfResourcesDoesNotHaveIds(resources);
+        checkIfResourcesDoesNotHaveIds(resources);
     }
 
-    private static boolean checkIfResourcesDoesNotHaveIds(List<Resource> resources) {
+    private static void checkIfResourcesDoesNotHaveIds(List<Resource> resources) throws IllegalArgumentException {
 
-        try {
-            for (Resource resource : resources) {
-                if (!checkIfResourceDoesNotHaveAnId(resource)) return false;
-                List<Service> services = new ArrayList<>();
-                if (resource instanceof Device) {
-                    services = ((Device) resource).getServices();
-                } else if (resource instanceof MobileSensor) {
-                    services = ((MobileSensor) resource).getServices();
-                } else if (resource instanceof Actuator) {
-                    services = ((Actuator) resource).getServices();
-                }
-                if (services != null && !services.isEmpty()) {
-                    for (Service service : services) {
-                        if (!checkIfResourceDoesNotHaveAnId(service)) return false;
-                    }
+        for (Resource resource : resources) {
+            if (!checkIfResourceDoesNotHaveAnId(resource))
+                throw new IllegalArgumentException("One of the resources has an ID or list with resources is invalid. Resources not created!");
+            List<Service> services = new ArrayList<>();
+            if (resource instanceof Device) {
+                services = ((Device) resource).getServices();
+            } else if (resource instanceof MobileSensor) {
+                services = ((MobileSensor) resource).getServices();
+            } else if (resource instanceof Actuator) {
+                services = ((Actuator) resource).getServices();
+            }
+            if (services != null && !services.isEmpty()) {
+                for (Service service : services) {
+                    if (!checkIfResourceDoesNotHaveAnId(service))
+                        throw new IllegalArgumentException("One of the services has an ID or list with resources is invalid. Resources not created!");
                 }
             }
-        } catch (Exception e) {
-            log.error(e);
+        }
+    }
+
+    /**
+     * Checks if given request consists of resources, which does not have any content in ID field.
+     *
+     * @param request
+     * @return true if given resources don't have an ID.
+     */
+    public static void checkIfResourcesHaveNullOrEmptyId(CoreSspResourceRegistryRequest request) {
+        List<Resource> resources = request.getBody().values().stream().collect(Collectors.toList());
+
+        for (Resource resource : resources) {
+            if (!resourceHasId(resource))
+                throw new IllegalArgumentException("One of the resources has ID or list with resources is invalid. Resources not modified!");
+
+            List<Service> services = new ArrayList<>();
+            try {
+                if (resource instanceof Device) services = ((Device) resource).getServices();
+            } catch (Exception e) {
+                log.error(e);
+                throw new IllegalArgumentException("Exception occured when casting Resource type");
+            }
+
+            if (services != null && !services.isEmpty()) {
+                for (Service service : services) {
+                    if (!resourceHasId(service))
+                        throw new IllegalArgumentException("One of the services has ID or list with resources is invalid. Resources not modified!");
+                }
+            }
+        }
+    }
+
+    private static boolean resourceHasId(Resource resource) {
+        if (StringUtils.isBlank(resource.getId())) {
+            log.error("One of the resources (or actuating services) does not have an ID!");
             return false;
         }
-
         return true;
     }
+
 
     private static boolean checkIfResourceDoesNotHaveAnId(Resource resource) {
         if (StringUtils.isNotBlank(resource.getId())) {
