@@ -896,7 +896,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(SSP_SDEV_CREATION_REQUESTED_QUEUE,
                     this.sspExchangeName,
                     this.sspSdevCreationRequestedRoutingKey,
-                    new SspSdevCreationRequestConsumer(getChannel(), this, repositoryManager));
+                    new SspSdevCreationRequestConsumer(getChannel(), this, repositoryManager, authorizationManager));
             log.info("Receiver waiting for SSP Sdev Creation messages....");
         } catch (IOException e) {
             log.error(e);
@@ -912,7 +912,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(SSP_SDEV_MODIFICATION_REQUESTED_QUEUE,
                     this.sspExchangeName,
                     this.sspSdevModificationRequestedRoutingKey,
-                    new SspSdevModificationRequestConsumer(getChannel(), this, repositoryManager));
+                    new SspSdevModificationRequestConsumer(getChannel(), this, repositoryManager, authorizationManager));
             log.info("Receiver waiting for SSP Sdev Modification messages....");
         } catch (IOException e) {
             log.error(e);
@@ -928,7 +928,7 @@ public class RabbitManager {
             createQueueAndBeginConsuming(SSP_SDEV_REMOVAL_REQUESTED_QUEUE,
                     this.sspExchangeName,
                     this.sspSdevRemovalRequestedRoutingKey,
-                    new SspSdevRemovalRequestConsumer(getChannel(), this, repositoryManager));
+                    new SspSdevRemovalRequestConsumer(getChannel(), this, repositoryManager, authorizationManager));
             log.info("Receiver waiting for SSP Sdev Removal messages....");
         } catch (IOException e) {
             log.error(e);

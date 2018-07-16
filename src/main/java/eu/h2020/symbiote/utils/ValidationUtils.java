@@ -238,7 +238,7 @@ public class ValidationUtils {
      * @param request
      * @return true if given resources don't have an ID.
      */
-    public static void checkIfResourcesDoesNotHaveIds(CoreResourceRegistryRequest request) throws IllegalArgumentException {
+    public static boolean checkIfResourcesDoesNotHaveIds(CoreResourceRegistryRequest request) {
         Map<String, Resource> resourceMap = new HashMap<>();
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -248,7 +248,12 @@ public class ValidationUtils {
             log.error("Could not deserialize content of request!" + e);
         }
         List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
-        checkIfResourcesDoesNotHaveIds(resources);
+        try {
+            checkIfResourcesDoesNotHaveIds(resources);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -257,13 +262,18 @@ public class ValidationUtils {
      * @param request
      * @return true if given resources don't have an ID.
      */
-    public static void checkIfResourcesDoesNotHaveIds(CoreSspResourceRegistryRequest request) throws IllegalArgumentException {
+    public static boolean checkIfResourcesDoesNotHaveIds(CoreSspResourceRegistryRequest request) {
         Map<String, Resource> resourceMap = request.getBody();
         List<Resource> resources = resourceMap.values().stream().collect(Collectors.toList());
-        checkIfResourcesDoesNotHaveIds(resources);
+        try {
+            checkIfResourcesDoesNotHaveIds(resources);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        return true;
     }
 
-    private static void checkIfResourcesDoesNotHaveIds(List<Resource> resources) throws IllegalArgumentException {
+    private static void checkIfResourcesDoesNotHaveIds(List<Resource> resources) {
 
         for (Resource resource : resources) {
             if (!checkIfResourceDoesNotHaveAnId(resource))
