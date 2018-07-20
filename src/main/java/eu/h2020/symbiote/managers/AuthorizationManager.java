@@ -13,6 +13,7 @@ import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsExce
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
 import eu.h2020.symbiote.security.handler.IComponentSecurityHandler;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,9 +94,9 @@ public class AuthorizationManager {
     public AuthorizationResult checkSdevOperationAccess(SecurityRequest securityRequest, String sDevsPluginID) {
         Set<String> ids = new HashSet<>();
 
-        final String componentId = "sspRegistry"; //// TODO: 10.07.2018 CHANGE!! after decision from team
+        final String componentId = "sspRegistry";
 
-        if (sDevsPluginID == null) {
+        if (StringUtils.isBlank(sDevsPluginID)) {
             return new AuthorizationResult("SdevsPluginId (SSP Id) is null!", false);                                   //Id of SSP given in Sdev (PluginId field)
         } else {
             ids.add(sDevsPluginID);
