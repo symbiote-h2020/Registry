@@ -93,7 +93,7 @@ public class AuthorizationManager {
     public AuthorizationResult checkSdevOperationAccess(SecurityRequest securityRequest, String sDevsPluginID) {
         Set<String> ids = new HashSet<>();
 
-        final String componentId = "reghandler"; //// TODO: 10.07.2018 CHANGE!! after decision from team
+        final String componentId = "sspRegistry"; //// TODO: 10.07.2018 CHANGE!! after decision from team
 
         if (sDevsPluginID == null) {
             return new AuthorizationResult("SdevsPluginId (SSP Id) is null!", false);                                   //Id of SSP given in Sdev (PluginId field)
