@@ -141,17 +141,61 @@ public class ValidationUtils {
         }
     }
 
-    public static void validateSdevsMatchWithSsp(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
+
+    /**
+     * Validates if there is no id in given Sdev and if there is a match with SSP
+     *
+     * @param repositoryManager
+     * @param request
+     * @throws IllegalAccessException
+     */
+    public static void validateIfSdevMatchWithSspForCreation(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
             throws IllegalAccessException {
 
         SspRegInfo sDev = request.getBody();
 
+        if (StringUtils.isNotBlank(sDev.getSymId()))
+            throw new IllegalAccessException("The SymId of Sdev is not blank!");
+
+        validateIfMatchWithSsp(repositoryManager, request);
+    }
+
+    /**
+     * Validates if there is an id in given Sdev and if there is a match with SSP
+     *
+     * @param repositoryManager
+     * @param request
+     * @throws IllegalAccessException
+     */
+    public static void validateIfSdevMatchWithSspForModification(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
+            throws IllegalAccessException {
+
+        SspRegInfo sDev = request.getBody();
+
+
+        if (StringUtils.isBlank(sDev.getSymId()))
+            throw new IllegalAccessException("The SymId of Sdev is blank!");
+
         if (repositoryManager.getSdevById(sDev.getSymId()) == null)
             throw new IllegalAccessException("There is no sDev in database with given SymId !");
 
+        validateIfMatchWithSsp(repositoryManager, request);
+    }
+
+    /**
+     * Validates if there is a match with SSP in given request
+     *
+     * @param repositoryManager
+     * @param request
+     * @throws IllegalAccessException
+     */
+    private static void validateIfMatchWithSsp(RepositoryManager repositoryManager, CoreSdevRegistryRequest request)
+            throws IllegalAccessException {
+
+        SspRegInfo sDev = request.getBody();
 
         //check if given sspId exists in DB
-        if (!repositoryManager.checkIfSspExists(request.getSspId())) {
+        if (!repositoryManager.checkIfSspExists(sDev.getPluginId())) {                                                  //Id of SSP given in Sdev (PluginId field)
             throw new IllegalAccessException("Ssp with given SspId does not exist in database!");
         }
 
@@ -162,7 +206,6 @@ public class ValidationUtils {
             throw new IllegalAccessException("Given Sdevs pluginURL does not match to any of Ssps InterworkingServiceURL!");
         }
     }
-
 
     public static void validateSspResource(CoreSspResourceRegistryRequest request, RepositoryManager repositoryManager) {
 

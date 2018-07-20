@@ -138,7 +138,7 @@ public class SspSdevRemovalRequestConsumer extends DefaultConsumer {
     }
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
-        ValidationUtils.validateSdevsMatchWithSsp(repositoryManager, request);
+        ValidationUtils.validateIfSdevMatchWithSspForModification(repositoryManager, request);
     }
 
     private void prepareAndSendErrorResponse(int status, String message) throws IOException {

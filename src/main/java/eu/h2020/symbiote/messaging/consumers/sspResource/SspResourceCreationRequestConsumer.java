@@ -131,15 +131,6 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
     }
 
     private boolean validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
-        try {
-            ValidationUtils.validateSspResource(request, repositoryManager);
-        } catch (IllegalArgumentException e) {
-            sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
-            return false;
-        } catch (Exception e) {
-            sendErrorReply(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            return false;
-        }
 
         try {
             ValidationUtils.checkIfResourcesDoesNotHaveIds(request);
@@ -147,6 +138,16 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
         } catch (IllegalArgumentException e) {
             sendErrorReply(HttpStatus.SC_BAD_REQUEST, "One of the resources has ID or list with resources is invalid. Resources not created!");
+            return false;
+        }
+
+        try {
+            ValidationUtils.validateSspResource(request, repositoryManager);
+        } catch (IllegalArgumentException e) {
+            sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+            return false;
+        } catch (Exception e) {
+            sendErrorReply(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             return false;
         }
 

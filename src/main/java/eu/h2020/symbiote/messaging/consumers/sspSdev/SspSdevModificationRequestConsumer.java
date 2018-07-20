@@ -109,8 +109,8 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
             //check if given ids have a match needed
             validateAccess(request);
 
-            //check if there is a migration going on
-            checkIfHashfieldsAreRight(request);
+            //check if hashes are equal
+            checkIfHashfieldsAreEqual(request);
 
         } catch (NoSuchAlgorithmException | IllegalAccessException e) {
             prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
@@ -148,7 +148,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
     }
 
 
-    private void checkIfHashfieldsAreRight(CoreSdevRegistryRequest request) throws NoSuchAlgorithmException, IllegalAccessException {
+    private void checkIfHashfieldsAreEqual(CoreSdevRegistryRequest request) throws NoSuchAlgorithmException, IllegalAccessException {
 
         SspRegInfo receivedSdev = request.getBody();
 
@@ -168,12 +168,8 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
 
             // if new hash field is different than old hashfield -> throw illegal access exception
 
-            StringBuilder s = new StringBuilder();
-            s.append("Sdev Hash comparing failed! Received Sdev Hash: ");
-            s.append(receivedSdevHashField);
-            s.append(" Calculated hash: ");
-            s.append(newHash);
-            String msg = s.toString();
+            String msg = String.format("Sdev Hash comparing failed! Received Sdev Hash: %s . Calculated hash: %s", receivedSdevHashField, newHash);
+
             log.error(msg);
             throw new IllegalAccessException(msg);
         }
@@ -184,10 +180,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
     private String calculateHash(String symId, String previousDK1) throws NoSuchAlgorithmException {
         String hash;
 
-        StringBuilder builder = new StringBuilder();
-        builder.append(symId);
-        builder.append(previousDK1);
-        String s = builder.toString();
+        String s = String.format("%s%s", symId, previousDK1);
 
         hash = SDevHelper.hashSHA1(s);
 
@@ -196,7 +189,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
     }
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
-        ValidationUtils.validateSdevsMatchWithSsp(repositoryManager, request);
+        ValidationUtils.validateIfSdevMatchWithSspForModification(repositoryManager, request);
     }
 
     private void prepareAndSendErrorResponse(int status, String message) throws IOException {

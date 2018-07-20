@@ -89,7 +89,6 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
         /////////////////// access verification
 
         try {
-            //check if given ids have a match needed
             validateAccess(request);
 
         } catch (IllegalAccessException e) {
@@ -104,7 +103,8 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
 
         AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                 request.getSecurityRequest(),
-                request.getBody().getSymId()); //todo partially MOCKED
+                request.getBody().getPluginId());
+        //todo partially MOCKED
 
         if (!tokenAuthorizationResult.isValidated()) {
             log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
@@ -136,11 +136,10 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
         //sdev class has newly created symId
         response.setBody(sDev);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-
     }
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
-        ValidationUtils.validateSdevsMatchWithSsp(repositoryManager, request);
+        ValidationUtils.validateIfSdevMatchWithSspForCreation(repositoryManager, request);
     }
 
     private void prepareAndSendErrorResponse(int status, String message) throws IOException {

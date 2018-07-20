@@ -90,18 +90,17 @@ public class AuthorizationManager {
         }
     }
 
-    public AuthorizationResult checkSdevOperationAccess(SecurityRequest securityRequest, String sDevId) {
+    public AuthorizationResult checkSdevOperationAccess(SecurityRequest securityRequest, String sDevsPluginID) {
         Set<String> ids = new HashSet<>();
 
         final String componentId = "reghandler"; //// TODO: 10.07.2018 CHANGE!! after decision from team
 
-        if (sDevId == null) {
-            return new AuthorizationResult("Sdev Id is null!", false);
+        if (sDevsPluginID == null) {
+            return new AuthorizationResult("SdevsPluginId (SSP Id) is null!", false);                                   //Id of SSP given in Sdev (PluginId field)
         } else {
-            ids.add(sDevId);
+            ids.add(sDevsPluginID);
             return checkOperationAccess(securityRequest, ids, componentId);
         }
-
     }
 
     private AuthorizationResult checkOperationAccess(SecurityRequest securityRequest, Set<String> platformIds, String componentId) {
