@@ -29,10 +29,9 @@ class AppConfig extends AbstractMongoConfiguration {
 
     @Override
     public Mongo mongo() throws Exception {
-        return new Mongo();
+        return new MongoClient(mongoHost);
     }
 
-    //TODO change 'localhost' in MongoClient to sth read from configuration
     @Bean
     public MongoTemplate mongoTemplate() throws Exception {
         return new MongoTemplate(new MongoClient(mongoHost), getDatabaseName());
