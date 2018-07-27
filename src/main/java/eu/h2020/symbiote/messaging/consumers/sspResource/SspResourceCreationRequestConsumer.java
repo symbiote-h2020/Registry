@@ -94,8 +94,16 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             //checking access by token verification
             AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                     request.getSecurityRequest(),
-                    request.getSdevId()); //todo partially MOCKED
+                    request.getSspId()); //todo partially MOCKED
 
+            log.debug("1");
+            if( tokenAuthorizationResult == null  ) {
+                log.error("Token authorization result is null");
+                sendErrorReply(400, "Error: authorization result is null");
+                return;
+            }
+
+            log.debug("2");
             if (!tokenAuthorizationResult.isValidated()) {
                 log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
                 sendErrorReply(400, String.format("Error: \" %s \"", tokenAuthorizationResult.getMessage()));
@@ -104,14 +112,16 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
             //checking access by verification of fields needed for that operation
             if (!validateAccess(request)) return;
-
+            log.debug("3");
 
             if (request.getBody() != null) {
 
+                log.debug("4");
                 log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
                 //contact with Semantic Manager accordingly to Type of object Description received
                 //sending JSON content to Semantic Manager and passing responsibility to another consumer
 
+                log.debug("5");
                 rabbitManager.sendSspResourceJsonTranslationRpcMessage(this, properties, envelope,
                         message,
                         request.getSdevId(),
@@ -132,6 +142,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
 
     private boolean validateAccess(CoreSspResourceRegistryRequest request) throws IOException {
 
+        log.debug("Validating access for the request");
         try {
             ValidationUtils.checkIfResourcesDoesNotHaveIds(request);
             //// TODO: 09.07.2018 check!!
@@ -142,6 +153,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
         }
 
         try {
+            log.debug("Validating SSP resource");
             ValidationUtils.validateSspResource(request, repositoryManager);
         } catch (IllegalArgumentException e) {
             sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
@@ -151,6 +163,7 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             return false;
         }
 
+        log.debug("Validate Access success, returning true");
         return true;
     }
 

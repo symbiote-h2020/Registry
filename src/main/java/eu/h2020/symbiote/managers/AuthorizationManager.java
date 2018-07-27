@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.managers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import eu.h2020.symbiote.core.internal.CoreResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.InterworkingService;
@@ -139,6 +140,7 @@ public class AuthorizationManager {
         for (String platformId : platformIds) {
 
             try {
+                log.debug("Setting up component home token access policy for: platformId: " + platformId + " componentId: " + componentId );
                 ComponentHomeTokenAccessPolicy componentHomeTokenAccessPolicy = new ComponentHomeTokenAccessPolicy(platformId, componentId, null);
                 accessPoliciesMap.put(platformId, componentHomeTokenAccessPolicy);
             } catch (InvalidArgumentsException e) {
@@ -146,10 +148,28 @@ public class AuthorizationManager {
             }
         }
 
+        printSecurityRequest(securityRequest);
         satisfiedPoliciesIdentifiers = componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
 
 
         return satisfiedPoliciesIdentifiers;
+    }
+
+    private void printSecurityRequest( SecurityRequest securityRequest ) {
+        log.debug("SecurityRequest:");
+        log.debug("header params:");
+        try {
+            log.debug(securityRequest.getSecurityRequestHeaderParams());
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        securityRequest.getSecurityCredentials().stream().forEach( sc -> {
+            log.debug("Token: " +sc.getToken());
+            log.debug("Challenge: " +sc.getAuthenticationChallenge());
+            log.debug("ClientCert: " +sc.getClientCertificate());
+            log.debug("ClientCertSignAAMCert: " +sc.getClientCertificateSigningAAMCertificate());
+            log.debug("ForeignTokenIssuing: " +sc.getForeignTokenIssuingAAMCertificate());
+        });
     }
 
     public String generateServiceResponse() {

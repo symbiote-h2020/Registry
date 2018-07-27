@@ -100,7 +100,7 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
         //checking access by token verification
         AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                 request.getSecurityRequest(),
-                request.getSdevId()); //todo partially MOCKED
+                request.getSspId()); //todo partially MOCKED
 
         if (!tokenAuthorizationResult.isValidated()) {
             log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");
