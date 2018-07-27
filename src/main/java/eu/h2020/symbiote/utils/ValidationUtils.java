@@ -209,26 +209,40 @@ public class ValidationUtils {
 
     public static void validateSspResource(CoreSspResourceRegistryRequest request, RepositoryManager repositoryManager) {
 
+        log.debug("Getting ssp by id : " + request.getSspId());
         SmartSpace sspById = repositoryManager.getSspById(request.getSspId());
 
         if (sspById == null) {
+            log.error("There is no such ssp in db!");
             throw new IllegalArgumentException("There is no such ssp in db!");
         }
 
+        log.debug("Getting sdev by id : " + request.getSdevId());
         SspRegInfo sdevById = repositoryManager.getSdevById(request.getSdevId());
 
         if (sdevById == null) {
+            log.error("There is no such sdev in DB!");
             throw new IllegalArgumentException("There is no such sdev in DB!");
         }
 
         //checks if there exists a matching IS URL in SSP to one given in Resource
         for (String k : request.getBody().keySet()) {
             String interworkingServiceURL = request.getBody().get(k).getInterworkingServiceURL();
+            if( sspById.getInterworkingServices() == null ) {
+                log.error("SSP " + request.getSspId() + " have a null list of interworking services");
+                throw new IllegalArgumentException("SSP " + request.getSspId() + " have a null list of interworking services");
+            }
+
+            if( interworkingServiceURL == null ) {
+                log.error("Resource " + k + " has null interworking service url");
+                throw new IllegalArgumentException("Resource " + k + " has null interworking service url");
+            }
+
             if (
                     sspById.getInterworkingServices().stream()
                             .map(InterworkingService::getUrl)
                             .noneMatch(url -> url.equalsIgnoreCase(interworkingServiceURL))) {
-
+                log.error("there does not exist a matching InterworkingService URL in SSP to one given in Resource!");
                 throw new IllegalArgumentException("there does not exist a matching InterworkingService URL in SSP to one given in Resource!");
             }
         }

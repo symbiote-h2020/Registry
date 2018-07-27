@@ -111,10 +111,11 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             }
 
             //checking access by verification of fields needed for that operation
-            if (!validateAccess(request)) return;
-            log.debug("3");
+
 
             if (request.getBody() != null) {
+                log.debug("3");
+                if (!validateAccess(request)) return;
 
                 log.debug("4");
                 log.info("Message to Semantic Manager Sent. Request: " + request.getBody());
@@ -156,9 +157,11 @@ public class SspResourceCreationRequestConsumer extends DefaultConsumer {
             log.debug("Validating SSP resource");
             ValidationUtils.validateSspResource(request, repositoryManager);
         } catch (IllegalArgumentException e) {
+            log.error(e);
             sendErrorReply(HttpStatus.SC_BAD_REQUEST, e.getMessage());
             return false;
         } catch (Exception e) {
+            log.error(e);
             sendErrorReply(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             return false;
         }
