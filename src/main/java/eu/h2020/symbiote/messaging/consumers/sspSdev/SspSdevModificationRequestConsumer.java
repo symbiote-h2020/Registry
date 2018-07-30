@@ -159,19 +159,26 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
 
         SspRegInfo sDevFromDbById = repositoryManager.getSdevById(receivedSdevId);
 
-        String previousDK1 = sDevFromDbById.getDerivedKey1();
+        //Only do hashchecks for roaming devices
+        if( sDevFromDbById.getRoaming() ) {
 
-        String newHash = calculateHash(receivedSdevId, previousDK1);
+
+            String previousDK1 = sDevFromDbById.getDerivedKey1();
+
+            String newHash = calculateHash(receivedSdevId, previousDK1);
 
 
-        if (!newHash.equals(receivedSdevHashField)) {
+            if (!newHash.equals(receivedSdevHashField)) {
 
-            // if new hash field is different than old hashfield -> throw illegal access exception
+                // if new hash field is different than old hashfield -> throw illegal access exception
 
-            String msg = String.format("Sdev Hash comparing failed! Received Sdev Hash: %s . Calculated hash: %s", receivedSdevHashField, newHash);
+                String msg = String.format("Sdev Hash comparing failed! Received Sdev Hash: %s . Calculated hash: %s", receivedSdevHashField, newHash);
 
-            log.error(msg);
-            throw new IllegalAccessException(msg);
+                log.error(msg);
+                throw new IllegalAccessException(msg);
+            }
+        } else {
+            log.debug("Sdev is not roaming - skipping hash comparison");
         }
         //if new hash field is the same as old one -> just update fields in sdev
     }
