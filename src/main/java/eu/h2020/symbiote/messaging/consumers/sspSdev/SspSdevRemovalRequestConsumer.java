@@ -92,7 +92,7 @@ public class SspSdevRemovalRequestConsumer extends DefaultConsumer {
 
         AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                 request.getSecurityRequest(),
-                request.getBody().getSymId()); //todo partially MOCKED
+                request.getSspId()); //todo partially MOCKED
 
         if (!tokenAuthorizationResult.isValidated()) {
             log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");

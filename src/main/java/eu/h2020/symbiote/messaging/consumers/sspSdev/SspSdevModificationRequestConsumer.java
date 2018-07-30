@@ -76,7 +76,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
         String message = new String(body, "UTF-8");
         response = new SdevRegistryResponse();
 
-        log.info(" [x] Received Sdev (SspRegInfo) to create");
+        log.info(" [x] Received Sdev (SspRegInfo) to modify");
         log.info("Content: " + message);
         this.envelope = envelope;
         this.properties = properties;
@@ -95,7 +95,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
 
         AuthorizationResult tokenAuthorizationResult = authorizationManager.checkSdevOperationAccess(
                 request.getSecurityRequest(),
-                request.getBody().getSymId()); //todo partially MOCKED
+                request.getSspId()); //todo partially MOCKED
 
         if (!tokenAuthorizationResult.isValidated()) {
             log.error("Token invalid: \"" + tokenAuthorizationResult.getMessage() + "\"");

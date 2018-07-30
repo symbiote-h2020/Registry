@@ -223,20 +223,38 @@ public class ValidationUtils {
         if (sdevById == null) {
             log.error("There is no such sdev in DB!");
             throw new IllegalArgumentException("There is no such sdev in DB!");
+        } else {
+            log.debug("Sdev by id found");
+        }
+
+        if( sdevById.getPluginId() == null ) {
+            log.error("Sdev " + sdevById.getSymId() + " from the database has null pluginId ");
+            throw new IllegalArgumentException("Sdev " + sdevById.getSymId() + " from the database has null pluginId ");
+        }
+
+        if( request.getBody().keySet() == null ) {
+            log.error("keysetisnull");
+            throw new IllegalArgumentException("Keyset is null");
         }
 
         //checks if there exists a matching IS URL in SSP to one given in Resource
         for (String k : request.getBody().keySet()) {
+            log.debug( "Checking for resource " + k);
             String interworkingServiceURL = request.getBody().get(k).getInterworkingServiceURL();
-            if( sspById.getInterworkingServices() == null ) {
-                log.error("SSP " + request.getSspId() + " have a null list of interworking services");
-                throw new IllegalArgumentException("SSP " + request.getSspId() + " have a null list of interworking services");
-            }
-
             if( interworkingServiceURL == null ) {
                 log.error("Resource " + k + " has null interworking service url");
                 throw new IllegalArgumentException("Resource " + k + " has null interworking service url");
+            } else {
+                log.debug("Found iiservice: " + interworkingServiceURL);
             }
+            if( sspById.getInterworkingServices() == null ) {
+                log.error("SSP " + request.getSspId() + " have a null list of interworking services");
+                throw new IllegalArgumentException("SSP " + request.getSspId() + " have a null list of interworking services");
+            } else {
+                log.debug( "Ssp has a list of interworking services");
+            }
+
+
 
             if (
                     sspById.getInterworkingServices().stream()
@@ -248,7 +266,7 @@ public class ValidationUtils {
         }
 
         //checks if SSP ID in request matches with SSP ID in given SDEV
-        if (!sdevById.getSspId().equals(request.getSspId())) {
+        if (!sdevById.getPluginId().equals(request.getSspId())) {
             throw new IllegalArgumentException("SSP ID in request does not match with SSP ID in given SDEV");
         }
     }
