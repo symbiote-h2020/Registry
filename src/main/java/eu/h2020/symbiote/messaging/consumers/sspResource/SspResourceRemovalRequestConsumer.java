@@ -114,39 +114,47 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
 
         try {
             resources = request.getBody();
-            Map<String, CoreSspResource> sspResourcesMap = convertResourceToCoreSspResourceMap(resources, request.getSdevId());
-
-            //// TODO: 05.06.2018 check if the resource is bounded to existing SSP - if not return and reply with 400
-
-            for (String key : sspResourcesMap.keySet()) {
-                if (sspResourcesMap.get(key) == null) {
-                    prepareAndSendErrorResponse(410, "Resources list contains a NULL ssp resource!" + sspResourcesMap);
-                    return;
-                } else {
-                    if (sspResourcesMap.get(key).getId() != null || !sspResourcesMap.get(key).getId().isEmpty()) {
-                        resourceRemovalResult = this.repositoryManager.removeCoreSspResource(sspResourcesMap.get(key).getId());
-                    } else {
-                        prepareAndSendErrorResponse(400, "Given Ssp Resource has id null or empty");
-                        return;
-                    }
-                    resourcesRemovalResultMap.put(key, resourceRemovalResult);
-                }
-            }
-
-            if (checkIfRemovalWasSuccessful(resourcesRemovalResultMap, resources)) {
-
-                sendFanoutMessage(resourcesRemovalResultMap);
-
-                response.setMessage("Success");
-                response.setStatus(200);
-                response.setServiceResponse(authorizationManager.generateServiceResponse());
-
-                response.setBody(convertCoreSspResourceToResourceMap(resourcesRemovalResultMap));
-
-                rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
-
+            log.debug("got resources :");
+            if( resources == null ) {
+                log.debug("Resources map is null");
+                prepareAndSendErrorResponse(410, "Resources map is null");
             } else {
-                prepareAndSendErrorResponse(410, "Operation od Ssp Resource Removal not performed!");
+                //// TODO: 05.06.2018 check if the resource is bounded to existing SSP - if not return and reply with 400
+
+                for (String key : resources.keySet()) {
+                    log.debug("testing for key " + key);
+                    if (resources.get(key) == null) {
+                        prepareAndSendErrorResponse(410, "Resources list contains a NULL ssp resource for key " + key);
+                        return;
+                    } else {
+                        if (resources.get(key).getId() != null || !resources.get(key).getId().isEmpty()) {
+                            log.debug("Removing resource " + resources.get(key).getId());
+                            resourceRemovalResult = this.repositoryManager.removeCoreSspResource(resources.get(key).getId());
+                        } else {
+                            prepareAndSendErrorResponse(400, "Given Ssp Resource has id null or empty");
+                            return;
+                        }
+                        log.debug("Resource removed : " + resources.get(key).getId());
+                        resourcesRemovalResultMap.put(key, resourceRemovalResult);
+                    }
+                }
+
+                log.debug("Checking if removal was successful");
+                if (checkIfRemovalWasSuccessful(resourcesRemovalResultMap, resources)) {
+
+                    sendFanoutMessage(resourcesRemovalResultMap);
+
+                    response.setMessage("Success");
+                    response.setStatus(200);
+                    response.setServiceResponse(authorizationManager.generateServiceResponse());
+
+                    response.setBody(convertCoreSspResourceToResourceMap(resourcesRemovalResultMap));
+
+                    rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+
+                } else {
+                    prepareAndSendErrorResponse(410, "Operation od Ssp Resource Removal not performed!");
+                }
             }
         } catch (Exception e) {
             prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Consumer critical exception!");
@@ -214,6 +222,13 @@ public class SspResourceRemovalRequestConsumer extends DefaultConsumer {
 
     private boolean checkIfRemovalWasSuccessful(Map<String, CoreSspResourcePersistenceResult> resourceRemovalResultsMap,
                                                 Map<String, Resource> resources) {
+        if( resourceRemovalResultsMap== null || resources == null ) {
+            log.error(resources==null?"Resources map is null":"removal result map is null");
+            return false;
+        } else {
+            log.debug("Checking removal for two maps: resources size is " + resources.size() + " resultMap is " + resourceRemovalResultsMap.size());
+        }
+
         List<CoreSspResource> resourcesRemovedSuccessfully = resourceRemovalResultsMap.keySet().stream()
                 .filter(key -> resourceRemovalResultsMap.get(key).getStatus() == 200)
                 .map(key -> resourceRemovalResultsMap.get(key).getCoreSspResource())
