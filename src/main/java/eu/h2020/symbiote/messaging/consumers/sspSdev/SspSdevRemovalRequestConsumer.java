@@ -101,28 +101,27 @@ public class SspSdevRemovalRequestConsumer extends DefaultConsumer {
         }
 
         /////////////////// access and migration verification
-
-        try {
-            //check if given ids have a match needed
-            log.debug("Validating request for sdev removal");
-            validateAccess(request);
-
-        } catch (IllegalAccessException e) {
-            log.error("Illegal access exception occurred when validating access: " + e.getMessage());
-            prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
-            return;
-        } catch (Exception e) {
-            log.error("Generic exception occurred when validating access: " + e.getMessage());
-            prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            return;
-        }
-
         SspRegInfo sDev = request.getBody();
         response.setBody(sDev);
 
-        //Check just sdev.symId
-//        if (ValidationUtils.validateFields(sDev)) {
-        if( sDev != null && sDev.getSymId() != null ) {
+        if ( sDev != null && ValidationUtils.validateFields(sDev) && sDev.getSymId() != null ) {
+
+            //Check access
+            try {
+                //check if given ids have a match needed
+                log.debug("Validating request for sdev removal");
+                validateAccess(request);
+
+            } catch (IllegalAccessException e) {
+                log.error("Illegal access exception occurred when validating access: " + e.getMessage());
+                prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+                return;
+            } catch (Exception e) {
+                log.error("Generic exception occurred when validating access: " + e.getMessage());
+                prepareAndSendErrorResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+                return;
+            }
+
             log.debug("Performing sdev removal for " + sDev.getSymId());
             SdevPersistenceResult sdevPersistenceResult = this.repositoryManager.removeSdev(sDev);
 

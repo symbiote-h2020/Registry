@@ -167,6 +167,9 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
 
         HashMap<String, CoreSspResource> coreSspResources = convertCoreResourcesToCoreSspResources(coreResourcesFromSM, sDevId);
 
+        //List to make sure
+        coreSspResources.values().stream().forEach( val -> System.out.println(val!=null?"After convert resource id is: " + val.getId():"After convert resource val is null"));
+
         Map<String, CoreSspResourcePersistenceResult> persistenceOperationResultsMap = new HashMap<>();
 
         switch (operationType) {
@@ -228,7 +231,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
     }
 
     private CoreSspResource convertCoreResourceToCoreSspResource(CoreResource coreResource, String sDevId) {
-        return new CoreSspResource(sDevId, coreResource);
+        return new CoreSspResource(coreResource.getId(),sDevId, coreResource);
     }
 
     /**

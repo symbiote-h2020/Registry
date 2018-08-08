@@ -818,21 +818,26 @@ public class RepositoryManager {
 
     public CoreSspResourcePersistenceResult removeCoreSspResource(String coreSspResourceId) {
         CoreSspResourcePersistenceResult resourceSavingResult;
+
+
+        log.debug("Trying to find resource with id: " + coreSspResourceId);
         CoreSspResource resourceToRemove = coreSspResourceRepository.findOne(coreSspResourceId);
 
         if (StringUtils.isBlank(coreSspResourceId)) {
+            log.debug("coreSspId is blank");
             resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
                     "Resource ID is empty!",
                     resourceToRemove);
 
         } else if (resourceToRemove == null) {
-
+            log.debug("could not find resource with specified id: " + coreSspResourceId);
             resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
                     "There is no such resource in DB!",
                     resourceToRemove);
 
         } else {
             try {
+                log.debug("Trying to remove resource...");
                 coreSspResourceRepository.delete(coreSspResourceId);
                 log.info("CoreSsp Resource with id: " + coreSspResourceId + " removed !");
 
@@ -842,7 +847,7 @@ public class RepositoryManager {
                         resourceToRemove);
 
             } catch (Exception e) {
-
+                log.error( "Got error during resource delete: " + e.getMessage());
                 resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         "Error occurred during CoreSsp Resource modifying in db",
                         resourceToRemove);

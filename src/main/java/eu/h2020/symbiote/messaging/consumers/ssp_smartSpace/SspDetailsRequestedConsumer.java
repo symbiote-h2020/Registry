@@ -67,11 +67,11 @@ public class SspDetailsRequestedConsumer extends DefaultConsumer {
 
             if (foundSsp != null) {
                 sspRegistryResponse.setStatus(HttpStatus.SC_OK);
-                sspRegistryResponse.setMessage("OK. Platform with id '" + foundSsp.getId() + "' found!");
+                sspRegistryResponse.setMessage("OK. Smart space with id '" + foundSsp.getId() + "' found!");
             } else {
-                log.debug("There is no Platform with given id (" + requestedSspId + ") in the system.");
+                log.debug("There is no Smart space with given id (" + requestedSspId + ") in the system.");
                 sspRegistryResponse.setStatus(HttpStatus.SC_BAD_REQUEST);
-                sspRegistryResponse.setMessage("There is no Platform with given id (" + requestedSspId + ") in the system.");
+                sspRegistryResponse.setMessage("There is no Smart space with given id (" + requestedSspId + ") in the system.");
             }
 
             sspRegistryResponse.setBody(foundSsp);
