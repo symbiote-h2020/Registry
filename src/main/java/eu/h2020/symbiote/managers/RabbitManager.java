@@ -1225,7 +1225,7 @@ public class RabbitManager {
                             rpcChannel, repositoryManager, this, platformId, operationType, descriptionType,
                             authorizationManager, policiesMap, requestBody);
 
-            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
+            rpcChannel.basicConsume(replyQueueName, false, responseConsumer); //// TODO: 14.08.2018 CHANGED TRUE TO FALSE -> for fixing bugs
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
                     + this.resourceExchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
@@ -1282,7 +1282,7 @@ public class RabbitManager {
                     authorizationManager, policiesMap, requestResourcesMap
             );
 
-            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
+            rpcChannel.basicConsume(replyQueueName, false, responseConsumer); //// TODO: 14.08.2018 CHANGED TRUE TO FALSE -> for fixing bugs
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:\nExchange name: "
                     + this.resourceExchangeName + "\nRouting key: " + routingKey + "\nProps: " + props);
@@ -1323,7 +1323,7 @@ public class RabbitManager {
                     .replyTo(replyQueueName)
                     .build();
 
-            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
+            rpcChannel.basicConsume(replyQueueName, false, responseConsumer); //// TODO: 14.08.2018 CHANGED TRUE TO FALSE -> for fixing bugs
 
             rpcChannel.basicPublish(exchangeName, routingKey, true, props, message.getBytes());
 
@@ -1400,7 +1400,7 @@ public class RabbitManager {
                     new InformationModelValidationResponseConsumer(rpcConsumer, rpcProperties, rpcEnvelope,
                             rpcChannel, repositoryManager, this, operationType);
 
-            rpcChannel.basicConsume(replyQueueName, true, responseConsumer);
+            rpcChannel.basicConsume(replyQueueName, false, responseConsumer); //// TODO: 14.08.2018 CHANGED TRUE TO FALSE -> for fixing bugs
 
             log.info("Sending RPC message to Semantic Manager... \nMessage params:" +
                     "\nExchange name: " + informationModelExchangeName
