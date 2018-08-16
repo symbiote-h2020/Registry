@@ -168,7 +168,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         HashMap<String, CoreSspResource> coreSspResources = convertCoreResourcesToCoreSspResources(coreResourcesFromSM, sDevId);
 
         //List to make sure
-        coreSspResources.values().stream().forEach( val -> System.out.println(val!=null?"After convert resource id is: " + val.getId():"After convert resource val is null"));
+        coreSspResources.values().stream().forEach(val -> System.out.println(val != null ? "After convert resource id is: " + val.getId() : "After convert resource val is null"));
 
         Map<String, CoreSspResourcePersistenceResult> persistenceOperationResultsMap = new HashMap<>();
 
@@ -231,7 +231,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
     }
 
     private CoreSspResource convertCoreResourceToCoreSspResource(CoreResource coreResource, String sDevId) {
-        return new CoreSspResource(coreResource.getId(),sDevId, coreResource);
+        return new CoreSspResource(coreResource.getId(), sDevId, coreResource);
     }
 
     /**
@@ -285,7 +285,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
 
         try {
             this.rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
-            this.rabbitManager.closeConsumer(this);
+//            this.rabbitManager.chancelConsumersChannel(this); //// TODO: 16.08.2018 Removed to find and fix bugs -> to check!
         } catch (IOException e) {
             log.error(e);
         }

@@ -12,9 +12,9 @@ import eu.h2020.symbiote.core.cci.InformationModelResponse;
 import eu.h2020.symbiote.core.internal.InformationModelValidationResult;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
-import eu.h2020.symbiote.model.persistenceResults.InformationModelPersistenceResult;
 import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.mim.InformationModel;
+import eu.h2020.symbiote.model.persistenceResults.InformationModelPersistenceResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -172,8 +172,7 @@ public class InformationModelValidationResponseConsumer extends DefaultConsumer 
 
         try {
             rabbitManager.sendRPCReplyMessage(rpcConsumer, rpcProperties, rpcEnvelope, response);
-
-            rabbitManager.closeConsumer(this);
+//            rabbitManager.chancelConsumersChannel(this); //// TODO: 16.08.2018 Removed to find and fix bugs -> to check!
         } catch (IOException e) {
             log.error(e);
         }
