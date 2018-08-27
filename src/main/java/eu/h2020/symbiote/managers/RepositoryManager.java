@@ -783,9 +783,9 @@ public class RepositoryManager {
                     "CoreSspResource has empty or null sDevId!",
                     coreSspResource);
 
-        } else if (StringUtils.isNotBlank(resource.getId())) {
+        } else if (StringUtils.isBlank(resource.getId())) {
             resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_BAD_REQUEST,
-                    "Resource has an ID!",
+                    "Resource does not have an ID!",
                     coreSspResource);
 
         } else if (StringUtils.isBlank(resource.getInterworkingServiceURL())) {

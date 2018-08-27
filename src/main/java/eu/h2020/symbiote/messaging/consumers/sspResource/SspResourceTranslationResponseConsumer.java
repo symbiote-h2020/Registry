@@ -269,7 +269,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
                     .filter(key -> persistenceOperationResultsMap.get(key).getStatus() == 200)
                     .forEach(key -> rollback(persistenceOperationResultsMap.get(key).getCoreSspResource()));
 
-            log.error("One (or more) of resources could not be processed. \nCheck list of response objects for details.");
+            log.error("One (or more) of resources could not be processed. \nCheck list of response objects for details.\n" + persistenceOperationResultsMap.toString());
             registryResponse.setStatus(500);
             registryResponse.setMessage("One (or more) of resources could not be processed. \nCheck list of response objects for details.");
         }
