@@ -177,14 +177,16 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
             case CREATION:
                 for (String key : coreSspResources.keySet()) {
                     CoreSspResource sspResource = coreSspResources.get(key);
-                    try {
-                        sspResource.getResource().setPolicySpecifier(policiesMap.get(key));
-                    } catch (Exception e) {
-                        log.error("Couldn't get Access Policies for Core Ssp Resource. " + e);
-                        persistenceOperationResultsMap.put(key,
-                                new CoreSspResourcePersistenceResult(500,
-                                        "Couldn't get Access Policies for Core Ssp Resource. " + e,
-                                        sspResource));
+                    if( policiesMap != null && policiesMap.get(key) != null ) {
+                        try {
+                            sspResource.getResource().setPolicySpecifier(policiesMap.get(key));
+                        } catch (Exception e) {
+                            log.error("Couldn't get Access Policies for Core Ssp Resource. " + e);
+                            persistenceOperationResultsMap.put(key,
+                                    new CoreSspResourcePersistenceResult(500,
+                                            "Couldn't get Access Policies for Core Ssp Resource. " + e,
+                                            sspResource));
+                        }
                     }
                     CoreSspResourcePersistenceResult resourceSavingResult =
                             this.repositoryManager.saveCoreSspResource(sspResource);
@@ -195,14 +197,16 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
             case MODIFICATION:
                 for (String key : coreSspResources.keySet()) {
                     CoreSspResource coreResource = coreSspResources.get(key);
-                    try {
-                        coreResource.getResource().setPolicySpecifier(policiesMap.get(key));
-                    } catch (Exception e) {
-                        log.error("Couldn't get Access Policies for Core Resource. " + e);
-                        persistenceOperationResultsMap.put(key,
-                                new CoreSspResourcePersistenceResult(500,
-                                        "Couldn't get Access Policies for Core Resource. " + e,
-                                        coreResource));
+                    if( policiesMap != null && policiesMap.get(key) != null ) {
+                        try {
+                            coreResource.getResource().setPolicySpecifier(policiesMap.get(key));
+                        } catch (Exception e) {
+                            log.error("Couldn't get Access Policies for Core Resource. " + e);
+                            persistenceOperationResultsMap.put(key,
+                                    new CoreSspResourcePersistenceResult(500,
+                                            "Couldn't get Access Policies for Core Resource. " + e,
+                                            coreResource));
+                        }
                     }
                     CoreSspResourcePersistenceResult resourceModificationResult =
                             this.repositoryManager.modifyCoreSspResource(coreResource);

@@ -171,12 +171,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             case CREATION:
                 for (String key : coreResources.keySet()) {
                     CoreResource coreResource = coreResources.get(key);
-                    try {
-                        coreResource.setPolicySpecifier(policiesMap.get(key));
-                    } catch (Exception e) {
-                        log.error("Couldn't get Access Policies for Core Resource. " + e);
-                        persistenceOperationResultsMap.put(key,
-                                new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                    if( policiesMap != null && policiesMap.get(key) != null ) {
+                        try {
+                            coreResource.setPolicySpecifier(policiesMap.get(key));
+                        } catch (Exception e) {
+                            log.error("Couldn't get Access Policies for Core Resource. " + e);
+                            persistenceOperationResultsMap.put(key,
+                                    new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                        }
                     }
                     ResourcePersistenceResult resourceSavingResult =
                             this.repositoryManager.saveResource(coreResource);
@@ -186,12 +188,14 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             case MODIFICATION:
                 for (String key : coreResources.keySet()) {
                     CoreResource coreResource = coreResources.get(key);
-                    try {
-                        coreResource.setPolicySpecifier(policiesMap.get(key));
-                    } catch (Exception e) {
-                        log.error("Couldn't get Access Policies for Core Resource. " + e);
-                        persistenceOperationResultsMap.put(key,
-                                new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                    if( policiesMap != null && policiesMap.get(key) != null ) {
+                        try {
+                            coreResource.setPolicySpecifier(policiesMap.get(key));
+                        } catch (Exception e) {
+                            log.error("Couldn't get Access Policies for Core Resource. " + e);
+                            persistenceOperationResultsMap.put(key,
+                                    new ResourcePersistenceResult(500, "Couldn't get Access Policies for Core Resource. " + e, coreResource));
+                        }
                     }
                     ResourcePersistenceResult resourceModificationResult =
                             this.repositoryManager.modifyResource(coreResources.get(key));
