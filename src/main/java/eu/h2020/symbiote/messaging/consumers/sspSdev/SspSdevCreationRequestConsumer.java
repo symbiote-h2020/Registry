@@ -17,6 +17,7 @@ import eu.h2020.symbiote.model.RegistryOperationType;
 import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
 import eu.h2020.symbiote.utils.ValidationUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -89,7 +90,11 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
         /////////////////// access verification
 
         try {
+            //check if given ids have a match needed
             validateAccess(request);
+
+            //checks if derivedKey1 in given sDev is not empty
+            checkIfDK1IsNotBlank(request.getBody());
 
         } catch (IllegalAccessException e) {
             prepareAndSendErrorResponse(HttpStatus.SC_BAD_REQUEST, e.getMessage());
@@ -136,6 +141,11 @@ public class SspSdevCreationRequestConsumer extends DefaultConsumer {
         //sdev class has newly created symId
         response.setBody(sDev);
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
+    }
+
+    private void checkIfDK1IsNotBlank(SspRegInfo receivedSdev) throws IllegalAccessException {
+        if (StringUtils.isBlank(receivedSdev.getDerivedKey1()))
+            throw new IllegalAccessException("DerivedKey1 can not be blank!");
     }
 
     private void validateAccess(CoreSdevRegistryRequest request) throws IllegalAccessException {
