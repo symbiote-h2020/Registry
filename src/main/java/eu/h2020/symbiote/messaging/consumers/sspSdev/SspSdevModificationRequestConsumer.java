@@ -18,7 +18,6 @@ import eu.h2020.symbiote.model.persistenceResults.AuthorizationResult;
 import eu.h2020.symbiote.model.persistenceResults.SdevPersistenceResult;
 import eu.h2020.symbiote.security.helpers.SDevHelper;
 import eu.h2020.symbiote.utils.ValidationUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpStatus;
@@ -111,7 +110,7 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
             validateAccess(request);
 
             //checks if derivedKey1 in given sDev is not empty
-            checkIfDK1IsNotBlank(request.getBody());
+            ValidationUtils.checkIfDK1IsNotBlank(request.getBody());
 
             //check if hashes are equal
             checkIfHashfieldsAreEqual(request);
@@ -149,11 +148,6 @@ public class SspSdevModificationRequestConsumer extends DefaultConsumer {
         }
         rabbitManager.sendRPCReplyMessage(this, properties, envelope, mapper.writeValueAsString(response));
 
-    }
-
-    private void checkIfDK1IsNotBlank(SspRegInfo receivedSdev) throws IllegalAccessException {
-        if (StringUtils.isBlank(receivedSdev.getDerivedKey1()))
-            throw new IllegalAccessException("DerivedKey1 can not be blank!");
     }
 
 

@@ -227,33 +227,32 @@ public class ValidationUtils {
             log.debug("Sdev by id found");
         }
 
-        if( sdevById.getPluginId() == null ) {
+        if (sdevById.getPluginId() == null) {
             log.error("Sdev " + sdevById.getSymId() + " from the database has null pluginId ");
             throw new IllegalArgumentException("Sdev " + sdevById.getSymId() + " from the database has null pluginId ");
         }
 
-        if( request.getBody().keySet() == null ) {
+        if (request.getBody().keySet() == null) {
             log.error("keysetisnull");
             throw new IllegalArgumentException("Keyset is null");
         }
 
         //checks if there exists a matching IS URL in SSP to one given in Resource
         for (String k : request.getBody().keySet()) {
-            log.debug( "Checking for resource " + k);
+            log.debug("Checking for resource " + k);
             String interworkingServiceURL = request.getBody().get(k).getInterworkingServiceURL();
-            if( interworkingServiceURL == null ) {
+            if (interworkingServiceURL == null) {
                 log.error("Resource " + k + " has null interworking service url");
                 throw new IllegalArgumentException("Resource " + k + " has null interworking service url");
             } else {
                 log.debug("Found iiservice: " + interworkingServiceURL);
             }
-            if( sspById.getInterworkingServices() == null ) {
+            if (sspById.getInterworkingServices() == null) {
                 log.error("SSP " + request.getSspId() + " have a null list of interworking services");
                 throw new IllegalArgumentException("SSP " + request.getSspId() + " have a null list of interworking services");
             } else {
-                log.debug( "Ssp has a list of interworking services");
+                log.debug("Ssp has a list of interworking services");
             }
-
 
 
             if (
@@ -483,5 +482,8 @@ public class ValidationUtils {
         return resourceMap.values().stream().collect(Collectors.toList());
     }
 
-
+    public static void checkIfDK1IsNotBlank(SspRegInfo receivedSdev) throws IllegalAccessException {
+        if (receivedSdev.getRoaming() && StringUtils.isBlank(receivedSdev.getDerivedKey1()))
+            throw new IllegalAccessException("DerivedKey1 can not be blank!");
+    }
 }
