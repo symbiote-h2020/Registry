@@ -302,7 +302,7 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreSspResourcesList);
         payload.setPlatformId(sspId);
-        this.rabbitManager.sendResourceOperationMessage(payload, operationType);
+        this.rabbitManager.sendSspResourceOperationMessage(payload, operationType);
     }
 
     /**

@@ -991,6 +991,28 @@ public class RabbitManager {
         }
     }
 
+    public void sendSspResourceOperationMessage(CoreResourceRegisteredOrModifiedEventPayload payload,
+                                             RegistryOperationType operationType) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(payload);
+
+            switch (operationType) {
+                case CREATION:
+                    sendMessage(this.resourceExchangeName, this.sspSdevResourceCreatedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    break;
+                case MODIFICATION:
+                    sendMessage(this.resourceExchangeName, this.sspSdevResourceModifiedRoutingKey, message,
+                            payload.getClass().getCanonicalName());
+                    break;
+            }
+            log.info("- ssp resources operation (" + operationType + ") message sent (fanout).");
+        } catch (JsonProcessingException e) {
+            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
+        }
+    }
+
     public void sendInformationModelOperationMessage(InformationModel informationModel,
                                                      RegistryOperationType operationType) {
         try {
