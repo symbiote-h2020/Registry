@@ -9,10 +9,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import eu.h2020.symbiote.core.internal.CoreResource;
-import eu.h2020.symbiote.core.internal.CoreResourceRegisteredOrModifiedEventPayload;
-import eu.h2020.symbiote.core.internal.CoreSspResourceRegistryResponse;
-import eu.h2020.symbiote.core.internal.ResourceInstanceValidationResult;
+import eu.h2020.symbiote.core.internal.*;
 import eu.h2020.symbiote.managers.AuthorizationManager;
 import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.managers.RepositoryManager;
@@ -299,10 +296,11 @@ public class SspResourceTranslationResponseConsumer extends DefaultConsumer {
      * Sends a Fanout message with payload constisting of modified resources list.
      */
     private void sendFanoutMessage(List<CoreResource> savedCoreSspResourcesList) {
-        CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
+        CoreSspResourceRegisteredOrModifiedEventPayload payload = new CoreSspResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreSspResourcesList);
         payload.setPlatformId(sspId);
-        this.rabbitManager.sendSspResourceOperationMessage(payload, operationType);
+        payload.setSdevId(sDevId);
+        this.rabbitManager.sendResourceOperationMessage(payload, operationType,payload.getClass().getCanonicalName());
     }
 
     /**

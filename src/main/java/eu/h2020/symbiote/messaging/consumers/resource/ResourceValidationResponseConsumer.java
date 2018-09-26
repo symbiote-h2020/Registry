@@ -287,7 +287,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
         CoreResourceRegisteredOrModifiedEventPayload payload = new CoreResourceRegisteredOrModifiedEventPayload();
         payload.setResources(savedCoreResourcesList);
         payload.setPlatformId(resourcesPlatformId);
-        rabbitManager.sendResourceOperationMessage(payload, operationType);
+        rabbitManager.sendResourceOperationMessage(payload, operationType, payload.getClass().getCanonicalName());
     }
 
     /**

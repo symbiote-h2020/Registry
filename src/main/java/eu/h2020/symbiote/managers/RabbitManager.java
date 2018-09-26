@@ -970,7 +970,8 @@ public class RabbitManager {
     }
 
     public void sendResourceOperationMessage(CoreResourceRegisteredOrModifiedEventPayload payload,
-                                             RegistryOperationType operationType) {
+                                             RegistryOperationType operationType,
+                                             String classType) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(payload);
@@ -978,11 +979,11 @@ public class RabbitManager {
             switch (operationType) {
                 case CREATION:
                     sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
+                            classType);
                     break;
                 case MODIFICATION:
                     sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
+                            classType);
                     break;
             }
             log.info("- resources operation (" + operationType + ") message sent (fanout).");
@@ -991,27 +992,27 @@ public class RabbitManager {
         }
     }
 
-    public void sendSspResourceOperationMessage(CoreResourceRegisteredOrModifiedEventPayload payload,
-                                             RegistryOperationType operationType) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(payload);
-
-            switch (operationType) {
-                case CREATION:
-                    sendMessage(this.resourceExchangeName, this.sspSdevResourceCreatedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
-                    break;
-                case MODIFICATION:
-                    sendMessage(this.resourceExchangeName, this.sspSdevResourceModifiedRoutingKey, message,
-                            payload.getClass().getCanonicalName());
-                    break;
-            }
-            log.info("- ssp resources operation (" + operationType + ") message sent (fanout).");
-        } catch (JsonProcessingException e) {
-            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
-        }
-    }
+//    public void sendSspResourceOperationMessage(CoreResourceRegisteredOrModifiedEventPayload payload,
+//                                             RegistryOperationType operationType) {
+//        try {
+//            ObjectMapper mapper = new ObjectMapper();
+//            String message = mapper.writeValueAsString(payload);
+//
+//            switch (operationType) {
+//                case CREATION:
+//                    sendMessage(this.resourceExchangeName, this.resourceCreatedRoutingKey, message,
+//                            payload.getClass().getCanonicalName());
+//                    break;
+//                case MODIFICATION:
+//                    sendMessage(this.resourceExchangeName, this.resourceModifiedRoutingKey, message,
+//                            payload.getClass().getCanonicalName());
+//                    break;
+//            }
+//            log.info("- ssp resources operation (" + operationType + ") message sent (fanout).");
+//        } catch (JsonProcessingException e) {
+//            log.error(ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON + payload, e);
+//        }
+//    }
 
     public void sendInformationModelOperationMessage(InformationModel informationModel,
                                                      RegistryOperationType operationType) {
