@@ -130,9 +130,10 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
                     for ( String k: resourceInstanceValidationResult.getObjectDescription().keySet()) {
                         requestedResourcesMap.put(k,RegistryUtils.convertCoreResourceToResource(resourceInstanceValidationResult.getObjectDescription().get(k)));
                     }
+                } else {
+                    requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {
+                    });
                 }
-                requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {
-                });
             } catch (Exception e) {
                 log.error("Unable to get resources from request body! ", e);
                 registryResponse.setStatus(500);
