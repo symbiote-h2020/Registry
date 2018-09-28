@@ -126,6 +126,7 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
 
             try {
                 if (descriptionType==DescriptionType.RDF) {
+                    log.debug("RDF validation - setting requested resource map properly");
                     requestedResourcesMap = new HashMap<>();
                     for ( String k: resourceInstanceValidationResult.getObjectDescription().keySet()) {
                         requestedResourcesMap.put(k,RegistryUtils.convertCoreResourceToResource(resourceInstanceValidationResult.getObjectDescription().get(k)));
