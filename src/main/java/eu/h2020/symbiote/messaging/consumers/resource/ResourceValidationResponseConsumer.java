@@ -125,6 +125,12 @@ public class ResourceValidationResponseConsumer extends DefaultConsumer {
             }
 
             try {
+                if (descriptionType==DescriptionType.RDF) {
+                    requestedResourcesMap = new HashMap<>();
+                    for ( String k: resourceInstanceValidationResult.getObjectDescription().keySet()) {
+                        requestedResourcesMap.put(k,RegistryUtils.convertCoreResourceToResource(resourceInstanceValidationResult.getObjectDescription().get(k)));
+                    }
+                }
                 requestedResourcesMap = mapper.readValue(requestBody, new TypeReference<Map<String, Resource>>() {
                 });
             } catch (Exception e) {
