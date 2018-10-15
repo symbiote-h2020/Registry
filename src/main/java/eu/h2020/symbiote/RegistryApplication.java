@@ -32,6 +32,8 @@ public class RegistryApplication {
     public static final String BIM_MODEL_OWNER = "BIM";
 
     public static void main(String[] args) {
+
+        WaitForPort.waitForServices(WaitForPort.findProperty("SPRING_BOOT_WAIT_FOR_SERVICES"));
         SpringApplication.run(RegistryApplication.class, args);
     }
 
