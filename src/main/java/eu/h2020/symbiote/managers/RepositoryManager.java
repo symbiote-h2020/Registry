@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Class managing persistence actions for Platforms, Resources and Locations using MongoDB repositories.
@@ -171,8 +172,7 @@ public class RepositoryManager {
             log.error("Given platform is null or has empty PlatformId!");
             platformRemovingResult.setMessage("Given platform is null or has empty PlatformId!");
             platformRemovingResult.setStatus(HttpStatus.SC_BAD_REQUEST);
-        } else if (resourceRepository.findByInterworkingServiceURL(platformToRemove.getId()) != null
-                && !resourceRepository.findByInterworkingServiceURL(platformToRemove.getId()).isEmpty()) {
+        } else if (ifPlatformHasResources(platformToRemove.getId())) {
             log.error("Given Platform has registered resources. Take care of resources first.");
             platformRemovingResult.setMessage("Given Platform has registered resources. Take care of resources first.");
             platformRemovingResult.setStatus(HttpStatus.SC_CONFLICT);
@@ -190,6 +190,23 @@ public class RepositoryManager {
             }
         }
         return platformRemovingResult;
+    }
+
+    private boolean ifPlatformHasResources(String platformId) {
+        boolean platformHasResources = false;
+
+        Platform platform = platformRepository.findOne(platformId);
+        List<String> urls = platform.getInterworkingServices().stream().map(InterworkingService::getUrl).collect(Collectors.toList());
+
+        for (String url : urls) {
+            if (resourceRepository.findByInterworkingServiceURL(url) != null
+                    && !resourceRepository.findByInterworkingServiceURL(url).isEmpty()) {
+                platformHasResources = true;
+                break;
+            }
+        }
+
+        return platformHasResources;
     }
 
     //// TODO: 25.07.2017 test method!
@@ -847,7 +864,7 @@ public class RepositoryManager {
                         resourceToRemove);
 
             } catch (Exception e) {
-                log.error( "Got error during resource delete: " + e.getMessage());
+                log.error("Got error during resource delete: " + e.getMessage());
                 resourceSavingResult = new CoreSspResourcePersistenceResult(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         "Error occurred during CoreSsp Resource modifying in db",
                         resourceToRemove);

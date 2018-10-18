@@ -140,7 +140,7 @@ public class AuthorizationManager {
         for (String platformId : platformIds) {
 
             try {
-                log.debug("Setting up component home token access policy for: platformId: " + platformId + " componentId: " + componentId );
+                log.debug("Setting up component home token access policy for: platformId: " + platformId + " componentId: " + componentId);
                 ComponentHomeTokenAccessPolicy componentHomeTokenAccessPolicy = new ComponentHomeTokenAccessPolicy(platformId, componentId, null);
                 accessPoliciesMap.put(platformId, componentHomeTokenAccessPolicy);
             } catch (InvalidArgumentsException e) {
@@ -155,7 +155,7 @@ public class AuthorizationManager {
         return satisfiedPoliciesIdentifiers;
     }
 
-    private void printSecurityRequest( SecurityRequest securityRequest ) {
+    private void printSecurityRequest(SecurityRequest securityRequest) {
         log.debug("SecurityRequest:");
         log.debug("header params:");
         try {
@@ -163,12 +163,12 @@ public class AuthorizationManager {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        securityRequest.getSecurityCredentials().stream().forEach( sc -> {
-            log.debug("Token: " +sc.getToken());
-            log.debug("Challenge: " +sc.getAuthenticationChallenge());
-            log.debug("ClientCert: " +sc.getClientCertificate());
-            log.debug("ClientCertSignAAMCert: " +sc.getClientCertificateSigningAAMCertificate());
-            log.debug("ForeignTokenIssuing: " +sc.getForeignTokenIssuingAAMCertificate());
+        securityRequest.getSecurityCredentials().stream().forEach(sc -> {
+            log.debug("Token: " + sc.getToken());
+            log.debug("Challenge: " + sc.getAuthenticationChallenge());
+            log.debug("ClientCert: " + sc.getClientCertificate());
+            log.debug("ClientCertSignAAMCert: " + sc.getClientCertificateSigningAAMCertificate());
+            log.debug("ForeignTokenIssuing: " + sc.getForeignTokenIssuingAAMCertificate());
         });
     }
 
@@ -207,6 +207,12 @@ public class AuthorizationManager {
         if (resources != null) {
             for (String key : resources.keySet()) {
                 String resourceInterworkingServiceUrl = resources.get(key).getInterworkingServiceURL();
+
+                if (resourceInterworkingServiceUrl == null) {
+                    log.error("Resource has a null Interworking service URL!");
+                    return new AuthorizationResult("Resource has a null Interworking service URL!", false);
+                }
+
                 if (!resourceInterworkingServiceUrl.endsWith("/")) {
                     resourceInterworkingServiceUrl += "/";
                 }

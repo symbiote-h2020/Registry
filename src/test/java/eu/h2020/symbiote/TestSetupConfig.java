@@ -288,6 +288,9 @@ public class TestSetupConfig {
         return platform;
     }
 
+    /**
+     * @return a Platform with all fields
+     */
     public static Platform generatePlatformB() {
         Platform platform = new Platform();
         platform.setId(PLATFORM_B_ID);

@@ -1,7 +1,6 @@
 package eu.h2020.symbiote;
 
 import eu.h2020.symbiote.managers.AuthorizationManager;
-import eu.h2020.symbiote.managers.RabbitManager;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.mim.InterworkingService;
 import eu.h2020.symbiote.model.mim.Platform;
@@ -37,7 +36,6 @@ public class AuthorizationManagerTests {
     @Before
     public void setup() throws IOException, TimeoutException, SecurityHandlerException {
         mockedPlatformRepository = Mockito.mock(PlatformRepository.class);
-        RabbitManager rabbitManager = Mockito.mock(RabbitManager.class);
 
         authorizationManager = new AuthorizationManager(mockedPlatformRepository, null, null, null, null, null, null, SECURITY_ENABLED); //security enabled = false stands for DISABLING security
         ReflectionTestUtils.setField(authorizationManager, "aamAddress", AAM_ADDRESS);
@@ -57,6 +55,12 @@ public class AuthorizationManagerTests {
     public void operationAccessWithSecurityDisabledTest() {
         Assert.assertTrue(authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, "").isValidated());
         //method should return true because of security is disabled
+    }
+
+    @Test
+    public void operationAccessWithNullPlatformIdTest() {
+        Assert.assertFalse(authorizationManager.checkSinglePlatformOperationAccess(SECURITY_REQUEST, null).isValidated());
+        //method should return false because platform id is null
     }
 
 
