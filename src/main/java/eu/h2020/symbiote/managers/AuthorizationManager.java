@@ -10,6 +10,7 @@ import eu.h2020.symbiote.repository.PlatformRepository;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
 import eu.h2020.symbiote.security.accesspolicies.common.singletoken.ComponentHomeTokenAccessPolicy;
+import eu.h2020.symbiote.security.commons.ComponentIdentifiers;
 import eu.h2020.symbiote.security.commons.exceptions.custom.InvalidArgumentsException;
 import eu.h2020.symbiote.security.commons.exceptions.custom.SecurityHandlerException;
 import eu.h2020.symbiote.security.communication.payloads.SecurityRequest;
@@ -52,7 +53,7 @@ public class AuthorizationManager {
                                 @Value("${aam.deployment.owner.username}") String componentOwnerName,
                                 @Value("${aam.deployment.owner.password}") String componentOwnerPassword,
                                 @Value("${aam.environment.aamAddress}") String aamAddress,
-                                @Value("${aam.environment.clientId}") String clientId,
+                                @Value("${platform.id}") String platformId,
                                 @Value("${aam.environment.keystoreName}") String keystoreName,
                                 @Value("${aam.environment.keystorePass}") String keystorePass,
                                 @Value("${registry.security.enabled}") Boolean securityEnabled) throws SecurityHandlerException {
@@ -63,7 +64,7 @@ public class AuthorizationManager {
         this.componentOwnerName = componentOwnerName;
         this.componentOwnerPassword = componentOwnerPassword;
         this.aamAddress = aamAddress;
-        this.clientId = clientId;
+        this.clientId = ComponentIdentifiers.CORE_REGISTRY + "@" + platformId;
         this.keystoreName = keystoreName;
         this.keystorePass = keystorePass;
         // do not remove even if seems not needed
