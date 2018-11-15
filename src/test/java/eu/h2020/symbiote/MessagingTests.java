@@ -1179,7 +1179,9 @@ public class MessagingTests {
     }
 
     private void mockSemanticManagerResourceTranslationCommunication(String message) throws IOException {
-        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        HashMap<String,Object> queueArgs = new HashMap<>();
+        queueArgs.put("x-message-ttl", 20000);
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, queueArgs);
         this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_TRANSLATION_REQUESTED_RK);
 
         this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
@@ -1241,7 +1243,9 @@ public class MessagingTests {
     }
 
     private void mockSemanticManagerResourceValidationCommunication(String message) throws IOException {
-        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        HashMap<String,Object> queueArgs = new HashMap<>();
+        queueArgs.put("x-message-ttl", 20000);
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, queueArgs);
         this.channel.queueBind(TEMP_QUEUE, RESOURCE_EXCHANGE_NAME, RESOURCE_VALIDATION_REQUESTED_RK);
 
         this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
@@ -1275,7 +1279,9 @@ public class MessagingTests {
     }
 
     private void mockIMVerificationCommunication(String message) throws IOException {
-        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, null);
+        HashMap<String,Object> queueArgs = new HashMap<>();
+        queueArgs.put("x-message-ttl", 20000);
+        this.channel.queueDeclare(TEMP_QUEUE, true, false, false, queueArgs);
         this.channel.queueBind(TEMP_QUEUE, PLATFORM_EXCHANGE_NAME, INFORMATION_MODEL_VALIDATION_REQUESTED_RK);
 
         this.channel.basicConsume(TEMP_QUEUE, new DefaultConsumer(this.channel) {
@@ -1323,7 +1329,9 @@ public class MessagingTests {
 
     private AMQP.BasicProperties getProps(Channel channel) throws IOException {
         String replyQueueName = "Queue" + Math.random();
-        channel.queueDeclare(replyQueueName, true, false, true, null);
+        HashMap<String,Object> queueArgs = new HashMap<>();
+        queueArgs.put("x-message-ttl", 20000);
+        channel.queueDeclare(replyQueueName, true, false, true, queueArgs);
 
         String correlationId = UUID.randomUUID().toString();
         AMQP.BasicProperties props = new AMQP.BasicProperties()

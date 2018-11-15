@@ -149,6 +149,8 @@ public class TestSetupConfig {
         ReflectionTestUtils.setField(rm, "rabbitHost", "localhost");
         ReflectionTestUtils.setField(rm, "rabbitUsername", "guest");
         ReflectionTestUtils.setField(rm, "rabbitPassword", "guest");
+        ReflectionTestUtils.setField(rm, "rabbitMessageTimeout",20000);
+
 
         ReflectionTestUtils.setField(rm, "platformExchangeName", PLATFORM_EXCHANGE_NAME);
         ReflectionTestUtils.setField(rm, "platformExchangeType", "topic");

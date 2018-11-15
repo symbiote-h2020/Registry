@@ -88,6 +88,9 @@ public class RabbitManager {
     private static final String SSP_RESOURCE_REMOVAL_REQUESTED_QUEUE = "symbIoTe-Registry-sspSdevResourceRemovalRequestedQueue";
     private static final String PLATFORM_DETAILS_REQUESTED_QUEUE = "symbIoTe-Registry-platformDetailsRequestedQueue";
     private static final String ERROR_OCCURRED_WHEN_PARSING_OBJECT_TO_JSON = "Error occurred when parsing Resource object JSON: ";
+
+    private Map<String,Object> queueArgs;
+
     /* Queues names */
 
     private static Log log = LogFactory.getLog(RabbitManager.class);
@@ -105,6 +108,8 @@ public class RabbitManager {
     @Value("${rabbit.password}")
     private String rabbitPassword;
     /* Connection Params */
+    @Value("${spring.rabbitmq.template.reply-timeout}")
+    private Integer rabbitMessageTimeout;
 
     /* Exchanges Params */
     @Value("${rabbit.exchange.platform.name}")
@@ -344,6 +349,11 @@ public class RabbitManager {
      * It triggers start of all consumers used in Registry communication.
      */
     public void init() {
+
+        //Setting up timeout args for mesages
+        queueArgs = new HashMap<>();
+        queueArgs.put("x-message-ttl", rabbitMessageTimeout);
+
         try {
             getConnection();
         } catch (TimeoutException e) {
@@ -502,7 +512,7 @@ public class RabbitManager {
                                               String exchangeName,
                                               String routingKeyName,
                                               Consumer consumer) throws IOException {
-        getChannel().queueDeclare(queueName, true, false, false, null);
+        getChannel().queueDeclare(queueName, true, false, false, queueArgs);
         getChannel().queueBind(queueName, exchangeName, routingKeyName);
 //            channel.basicQos(1); // to spread the load over multiple servers we set the prefetchCount setting
         getChannel().basicConsume(queueName, false, consumer);
@@ -1234,7 +1244,7 @@ public class RabbitManager {
                                                                   Map<String, IAccessPolicySpecifier> policiesMap,
                                                                   String requestBody) {
         try {
-            String replyQueueName = rpcChannel.queueDeclare().getQueue();
+            String replyQueueName = generateRpcQueue(rpcChannel);
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -1290,7 +1300,7 @@ public class RabbitManager {
                                                                      Map<String, IAccessPolicySpecifier> policiesMap,
                                                                      Map<String, Resource> requestResourcesMap) {
         try {
-            String replyQueueName = rpcChannel.queueDeclare().getQueue();
+            String replyQueueName = generateRpcQueue(rpcChannel);
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -1337,7 +1347,7 @@ public class RabbitManager {
                                      String message, Consumer responseConsumer) {
         try {
             String replyQueueName = "Queue" + Math.random();
-            rpcChannel.queueDeclare(replyQueueName, true, false, true, null);
+            rpcChannel.queueDeclare(replyQueueName, true, false, true, queueArgs);
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -1410,7 +1420,7 @@ public class RabbitManager {
                                                          AMQP.BasicProperties rpcProperties, Envelope rpcEnvelope,
                                                          String message, RegistryOperationType operationType) {
         try {
-            String replyQueueName = rpcChannel.queueDeclare().getQueue();
+            String replyQueueName = generateRpcQueue(rpcChannel);
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -1438,6 +1448,12 @@ public class RabbitManager {
         } catch (IOException e) {
             log.error(e);
         }
+    }
+
+    private String generateRpcQueue(Channel rpcChannel) throws IOException {
+        String queueName = UUID.randomUUID().toString();
+        rpcChannel.queueDeclare(queueName, false, true, true, queueArgs);
+        return queueName;
     }
 
     /**
@@ -1524,7 +1540,7 @@ public class RabbitManager {
         try {
             log.debug("Sending RPC message...");
 
-            String replyQueueName = getChannel().queueDeclare().getQueue();
+            String replyQueueName = generateRpcQueue(getChannel());
 
             String correlationId = UUID.randomUUID().toString();
             AMQP.BasicProperties props = new AMQP.BasicProperties()
@@ -1569,4 +1585,5 @@ public class RabbitManager {
         }
         return null;
     }
+
 }
